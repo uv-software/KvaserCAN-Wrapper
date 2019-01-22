@@ -120,8 +120,12 @@ static int receive_fd(int handle);
 static int convert(const char *string, can_bitrate_t *bitrate);
 static void verbose(BYTE op_mode, const can_bitrate_t *bitrate);
 
-static int start_timer(DWORD timeout);
-static int is_timeout(void);
+#ifndef _WAITABLE_TIMER
+ static int start_timer(DWORD timeout);
+ static int is_timeout(void);
+#else
+ static void usleep(QWORD usec);
+#endif
 
 static void sigterm(int signo);
 //static void usage(FILE *stream, char *program);
@@ -361,7 +365,7 @@ static int transmit(int handle, int frames, DWORD delay)
         }
         while (!is_timeout()) {
             if (!running) {
-                printf("\n");
+                printf("%i\n", frames);
                 return i;
             }
         }
@@ -370,11 +374,11 @@ static int transmit(int handle, int frames, DWORD delay)
             fflush(stdout);
         }
         if (!running) {
-            printf("\n");
+            printf("%i\n", frames);
             return i;
         }
     }
-    printf("\n");
+    printf("%i\n", frames);
     return i;
 }
 
@@ -415,7 +419,7 @@ static int transmit_fd(int handle, int frames, DWORD delay)
         }
         while (!is_timeout()) {
             if (!running) {
-                printf("\n");
+                printf("%i\n", frames);
                 return i;
             }
         }
@@ -424,11 +428,11 @@ static int transmit_fd(int handle, int frames, DWORD delay)
             fflush(stdout);
         }
         if (!running) {
-            printf("\n");
+            printf("%i\n", frames);
             return i;
         }
     }
-    printf("\n");
+    printf("%i\n", frames);
     return i;
 }
 
@@ -506,7 +510,7 @@ static int receive(int handle)
         }
     }
     if (!option_echo) {
-        fprintf(stdout, "%llu", frames);
+        fprintf(stdout, "%llu\n", frames);
         fflush(stdout);
     }
     return 0;
@@ -589,7 +593,7 @@ static int receive_fd(int handle)
         }
     }
     if (!option_echo) {
-        fprintf(stdout, "%llu", frames);
+        fprintf(stdout, "%llu\n", frames);
         fflush(stdout);
     }
     return 0;
@@ -669,14 +673,15 @@ static void verbose(BYTE op_mode, const can_bitrate_t *bitrate)
 
 static void sigterm(int signo)
 {
-    /*printf("got signal %d\n", signo);*/
+    //printf("%s: got signal %d\n", __FILE__, signo);
     running = 0;
 }
 
-static LONGLONG  llUntilStop = 0;       // counter value for time-out
+#ifndef _WAITABLE_TIMER
+ static LONGLONG  llUntilStop = 0;       // counter value for time-out
 
-static int start_timer(DWORD timeout)
-{
+ static int start_timer(DWORD timeout)
+ {
     LARGE_INTEGER largeCounter;         // high-resolution performance counter
     LARGE_INTEGER largeFrequency;       // frequency in counts per second
 
@@ -688,12 +693,12 @@ static int start_timer(DWORD timeout)
         return CANERR_FATAL;
     // calculate the counter value for the desired time-out
     llUntilStop = largeCounter.QuadPart + ((largeFrequency.QuadPart * (LONGLONG)timeout)
-        / (LONGLONG)1000000);
+                                                                    / (LONGLONG)1000000);
     return 0;
-}
+ }
 
-static int is_timeout(void)
-{
+ static int is_timeout(void)
+ {
     LARGE_INTEGER largeCounter;         // high-resolution performance counter
 
     // retrieve the current value of the high-resolution performance counter
@@ -704,8 +709,22 @@ static int is_timeout(void)
         return FALSE;
     else
         return TRUE;
-}
+ }
+#else
+ static void usleep(QWORD usec)
+ {
+    HANDLE timer;
+    LARGE_INTEGER ft;
 
+    ft.QuadPart = -(10 * (LONGLONG)usec); // Convert to 100 nanosecond interval, negative value indicates relative time
+    if (usec >= 100) {
+        timer = CreateWaitableTimer(NULL, TRUE, NULL);
+        SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0);
+        WaitForSingleObject(timer, INFINITE);
+        CloseHandle(timer);
+    }
+ }
+#endif
 /*  ----------------------------------------------------------------------
  *  Uwe Vogt,  UV Software,  Chausseestrasse 33 A,  10115 Berlin,  Germany
  *  Tel.: +49-30-46799872,  Fax: +49-30-46799873,  Mobile: +49-170-3801903
