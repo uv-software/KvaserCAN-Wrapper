@@ -134,6 +134,7 @@
     </Link>
     <PostBuildEvent>
       <Command>copy .\Release\u3cankvl.dll ..\..\..\x86\u3cankvl.dll
+
 copy .\Release\u3cankvl.lib ..\x86\u3cankvl.lib</Command>
     </PostBuildEvent>
     <PostBuildEvent>
