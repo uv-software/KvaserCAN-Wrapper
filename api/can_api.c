@@ -4,9 +4,9 @@
  *
  *  purpose   :  CAN Interface API, Version 3 (Kvaser canlib32)
  *
- *  copyright :  (C) 2017-2018, UV Software, Berlin
+ *  copyright :  (C) 2017-2019, UV Software, Berlin
  *
- *  compiler  :  Microsoft Visual C/C++ Compiler (Version 19.15.26730)
+ *  compiler  :  Microsoft Visual C/C++ Compiler (Version 19.15)
  *
  *  export    :  (see header file)
  *
@@ -378,7 +378,7 @@ int can_read(int handle, can_msg_t *msg, unsigned short timeout)
     long id;                            // the message:
     unsigned int len, flags;
     unsigned char data[CANFD_MAX_LEN];
-    unsigned long timestamp;            // time stamp
+    unsigned long timestamp;            // time stamp (in [ms])
     canStatus rc;                       // return value
 
     if(!init)                           // must be initialized!
@@ -390,6 +390,7 @@ int can_read(int handle, can_msg_t *msg, unsigned short timeout)
     if(can[handle].status.b.can_stopped)// must be running!
         return CANERR_OFFLINE;
 
+    // TODO: canReadWait - 'blocking read' (what´s about Ctrl+C?) 
     if((rc = canRead(can[handle].handle, &id, data, &len, &flags, &timestamp)) == canERR_NOMSG) {
         can[handle].status.b.receiver_empty = 1;
         return CANERR_RX_EMPTY;         //   receiver empty!
@@ -409,9 +410,13 @@ int can_read(int handle, can_msg_t *msg, unsigned short timeout)
     msg->brs = (flags & canFDMSG_BRS)? 1 : 0;
     msg->esi = (flags & canFDMSG_ESI)? 1 : 0;
     msg->dlc = LEN2DLC(len);
+#ifndef CAN_20_ONLY
     memcpy(msg->data, data, CANFD_MAX_LEN);
-    msg->timestamp.sec = (long)(timestamp / 1000ull);
-    msg->timestamp.usec = (long)(timestamp % 1000ull);
+#else
+    memcpy(msg->data, data, CAN_MAX_LEN);
+#endif
+    msg->timestamp.sec = (long)(timestamp / 1000ul);
+    msg->timestamp.usec = (long)(timestamp % 1000ul) * 1000l;
     can[handle].status.b.receiver_empty = 0;// message read!
 
     return CANERR_NOERROR;
