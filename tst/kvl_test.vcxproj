@@ -22,6 +22,7 @@
     <ClCompile Include="..\api\can_api.c" />
     <ClCompile Include="bitrates.c" />
     <ClCompile Include="kvl_test.c" />
+    <ClCompile Include="printmsg.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\api\canlib.h" />
@@ -29,6 +30,7 @@
     <ClInclude Include="..\api\can_api.h" />
     <ClInclude Include="..\api\can_defs.h" />
     <ClInclude Include="bitrates.h" />
+    <ClInclude Include="printmsg.h" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\x86\canlib32.lib" />
