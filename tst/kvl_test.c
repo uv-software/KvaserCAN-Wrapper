@@ -35,7 +35,7 @@
  */
 
 #include "can_api.h"
-//#include "bitrates.h"
+#include "bitrates.h"
 #include "printmsg.h"
 
 #include <stdio.h>
