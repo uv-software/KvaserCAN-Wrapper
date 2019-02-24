@@ -15,7 +15,7 @@
  *
  *  libraries :  (none)
  *
- *  includes  :  can_api.h (can_defs.h), dosopt.h, bitrates.h
+ *  includes  :  can_api.h (can_defs.h), printmsg.h, bitrates.h
  *
  *  author    :  Uwe Vogt, UV Software
  *
@@ -33,6 +33,10 @@
 
 /*  -----------  includes  -----------------------------------------------
  */
+
+#include "can_api.h"
+//#include "bitrates.h"
+#include "printmsg.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,9 +58,6 @@
 #define QWORD unsigned long long
 #endif
 #endif
-#include "can_api.h"                    // CAN API V3 Interface
-#include "bitrates.h"                   // Bit-rate conversion
-#include "printmsg.h"                   // Print CAN messages
 
 
 /*  -----------  options  ------------------------------------------------
