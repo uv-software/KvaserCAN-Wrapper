@@ -8,6 +8,11 @@ copyright :  (C) 2017-2019, UV Software, Berlin
 
 ----------------------------------------------------------------------
 
+2019-03-11:
+- blocking read
+- get bus-load
+- get bit-rate
+
 2017-03-11:
 - time offset: do I need it?
 

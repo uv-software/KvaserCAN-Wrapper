@@ -29,8 +29,6 @@
  *
  *  e-mail    :  uwe.vogt@uv-software.de
  *
- *  origin    :  Template
- *
  *
  *  -----------  description  --------------------------------------------
  */
@@ -272,7 +270,7 @@ typedef struct _can_msg_t {
  */
 
 /** @brief       tests if the CAN interface (hardware and driver) given by
- *               the arguments s 'library' and 'board' is present.
+ *               the arguments 'library' and 'board' is present.
  *
  *  @param[in]   board   - type of the CAN interface board.
  *  @param[in]   mode    - operation mode to be checked.
