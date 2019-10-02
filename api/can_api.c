@@ -57,7 +57,13 @@ static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION"."SV
 #include "canstat.h"
 
 
-/*  -----------  defines  ------------------------------------------------
+ /*  -----------  options  ------------------------------------------------
+  */
+
+#define _BLOCKING_READ                  // blocking read via wait event
+
+
+  /*  -----------  defines  ------------------------------------------------
  */
 
 #ifndef KVASER_MAX_HANDLES
@@ -295,6 +301,40 @@ int can_start(int handle, const can_bitrate_t *bitrate)
     return CANERR_NOERROR;
 }
 
+int can_kill(int handle)
+{
+	HANDLE hEvent = NULL;				// event object
+	int i;
+
+	if(!init)							// must be initialized!
+		return CANERR_NOTINIT;
+	if(handle != CANKILL_ALL) {
+		if(!IS_HANDLE_VALID(handle))	// must be a valid handle!
+			return CANERR_HANDLE;
+#ifdef _BLOCKING_READ
+		if(can[handle].handle != canINVALID_HANDLE) {
+			if((canIoCtl(can[handle].handle, canIOCTL_GET_EVENTHANDLE, 
+				        (void*)&hEvent, sizeof(hEvent)) == canOK) &&
+			   (hEvent != NULL)) {
+				(void)SetEvent(hEvent);		// signal the event object
+			}
+		}
+	}
+	else {
+		for(i = 0; i < KVASER_MAX_HANDLES; i++) {
+			if(can[i].handle != canINVALID_HANDLE) {
+				if((canIoCtl(can[i].handle, canIOCTL_GET_EVENTHANDLE,
+					(void*)&hEvent, sizeof(hEvent)) == canOK) &&
+				   (hEvent != NULL)) {
+					(void)SetEvent(hEvent);	// signal all event objects
+				}
+			}
+		}
+#endif
+	}
+	return CANERR_NOERROR;
+}
+
 int can_reset(int handle)
 {
     if(!init)                           // must be initialized!
@@ -390,12 +430,32 @@ int can_read(int handle, can_msg_t *msg, unsigned short timeout)
     if(can[handle].status.b.can_stopped)// must be running!
         return CANERR_OFFLINE;
 
-    // TODO: canReadWait - 'blocking read' (what´s about Ctrl+C?) 
     if((rc = canRead(can[handle].handle, &id, data, &len, &flags, &timestamp)) == canERR_NOMSG) {
-        can[handle].status.b.receiver_empty = 1;
-        return CANERR_RX_EMPTY;         //   receiver empty!
+#ifdef _BLOCKING_READ
+		if(timeout > 0) {
+			switch(canWaitForEvent(can[handle].handle, (timeout != CANREAD_INFINITE) ? timeout : INFINITE)) {
+			case canOK:
+				break;					//   one or more messages received
+			case canERR_TIMEOUT:
+				break;					//   time-out, but look for old messages
+			default:
+				return CANERR_FATAL;	//   function failed!
+			}
+			if((rc = canRead(can[handle].handle, &id, data, &len, &flags, &timestamp)) == canERR_NOMSG) {
+				can[handle].status.b.receiver_empty = 1;
+				return CANERR_RX_EMPTY; //   receiver empty!
+			}
+		}
+		else {
+			can[handle].status.b.receiver_empty = 1;
+			return CANERR_RX_EMPTY;     //   receiver empty!
+		}
+#else
+		can[handle].status.b.receiver_empty = 1;
+		return CANERR_RX_EMPTY;         //   receiver empty!
+#endif
     }
-    else if(rc < canOK)                 // receive error?
+    if(rc < canOK)						// receive error?
     {
         return kvaser_error(rc);        //   something´s wrong!
     }
