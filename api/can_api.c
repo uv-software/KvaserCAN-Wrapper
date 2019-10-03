@@ -616,7 +616,7 @@ int can_library(int *library)
     if(library == NULL)                 // null-pointer assignment!
         return CANERR_NULLPTR;
 
-    *library = KVASER_LIB_ID;               // library ID
+    *library = KVASER_LIB_ID;           // library ID
 
     return CANERR_NOERROR;
 }
@@ -626,12 +626,10 @@ int can_library(int *library)
 
 static int kvaser_error(canStatus status)
 {
-    if(((int)status < CANERR_NOERROR) || ((int)status) > CANERR_FATAL)
-        return KVASER_ERR_OFFSET + (int)status;
-    else if(status != canOK)
-        return KVASER_ERR_UNKNOWN;
-    else
-        return CANERR_NOERROR;
+	if((canOK > status) && (status > canERR__RESERVED))
+		return KVASER_ERR_OFFSET + (int)status;
+
+	return KVASER_ERR_UNKNOWN;
 }
 
 /*  -----------  revision control  ---------------------------------------
