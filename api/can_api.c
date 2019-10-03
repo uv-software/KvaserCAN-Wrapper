@@ -61,6 +61,7 @@ static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION"."SV
   */
 
 #define _BLOCKING_READ                  // blocking read via wait event
+//#define _OPEN_EXCLUSIVE					// permit only exclusive access
 
 
   /*  -----------  defines  ------------------------------------------------
@@ -110,7 +111,7 @@ typedef struct {
 /*  -----------  prototypes  ---------------------------------------------
  */
 
-static int kvaser_error(TPCANStatus);   // Kvaser specific errors
+static int kvaser_error(canStatus);    // Kvaser specific errors
 
 
 /*  -----------  variables  ----------------------------------------------
@@ -146,7 +147,10 @@ static int  init = 0;                   // initialization flag
 
 int can_test(int board, unsigned char mode, const void *param, int *result)
 {
-    int i;
+	int capacity = 0x0000;				// channel capacity
+	int flags = 0x0000;					// channel flags
+	canStatus rc;                       // return value
+	int i, n;
 
     if(!init) {                         // when not init before:
         for(i = 0; i < KVASER_MAX_HANDLES; i++) {
@@ -155,13 +159,35 @@ int can_test(int board, unsigned char mode, const void *param, int *result)
         canInitializeLibrary();         //   initialize the driver
         init = 1;                       //   set initialization flag
     }
-    // TODO: ...
-    (void)board;
-    (void)mode;
+	if((rc = canGetNumberOfChannels(&n)) != canOK)
+		return kvaser_error(rc);
+	if(board >= n) {
+		if (result)
+			*result = CANBRD_NOT_PRESENT;
+		return CANERR_NOERROR;
+	}
+	if((rc = canGetChannelData(board, canCHANNELDATA_CHANNEL_CAP, (void*)&capacity, sizeof(capacity))) != canOK)
+		return kvaser_error(rc);
+	if(capacity & (canCHANNEL_CAP_VIRTUAL | canCHANNEL_CAP_SIMULATED)) {
+		if (result)
+			*result = CANBRD_NOT_PRESENT;
+		return CANERR_NOERROR;
+	}
+	if((rc = canGetChannelData(board, canCHANNELDATA_CHANNEL_FLAGS, (void*)&flags, sizeof(flags))) != canOK)
+		return kvaser_error(rc);
+	if(result) {
+#ifdef _OPEN_EXCLUSIVE
+		if(flags & (canCHANNEL_IS_OPEN))
+#else
+		if(flags & (canCHANNEL_IS_EXCLUSIVE))
+#endif
+			*result = CANBRD_NOT_AVAILABLE;
+		else
+			*result = CANBRD_PRESENT;
+	}
+	(void)mode;
     (void)param;
-    (void)result;
-
-    return CANERR_NOTSUPP;
+    return CANERR_NOERROR;
 }
 
 int can_init(int board, unsigned char mode, const void *param)
@@ -185,6 +211,9 @@ int can_init(int board, unsigned char mode, const void *param)
     if(!IS_HANDLE_VALID(i))             // no free handle found
         return CANERR_HANDLE;
 
+#ifdef _OPEN_EXCLUSIVE
+	flags = canOPEN_EXCLUSIVE;
+#endif
     flags |= (mode & CANMODE_FDOE)? canOPEN_CAN_FD : 0;
     flags |= (mode & CANMODE_FDOE)? canOPEN_ACCEPT_LARGE_DLC : 0;// why?
     flags |= (mode & CANMODE_NISO)? canOPEN_CAN_FD_NONISO : 0;
