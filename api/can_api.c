@@ -61,7 +61,7 @@ static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION"."SV
   */
 
 #define _BLOCKING_READ                  // blocking read via wait event
-//#define _OPEN_EXCLUSIVE					// permit only exclusive access
+//#define _OPEN_EXCLUSIVE                   // permit only exclusive access
 
 
   /*  -----------  defines  ------------------------------------------------
@@ -105,6 +105,7 @@ typedef struct {
     int        channel;                 // channel number ot the CAN board
     can_mode_t mode;                    // operation mode of the CAN channel
     can_status_t status;                // 8-bit status register
+    can_bitrate_t bitrate;              // bit-rate setting 
 }   can_interface_t;
 
 
@@ -147,45 +148,48 @@ static int  init = 0;                   // initialization flag
 
 int can_test(int board, unsigned char mode, const void *param, int *result)
 {
-	int capacity = 0x0000;				// channel capacity
-	int flags = 0x0000;					// channel flags
-	canStatus rc;                       // return value
-	int i, n;
+    int capacity = 0x0000;              // channel capacity
+    int flags = 0x0000;                 // channel flags
+    canStatus rc;                       // return value
+    int i, n;
 
     if(!init) {                         // when not init before:
         for(i = 0; i < KVASER_MAX_HANDLES; i++) {
             can[i].handle = canINVALID_HANDLE;
+            can[i].mode.byte = CANMODE_DEFAULT;
+            can[i].status.byte = CANSTAT_RESET;
+            can[i].bitrate.index = -CANBDR_250;
         }
         canInitializeLibrary();         //   initialize the driver
         init = 1;                       //   set initialization flag
     }
-	if((rc = canGetNumberOfChannels(&n)) != canOK)
-		return kvaser_error(rc);
-	if(board >= n) {
-		if (result)
-			*result = CANBRD_NOT_PRESENT;
-		return CANERR_NOERROR;
-	}
-	if((rc = canGetChannelData(board, canCHANNELDATA_CHANNEL_CAP, (void*)&capacity, sizeof(capacity))) != canOK)
-		return kvaser_error(rc);
-	if(capacity & (canCHANNEL_CAP_VIRTUAL | canCHANNEL_CAP_SIMULATED)) {
-		if (result)
-			*result = CANBRD_NOT_PRESENT;
-		return CANERR_NOERROR;
-	}
-	if((rc = canGetChannelData(board, canCHANNELDATA_CHANNEL_FLAGS, (void*)&flags, sizeof(flags))) != canOK)
-		return kvaser_error(rc);
-	if(result) {
+    if((rc = canGetNumberOfChannels(&n)) != canOK)
+        return kvaser_error(rc);
+    if(board >= n) {
+        if (result)
+            *result = CANBRD_NOT_PRESENT;
+        return CANERR_NOERROR;
+    }
+    if((rc = canGetChannelData(board, canCHANNELDATA_CHANNEL_CAP, (void*)&capacity, sizeof(capacity))) != canOK)
+        return kvaser_error(rc);
+    if(capacity & (canCHANNEL_CAP_VIRTUAL | canCHANNEL_CAP_SIMULATED)) {
+        if (result)
+            *result = CANBRD_NOT_PRESENT;
+        return CANERR_NOERROR;
+    }
+    if((rc = canGetChannelData(board, canCHANNELDATA_CHANNEL_FLAGS, (void*)&flags, sizeof(flags))) != canOK)
+        return kvaser_error(rc);
+    if(result) {
 #ifdef _OPEN_EXCLUSIVE
-		if(flags & (canCHANNEL_IS_OPEN))
+        if(flags & (canCHANNEL_IS_OPEN))
 #else
-		if(flags & (canCHANNEL_IS_EXCLUSIVE))
+        if(flags & (canCHANNEL_IS_EXCLUSIVE))
 #endif
-			*result = CANBRD_NOT_AVAILABLE;
-		else
-			*result = CANBRD_PRESENT;
-	}
-	(void)mode;
+            *result = CANBRD_NOT_AVAILABLE;
+        else
+            *result = CANBRD_PRESENT;
+    }
+    (void)mode;
     (void)param;
     return CANERR_NOERROR;
 }
@@ -200,6 +204,9 @@ int can_init(int board, unsigned char mode, const void *param)
     if(!init) {                         // when not init before:
         for(i = 0; i < KVASER_MAX_HANDLES; i++) {
             can[i].handle = canINVALID_HANDLE;
+            can[i].mode.byte = CANMODE_DEFAULT;
+            can[i].status.byte = CANSTAT_RESET;
+            can[i].bitrate.index = -CANBDR_250;
         }
         canInitializeLibrary();         // initialize the driver
         init = 1;                       // set initialization flag
@@ -212,7 +219,7 @@ int can_init(int board, unsigned char mode, const void *param)
         return CANERR_HANDLE;
 
 #ifdef _OPEN_EXCLUSIVE
-	flags = canOPEN_EXCLUSIVE;
+    flags = canOPEN_EXCLUSIVE;
 #endif
     flags |= (mode & CANMODE_FDOE)? canOPEN_CAN_FD : 0;
     flags |= (mode & CANMODE_FDOE)? canOPEN_ACCEPT_LARGE_DLC : 0;// why?
@@ -234,7 +241,7 @@ int can_init(int board, unsigned char mode, const void *param)
     can[i].mode.byte = mode;            // store selected operation mode
     can[i].status.byte = CANSTAT_RESET; // CAN controller not started yet!
 
-	return i;                           // return the handle
+    return i;                           // return the handle
 }
 
 int can_exit(int handle)
@@ -324,6 +331,7 @@ int can_start(int handle, const can_bitrate_t *bitrate)
     if((rc = canBusOn(can[handle].handle)) != canOK)
         return kvaser_error(rc);
     
+    memcpy(&can[handle].bitrate, bitrate, sizeof(can_bitrate_t));
     can[handle].status.byte = 0x00;     // clear old status bits
     can[handle].status.b.can_stopped = 0;// CAN controller started!
 
@@ -332,36 +340,36 @@ int can_start(int handle, const can_bitrate_t *bitrate)
 
 int can_kill(int handle)
 {
-	HANDLE hEvent = NULL;				// event object
-	int i;
+    HANDLE hEvent = NULL;               // event object
+    int i;
 
-	if(!init)							// must be initialized!
-		return CANERR_NOTINIT;
-	if(handle != CANKILL_ALL) {
-		if(!IS_HANDLE_VALID(handle))	// must be a valid handle!
-			return CANERR_HANDLE;
+    if(!init)                           // must be initialized!
+        return CANERR_NOTINIT;
+    if(handle != CANKILL_ALL) {
+        if(!IS_HANDLE_VALID(handle))    // must be a valid handle!
+            return CANERR_HANDLE;
 #ifdef _BLOCKING_READ
-		if(can[handle].handle != canINVALID_HANDLE) {
-			if((canIoCtl(can[handle].handle, canIOCTL_GET_EVENTHANDLE, 
-				        (void*)&hEvent, sizeof(hEvent)) == canOK) &&
-			   (hEvent != NULL)) {
-				(void)SetEvent(hEvent);		// signal the event object
-			}
-		}
-	}
-	else {
-		for(i = 0; i < KVASER_MAX_HANDLES; i++) {
-			if(can[i].handle != canINVALID_HANDLE) {
-				if((canIoCtl(can[i].handle, canIOCTL_GET_EVENTHANDLE,
-					(void*)&hEvent, sizeof(hEvent)) == canOK) &&
-				   (hEvent != NULL)) {
-					(void)SetEvent(hEvent);	// signal all event objects
-				}
-			}
-		}
+        if(can[handle].handle != canINVALID_HANDLE) {
+            if((canIoCtl(can[handle].handle, canIOCTL_GET_EVENTHANDLE, 
+                        (void*)&hEvent, sizeof(hEvent)) == canOK) &&
+               (hEvent != NULL)) {
+                (void)SetEvent(hEvent);     // signal the event object
+            }
+        }
+    }
+    else {
+        for(i = 0; i < KVASER_MAX_HANDLES; i++) {
+            if(can[i].handle != canINVALID_HANDLE) {
+                if((canIoCtl(can[i].handle, canIOCTL_GET_EVENTHANDLE,
+                    (void*)&hEvent, sizeof(hEvent)) == canOK) &&
+                   (hEvent != NULL)) {
+                    (void)SetEvent(hEvent); // signal all event objects
+                }
+            }
+        }
 #endif
-	}
-	return CANERR_NOERROR;
+    }
+    return CANERR_NOERROR;
 }
 
 int can_reset(int handle)
@@ -461,30 +469,30 @@ int can_read(int handle, can_msg_t *msg, unsigned short timeout)
 
     if((rc = canRead(can[handle].handle, &id, data, &len, &flags, &timestamp)) == canERR_NOMSG) {
 #ifdef _BLOCKING_READ
-		if(timeout > 0) {
-			switch(canWaitForEvent(can[handle].handle, (timeout != CANREAD_INFINITE) ? timeout : INFINITE)) {
-			case canOK:
-				break;					//   one or more messages received
-			case canERR_TIMEOUT:
-				break;					//   time-out, but look for old messages
-			default:
-				return CANERR_FATAL;	//   function failed!
-			}
-			if((rc = canRead(can[handle].handle, &id, data, &len, &flags, &timestamp)) == canERR_NOMSG) {
-				can[handle].status.b.receiver_empty = 1;
-				return CANERR_RX_EMPTY; //   receiver empty!
-			}
-		}
-		else {
-			can[handle].status.b.receiver_empty = 1;
-			return CANERR_RX_EMPTY;     //   receiver empty!
-		}
+        if(timeout > 0) {
+            switch(canWaitForEvent(can[handle].handle, (timeout != CANREAD_INFINITE) ? timeout : INFINITE)) {
+            case canOK:
+                break;                  //   one or more messages received
+            case canERR_TIMEOUT:
+                break;                  //   time-out, but look for old messages
+            default:
+                return CANERR_FATAL;    //   function failed!
+            }
+            if((rc = canRead(can[handle].handle, &id, data, &len, &flags, &timestamp)) == canERR_NOMSG) {
+                can[handle].status.b.receiver_empty = 1;
+                return CANERR_RX_EMPTY; //   receiver empty!
+            }
+        }
+        else {
+            can[handle].status.b.receiver_empty = 1;
+            return CANERR_RX_EMPTY;     //   receiver empty!
+        }
 #else
-		can[handle].status.b.receiver_empty = 1;
-		return CANERR_RX_EMPTY;         //   receiver empty!
+        can[handle].status.b.receiver_empty = 1;
+        return CANERR_RX_EMPTY;         //   receiver empty!
 #endif
     }
-    if(rc < canOK)						// receive error?
+    if(rc < canOK)                      // receive error?
     {
         return kvaser_error(rc);        //   something´s wrong!
     }
@@ -539,30 +547,30 @@ int can_status(int handle, unsigned char *status)
 
 int can_busload(int handle, unsigned char *load, unsigned char *status)
 {
-    unsigned long flags;                // status flags
-    canStatus rc;                       // return value
-
     if(!init)                           // must be initialized!
         return CANERR_NOTINIT;
     if(!IS_HANDLE_VALID(handle))        // must be a valid handle!
         return CANERR_HANDLE;
 
-    if((rc = canRequestChipStatus(can[handle].handle)) != canOK)
-        return kvaser_error(rc);
-    if((rc = canReadStatus(can[handle].handle, &flags)) != canOK)
-        return kvaser_error(rc);
+    if(!can[handle].status.b.can_stopped) { // must be running:
+        if (load)
+            *load = 0;                  //   TODO: bus-load [percent]
+    }
+    return can_status(handle, status);  // status-register
+}
 
-    can[handle].status.b.bus_off = (flags & canSTAT_BUS_OFF)? 1 : 0;
-    can[handle].status.b.bus_error = (flags & canSTAT_ERROR_PASSIVE)? 1 : 0;
-    can[handle].status.b.warning_level = (flags & canSTAT_ERROR_WARNING)? 1 : 0;
-    can[handle].status.b.message_lost |= (flags & canSTAT_RXERR)? 1 : 0;
-    can[handle].status.b.transmitter_busy |= (flags & canSTAT_TX_PENDING)? 1 : 0;
-    if(status)                          // status-register
-      *status = can[handle].status.byte;
-    if(load)                            // bus-load
-      *load = 255;
-      
-    return CANERR_NOERROR;
+int can_bitrate(int handle, can_bitrate_t *bitrate, unsigned char *status)
+{
+    if(!init)                           // must be initialized!
+        return CANERR_NOTINIT;
+    if(!IS_HANDLE_VALID(handle))        // must be a valid handle!
+        return CANERR_HANDLE;
+
+    if(!can[handle].status.b.can_stopped) { // must be running:
+        if(bitrate)
+            memcpy(bitrate, &can[handle].bitrate, sizeof(can_bitrate_t));
+    }
+    return can_status(handle, status);  // status-register
 }
 
 int can_interface(int handle, int *board, unsigned char *mode, void *param)
@@ -626,10 +634,10 @@ int can_library(int *library)
 
 static int kvaser_error(canStatus status)
 {
-	if((canOK > status) && (status > canERR__RESERVED))
-		return KVASER_ERR_OFFSET + (int)status;
+    if((canOK > status) && (status > canERR__RESERVED))
+        return KVASER_ERR_OFFSET + (int)status;
 
-	return KVASER_ERR_UNKNOWN;
+    return KVASER_ERR_UNKNOWN;
 }
 
 /*  -----------  revision control  ---------------------------------------

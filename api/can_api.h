@@ -17,6 +17,7 @@
  *               int can_read(int handle, can_msg_t *msg, unsigned short timeout);
  *               int can_status(int handle, unsigned char *status);
  *               int can_busload(int handle, unsigned char *load, unsigned char *status);
+ *               int can_bitrate(int handle, can_bitrate_t *bitrate, unsigned char *status);
  *               int can_interface(int handle, int *board, unsigned char *mode, void *param);
  *               char *can_hardware(int handle);
  *               char *can_software(int handle);
@@ -36,7 +37,7 @@
  *
  *  @brief       CAN API V3 for Kvaser CAN Interfaces - API
  *
- *               For Kvaser CANLIB API Interfaces (canlib32.dll V5.25).
+ *               For Kvaser CANLIB API Interfaces (canlib32.dll 5.28.846).
  *
  *  @author      $Author$
  *
@@ -410,6 +411,18 @@ CANAPI int can_status(int handle, unsigned char *status);
 CANAPI int can_busload(int handle, unsigned char *load, unsigned char *status);
 
 
+/** @brief       retrieves the bit-rate setting of the CAN interface. The
+ *               CAN interface must be in operation status 'running'.
+ *
+ *  @param[in]   handle  - handle of the CAN interface.
+ *  @param[out]  bitrate - bit-rate setting.
+ *  @param[out]  status  - 8-bit status register.
+ *
+ *  @returns     0 if successful, or a negative value on error.
+ */
+CANAPI int can_bitrate(int handle, can_bitrate_t *bitrate, unsigned char *status);
+
+
 /** @brief       retrieves operation information of the CAN interface.
  *
  *  @param[in]   handle  - handle of the CAN interface.
@@ -438,11 +451,11 @@ CANAPI char *can_hardware(int handle);
 CANAPI char *can_software(int handle);
 
 
-/** @brief      retrieves the library number (ID) of the CAN interface.
+/** @brief       retrieves the library number (ID) of the CAN interface.
  *
- *  @param[out] library - driver library of the CAN interface.
+ *  @param[out]  library - driver library of the CAN interface.
  *
- *  @returns     0 if successful, or a negative value on error.
+ *  @returns      0 if successful, or a negative value on error.
  */
 CANAPI int can_library(int *library);
 
