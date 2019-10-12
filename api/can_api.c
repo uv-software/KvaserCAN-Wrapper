@@ -31,7 +31,10 @@
  *  @{
  */
 
-#define VERSION "1.1.dev"
+#define VERSION_MAJOR     1
+#define VERSION_MINOR     1
+#define VERSION_REVISION  0
+#define VERSION_STRING    TOSTRING(VERSION_MAJOR)"." TOSTRING(VERSION_MINOR)"."TOSTRING(VERSION_REVISION)
 #if defined(_WIN64)
 #define PLATFORM    "x64"
 #elif defined(_WIN32)
@@ -41,9 +44,9 @@
 #endif
 #include "can_vers.h"
 #ifdef _DEBUG
-static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION"."SVN_REV_STR" ("PLATFORM") _DEBUG";
+static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION_STRING"-"TOSTRING(BUILD_NO)" ("PLATFORM") _DEBUG";
 #else
-static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION"."SVN_REV_STR" ("PLATFORM")";
+static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION_STRING"-"TOSTRING(BUILD_NO)" ("PLATFORM")";
 #endif
 
 /*  -----------  includes  -----------------------------------------------
@@ -211,11 +214,11 @@ int can_init(int board, unsigned char mode, const void *param)
         canInitializeLibrary();         // initialize the driver
         init = 1;                       // set initialization flag
     }
-	for(i = 0; i < KVASER_MAX_HANDLES; i++) {
-		if((can[i].handle != canINVALID_HANDLE) && 
-		   (can[i].channel == board))   // channel already in use
-			return CANERR_YETINIT;
-	}
+    for(i = 0; i < KVASER_MAX_HANDLES; i++) {
+        if((can[i].handle != canINVALID_HANDLE) && 
+           (can[i].channel == board))   // channel already in use
+            return CANERR_YETINIT;
+    }
     for(i = 0; i < KVASER_MAX_HANDLES; i++) {
         if(can[i].handle == canINVALID_HANDLE)
             break;
@@ -642,16 +645,16 @@ char *can_software(int handle)
     return (char*)software;             // software version
 }
 
-int can_library(int *library)
+int can_library(unsigned short *version, unsigned char *revision, unsigned long *build)
 {
-    //if(!init)                         // must be initialized!
-    //  return CANERR_NOTINIT;
-    if(library == NULL)                 // null-pointer assignment!
-        return CANERR_NULLPTR;
+    if(version)
+        *version = ((unsigned short)VERSION_MAJOR << 8) | ((unsigned short)VERSION_MINOR & 0x00FFu);
+    if(revision)
+        *revision = (unsigned char)VERSION_REVISION;
+    if(build)
+        *build = (unsigned long)BUILD_NO;
 
-    *library = KVASER_LIB_ID;           // library ID
-
-    return CANERR_NOERROR;
+    return KVASER_LIB_ID;               // library ID
 }
 
 /*  -----------  local functions  ----------------------------------------
