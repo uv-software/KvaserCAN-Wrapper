@@ -608,12 +608,12 @@ int can_interface(int handle, int *board, unsigned char *mode, void *param)
         return CANERR_HANDLE;
     if(can[handle].handle == canINVALID_HANDLE) // must be an opend handle!
         return CANERR_HANDLE;
-    if(board == NULL || mode == NULL)   // null-pointer assignment!
-        return CANERR_NULLPTR;
 
-    *board = can[handle].channel;       // handle of the CAN channel
-    *mode  = can[handle].mode.byte;     // current opperation mode
-    (void)param;
+    if(board)                           // handle of the CAN channel
+        *board = can[handle].channel;
+    if(mode)                            // current opperation mode
+        *mode = can[handle].mode.byte;
+    (void)param;                        // no parameters available
 
     return CANERR_NOERROR;
 }
