@@ -10,7 +10,7 @@
  *
  *  export    :  (see header file)
  *
- *  includes  :  can_api.h (can_defs.h), canlib.h, canstat.h
+ *  includes  :  can_api.h (can_defs.h), can_vers.h, canlib.h, canstat.h
  *
  *  author    :  Uwe Vogt, UV Software
  *
@@ -64,7 +64,7 @@ static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION_STRI
   */
 
 #define _BLOCKING_READ                  // blocking read via wait event
-//#define _OPEN_EXCLUSIVE                   // permit only exclusive access
+#define _OPEN_EXCLUSIVE                   // permit only exclusive access
 
 
   /*  -----------  defines  ------------------------------------------------
