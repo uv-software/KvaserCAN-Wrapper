@@ -206,8 +206,9 @@ int can_test(int board, unsigned char mode, const void *param, int *result)
             *result = CANBRD_PRESENT;   // CAN board present and available
 
         for(i = 0; i < KVASER_MAX_HANDLES; i++)
-            if(can[i].channel == board) // CAN board occupied by ourself
-                *result = CANBRD_OCCUPIED;
+            if((can[i].handle != canINVALID_HANDLE) &&
+               (can[i].channel == board))
+                *result = CANBRD_OCCUPIED; // CAN board occupied by ourself
     }
     if((mode & CANMODE_FDOE) && !(capacity & canCHANNEL_CAP_CAN_FD))
         return CANERR_ILLPARA; // CAN FD operation requested, but not supported
