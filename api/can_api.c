@@ -64,10 +64,12 @@ static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION_STRI
   */
 
 #define _BLOCKING_READ                  // blocking read via wait event
-#define _OPEN_EXCLUSIVE                   // permit only exclusive access
+#define _OPEN_EXCLUSIVE                 // permit only exclusive access
+#define _VIRTUAL_CHANNELS               // support of virtual channels
+//#define _SIMULATED_CHANNELS             // support of simulated channels
 
 
-  /*  -----------  defines  ------------------------------------------------
+/*  -----------  defines  ------------------------------------------------
  */
 
 #ifndef KVASER_MAX_HANDLES
@@ -169,30 +171,54 @@ int can_test(int board, unsigned char mode, const void *param, int *result)
     if((rc = canGetNumberOfChannels(&n)) != canOK)
         return kvaser_error(rc);
     if(board >= n) {
-        if (result)
+        if(result)                      // CAN board not present
             *result = CANBRD_NOT_PRESENT;
         return CANERR_NOERROR;
     }
-    if((rc = canGetChannelData(board, canCHANNELDATA_CHANNEL_CAP, (void*)&capacity, sizeof(capacity))) != canOK)
+    if((rc = canGetChannelData(board, canCHANNELDATA_CHANNEL_CAP, 
+                               (void*)&capacity, sizeof(capacity))) != canOK)
         return kvaser_error(rc);
-    if(capacity & (canCHANNEL_CAP_VIRTUAL | canCHANNEL_CAP_SIMULATED)) {
-        if (result)
+#ifndef _VIRTUAL_CHANNELS
+    if((capacity & canCHANNEL_CAP_VIRTUAL)) {
+        if(result)                     // declare as not available
             *result = CANBRD_NOT_PRESENT;
         return CANERR_NOERROR;
     }
-    if((rc = canGetChannelData(board, canCHANNELDATA_CHANNEL_FLAGS, (void*)&flags, sizeof(flags))) != canOK)
+#endif
+#ifndef _SIMULATED_CHANNELS
+    if((capacity & canCHANNEL_CAP_SIMULATED)) {
+        if(result)                     // declare as not available
+            *result = CANBRD_NOT_PRESENT;
+        return CANERR_NOERROR;
+    }
+#endif
+    if((rc = canGetChannelData(board, canCHANNELDATA_CHANNEL_FLAGS,
+                               (void*)&flags, sizeof(flags))) != canOK)
         return kvaser_error(rc);
     if(result) {
 #ifdef _OPEN_EXCLUSIVE
-        if(flags & (canCHANNEL_IS_OPEN))
+        if(flags & canCHANNEL_IS_OPEN)
 #else
-        if(flags & (canCHANNEL_IS_EXCLUSIVE))
+        if(flags & canCHANNEL_IS_EXCLUSIVE)
 #endif
-            *result = CANBRD_NOT_AVAILABLE;
+            *result = CANBRD_OCCUPIED;  // CAN board occupied by another process
         else
-            *result = CANBRD_PRESENT;
+            *result = CANBRD_PRESENT;   // CAN board present and available
+
+        for(i = 0; i < KVASER_MAX_HANDLES; i++)
+            if(can[i].channel == board) // CAN board occupied by ourself
+                *result = CANBRD_OCCUPIED;
     }
-    (void)mode;
+    if((mode & CANMODE_FDOE) && !(capacity & canCHANNEL_CAP_CAN_FD))
+        return CANERR_ILLPARA; // CAN FD operation requested, but not supported
+    if((mode & CANMODE_BRSE) && !(mode & CANMODE_FDOE))
+        return CANERR_ILLPARA; // bit-rate switching requested, but CAN FD not enabled
+    if((mode & CANMODE_NISO) && !(capacity & canCHANNEL_CAP_CAN_FD_NONISO))
+        return CANERR_ILLPARA; // Non-ISO operation requested, but not supported
+    if((mode & CANMODE_NISO) && !(mode & CANMODE_FDOE))
+        return CANERR_ILLPARA; // Non-ISO operation requested, but CAN FD not enabled
+    if((mode & CANMODE_MON) && !(capacity & canCHANNEL_CAP_SILENT_MODE))
+        return CANERR_ILLPARA; // listen-only mode requested, but not supported
     (void)param;
     return CANERR_NOERROR;
 }
@@ -227,12 +253,14 @@ int can_init(int board, unsigned char mode, const void *param)
         return CANERR_HANDLE;
 
 #ifdef _OPEN_EXCLUSIVE
-    flags = canOPEN_EXCLUSIVE;
+    flags |= canOPEN_EXCLUSIVE;
 #endif
     flags |= (mode & CANMODE_FDOE)? canOPEN_CAN_FD : 0;
     flags |= (mode & CANMODE_FDOE)? canOPEN_ACCEPT_LARGE_DLC : 0;// why?
     flags |= (mode & CANMODE_NISO)? canOPEN_CAN_FD_NONISO : 0;
-
+#ifdef _VIRTUAL_CHANNELS
+    // TODO: flags |= (mode & CANMODE_VIRT) ? canOPEN_ACCEPT_VIRTUAL : 0;
+#endif
     if((result = canOpenChannel(board, flags)) < canOK)
         return kvaser_error(result);
 
@@ -247,18 +275,18 @@ int can_init(int board, unsigned char mode, const void *param)
     can[i].handle = result;             // handle of the CAN board/channel
     can[i].channel = board;             // channel number of the CAN board
     can[i].mode.byte = mode;            // store selected operation mode
-    can[i].status.byte = CANSTAT_RESET; // CAN controller not started yet!
+    can[i].status.byte = CANSTAT_RESET; // CAN controller not started yet
 
     return i;                           // return the handle
 }
 
 int can_exit(int handle)
 {
-    if(!init)                           // must be initialized!
+    if(!init)                           // must be initialized
         return CANERR_NOTINIT;
-    if(!IS_HANDLE_VALID(handle))        // must be a valid handle!
+    if(!IS_HANDLE_VALID(handle))        // must be a valid handle
         return CANERR_HANDLE;
-    if(can[handle].handle == canINVALID_HANDLE) // must be an opend handle!
+    if(can[handle].handle == canINVALID_HANDLE) // must be an opened handle
         return CANERR_HANDLE;
 
     /*if(!can[handle].status.b.can_stopped) // go to CAN INIT mode (bus off)*/
@@ -285,15 +313,15 @@ int can_start(int handle, const can_bitrate_t *bitrate)
     unsigned int fast_sjw = 0;          // sync. jump width (data)
     canStatus rc;                       // return value
 
-    if(!init)                           // must be initialized!
+    if(!init)                           // must be initialized
         return CANERR_NOTINIT;
-    if(!IS_HANDLE_VALID(handle))        // must be a valid handle!
+    if(!IS_HANDLE_VALID(handle))        // must be a valid handle
         return CANERR_HANDLE;
-    if(can[handle].handle == canINVALID_HANDLE) // must be an opend handle!
+    if(can[handle].handle == canINVALID_HANDLE) // must be an opened handle
         return CANERR_HANDLE;
-    if(bitrate == NULL)                 // null-pointer assignment!
+    if(bitrate == NULL)                 // check for null-pointer
         return CANERR_NULLPTR;
-    if(!can[handle].status.b.can_stopped)// must be stopped!
+    if(!can[handle].status.b.can_stopped) // must be stopped
         return CANERR_ONLINE;
 
     if(bitrate->index <= 0) {           // bit-rate from index
@@ -328,7 +356,7 @@ int can_start(int handle, const can_bitrate_t *bitrate)
         /* bit-rate for CAN FD data */
         if(can[handle].mode.b.fdoe && can[handle].mode.b.brse) {
             if(bitrate->btr.nominal.brp == 0)
-                return CANERR_BAUDRATE;     //   divide-by-zero!
+                return CANERR_BAUDRATE; //   divide-by-zero!
 
             /* data bit-rate = frequency / (brp * (1 + tseg1 + tseg2)) */
             fast_baud = bitrate->btr.frequency / (((long)bitrate->btr.data.brp) * (1l + (long)bitrate->btr.data.tseg1 + (long)bitrate->btr.data.tseg2));
@@ -355,15 +383,15 @@ int can_kill(int handle)
     HANDLE hEvent = NULL;               // event object
     int i;
 
-    if(!init)                           // must be initialized!
+    if(!init)                           // must be initialized
         return CANERR_NOTINIT;
     if(handle != CANKILL_ALL) {
-        if(!IS_HANDLE_VALID(handle))    // must be a valid handle!
+        if(!IS_HANDLE_VALID(handle))    // must be a valid handle
             return CANERR_HANDLE;
 #ifdef _BLOCKING_READ
         if(can[handle].handle != canINVALID_HANDLE) {
             if((canIoCtl(can[handle].handle, canIOCTL_GET_EVENTHANDLE, 
-                        (void*)&hEvent, sizeof(hEvent)) == canOK) &&
+                         (void*)&hEvent, sizeof(hEvent)) == canOK) &&
                (hEvent != NULL)) {
                 (void)SetEvent(hEvent);     // signal the event object
             }
@@ -386,11 +414,11 @@ int can_kill(int handle)
 
 int can_reset(int handle)
 {
-    if(!init)                           // must be initialized!
+    if(!init)                           // must be initialized
         return CANERR_NOTINIT;
-    if(!IS_HANDLE_VALID(handle))        // must be a valid handle!
+    if(!IS_HANDLE_VALID(handle))        // must be a valid handle
         return CANERR_HANDLE;
-    if(can[handle].handle == canINVALID_HANDLE) // must be an opend handle!
+    if(can[handle].handle == canINVALID_HANDLE) // must be an opened handle
         return CANERR_HANDLE;
 
     if(can[handle].status.b.can_stopped) {  // CAN started, then reset
@@ -408,13 +436,13 @@ int can_write(int handle, const can_msg_t *msg)
     unsigned char data[CANFD_MAX_LEN];
     canStatus rc;                       // return value
 
-    if(!init)                           // must be initialized!
+    if(!init)                           // must be initialized
         return CANERR_NOTINIT;
-    if(!IS_HANDLE_VALID(handle))        // must be a valid handle!
+    if(!IS_HANDLE_VALID(handle))        // must be a valid handle
         return CANERR_HANDLE;
-    if(can[handle].handle == canINVALID_HANDLE) // must be an opend handle!
+    if(can[handle].handle == canINVALID_HANDLE) // must be an opened handle
         return CANERR_HANDLE;
-    if(msg == NULL)                     // null-pointer assignment!
+    if(msg == NULL)                     // check for null-pointer
         return CANERR_NULLPTR;
     if(can[handle].status.b.can_stopped)// must be running!
         return CANERR_OFFLINE;
@@ -453,15 +481,15 @@ int can_write(int handle, const can_msg_t *msg)
     {
         if((rc & canERR_TXBUFOFL)) {    //   transmit queue full?
             can[handle].status.b.transmitter_busy = 1;
-            return CANERR_TX_BUSY;      //     transmitter busy!
+            return CANERR_TX_BUSY;      //     transmitter busy
         }
         else if((rc & canERR_TIMEOUT)) {//   timed out?
             can[handle].status.b.transmitter_busy = 1;
-            return CANERR_TX_BUSY;      //     transmitter busy!
+            return CANERR_TX_BUSY;      //     transmitter busy
         }
         return kvaser_error(rc);        //   Kvaser specific error?
     }
-    can[handle].status.b.transmitter_busy = 0;  // message transmitted!
+    can[handle].status.b.transmitter_busy = 0;  // message transmitted
 
     return CANERR_NOERROR;
 }
@@ -474,13 +502,13 @@ int can_read(int handle, can_msg_t *msg, unsigned short timeout)
     unsigned long timestamp;            // time stamp (in [ms])
     canStatus rc;                       // return value
 
-    if(!init)                           // must be initialized!
+    if(!init)                           // must be initialized
         return CANERR_NOTINIT;
-    if(!IS_HANDLE_VALID(handle))        // must be a valid handle!
+    if(!IS_HANDLE_VALID(handle))        // must be a valid handle
         return CANERR_HANDLE;
-    if(can[handle].handle == canINVALID_HANDLE) // must be an opend handle!
+    if(can[handle].handle == canINVALID_HANDLE) // must be an opened handle
         return CANERR_HANDLE;
-    if(msg == NULL)                     // null-pointer assignment!
+    if(msg == NULL)                     // check for null-pointer
         return CANERR_NULLPTR;
     if(can[handle].status.b.can_stopped)// must be running!
         return CANERR_OFFLINE;
@@ -498,25 +526,25 @@ int can_read(int handle, can_msg_t *msg, unsigned short timeout)
             }
             if((rc = canRead(can[handle].handle, &id, data, &len, &flags, &timestamp)) == canERR_NOMSG) {
                 can[handle].status.b.receiver_empty = 1;
-                return CANERR_RX_EMPTY; //   receiver empty!
+                return CANERR_RX_EMPTY; //   receiver empty
             }
         }
         else {
             can[handle].status.b.receiver_empty = 1;
-            return CANERR_RX_EMPTY;     //   receiver empty!
+            return CANERR_RX_EMPTY;     //   receiver empty
         }
 #else
         can[handle].status.b.receiver_empty = 1;
-        return CANERR_RX_EMPTY;         //   receiver empty!
+        return CANERR_RX_EMPTY;         //   receiver empty
 #endif
     }
     if(rc < canOK)                      // receive error?
     {
-        return kvaser_error(rc);        //   something´s wrong!
+        return kvaser_error(rc);        //   something´s wrong
     }
     if((flags & canMSG_ERROR_FRAME)) {  // error frame?  
         can[handle].status.b.receiver_empty = 1;
-        return CANERR_RX_EMPTY;         //   receiver empty!
+        return CANERR_RX_EMPTY;         //   receiver empty
     }
     msg->id = id;
     msg->ext = (flags & canMSG_EXT)? 1 : 0;
@@ -532,7 +560,7 @@ int can_read(int handle, can_msg_t *msg, unsigned short timeout)
 #endif
     msg->timestamp.sec = (long)(timestamp / 1000ul);
     msg->timestamp.usec = (long)(timestamp % 1000ul) * 1000l;
-    can[handle].status.b.receiver_empty = 0;// message read!
+    can[handle].status.b.receiver_empty = 0;// message read
 
     return CANERR_NOERROR;
 }
@@ -542,11 +570,11 @@ int can_status(int handle, unsigned char *status)
     unsigned long flags;                // status flags
     canStatus rc;                       // return value
 
-    if(!init)                           // must be initialized!
+    if(!init)                           // must be initialized
         return CANERR_NOTINIT;
-    if(!IS_HANDLE_VALID(handle))        // must be a valid handle!
+    if(!IS_HANDLE_VALID(handle))        // must be a valid handle
         return CANERR_HANDLE;
-    if(can[handle].handle == canINVALID_HANDLE) // must be an opend handle!
+    if(can[handle].handle == canINVALID_HANDLE) // must be an opened handle
         return CANERR_HANDLE;
 
     if((rc = canRequestChipStatus(can[handle].handle)) != canOK)
@@ -567,11 +595,11 @@ int can_status(int handle, unsigned char *status)
 
 int can_busload(int handle, unsigned char *load, unsigned char *status)
 {
-    if(!init)                           // must be initialized!
+    if(!init)                           // must be initialized
         return CANERR_NOTINIT;
-    if(!IS_HANDLE_VALID(handle))        // must be a valid handle!
+    if(!IS_HANDLE_VALID(handle))        // must be a valid handle
         return CANERR_HANDLE;
-    if(can[handle].handle == canINVALID_HANDLE) // must be an opend handle!
+    if(can[handle].handle == canINVALID_HANDLE) // must be an opened handle
         return CANERR_HANDLE;
 
     if(!can[handle].status.b.can_stopped) { // must be running:
@@ -583,11 +611,11 @@ int can_busload(int handle, unsigned char *load, unsigned char *status)
 
 int can_bitrate(int handle, can_bitrate_t *bitrate, can_speed_t *speed)
 {
-    if(!init)                           // must be initialized!
+    if(!init)                           // must be initialized
         return CANERR_NOTINIT;
-    if(!IS_HANDLE_VALID(handle))        // must be a valid handle!
+    if(!IS_HANDLE_VALID(handle))        // must be a valid handle
         return CANERR_HANDLE;
-    if(can[handle].handle == canINVALID_HANDLE) // must be an opend handle!
+    if(can[handle].handle == canINVALID_HANDLE) // must be an opened handle
         return CANERR_HANDLE;
 
     if(!can[handle].status.b.can_stopped) { // must be running:
@@ -602,11 +630,11 @@ int can_bitrate(int handle, can_bitrate_t *bitrate, can_speed_t *speed)
 int can_interface(int handle, int *board, unsigned char *mode, void *param)
 {
 
-    if(!init)                           // must be initialized!
+    if(!init)                           // must be initialized
         return CANERR_NOTINIT;
-    if(!IS_HANDLE_VALID(handle))        // must be a valid handle!
+    if(!IS_HANDLE_VALID(handle))        // must be a valid handle
         return CANERR_HANDLE;
-    if(can[handle].handle == canINVALID_HANDLE) // must be an opend handle!
+    if(can[handle].handle == canINVALID_HANDLE) // must be an opened handle
         return CANERR_HANDLE;
 
     if(board)                           // handle of the CAN channel
@@ -620,11 +648,11 @@ int can_interface(int handle, int *board, unsigned char *mode, void *param)
 
 char *can_hardware(int handle)
 {
-    if(!init)                           // must be initialized!
+    if(!init)                           // must be initialized
         return NULL;
-    if(!IS_HANDLE_VALID(handle))        // must be a valid handle!
+    if(!IS_HANDLE_VALID(handle))        // must be a valid handle
         return NULL;
-    if(can[handle].handle == canINVALID_HANDLE) // must be an opend handle!
+    if(can[handle].handle == canINVALID_HANDLE) // must be an opened handle
         return NULL;
 
     if(canGetChannelData(can[handle].channel, canCHANNELDATA_CHANNEL_NAME, hardware, 255) != canOK)
@@ -637,7 +665,7 @@ char *can_software(int handle)
 {
     unsigned short version;             // version number
 
-    if(!init)                           // must be initialized!
+    if(!init)                           // must be initialized
         return NULL;
     (void)handle;                       // handle not needed here
 
