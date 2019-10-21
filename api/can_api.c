@@ -445,7 +445,7 @@ int can_write(int handle, const can_msg_t *msg)
         return CANERR_HANDLE;
     if(msg == NULL)                     // check for null-pointer
         return CANERR_NULLPTR;
-    if(can[handle].status.b.can_stopped)// must be running!
+    if(can[handle].status.b.can_stopped) // must be running
         return CANERR_OFFLINE;
 
     if(!can[handle].mode.b.fdoe) {
@@ -511,7 +511,7 @@ int can_read(int handle, can_msg_t *msg, unsigned short timeout)
         return CANERR_HANDLE;
     if(msg == NULL)                     // check for null-pointer
         return CANERR_NULLPTR;
-    if(can[handle].status.b.can_stopped)// must be running!
+    if(can[handle].status.b.can_stopped) // must be running
         return CANERR_OFFLINE;
 
     if((rc = canRead(can[handle].handle, &id, data, &len, &flags, &timestamp)) == canERR_NOMSG) {
@@ -603,8 +603,8 @@ int can_busload(int handle, unsigned char *load, unsigned char *status)
     if(can[handle].handle == canINVALID_HANDLE) // must be an opened handle
         return CANERR_HANDLE;
 
-    if(!can[handle].status.b.can_stopped) { // must be running:
-        if (load)
+    if(!can[handle].status.b.can_stopped) { // only when running:
+        if(load)
             *load = 0;                  //   TODO: bus-load [percent]
     }
     return can_status(handle, status);  // status-register
@@ -618,14 +618,15 @@ int can_bitrate(int handle, can_bitrate_t *bitrate, can_speed_t *speed)
         return CANERR_HANDLE;
     if(can[handle].handle == canINVALID_HANDLE) // must be an opened handle
         return CANERR_HANDLE;
+    if(can[handle].status.b.can_stopped) // must be running
+        return CANERR_OFFLINE;
 
-    if(!can[handle].status.b.can_stopped) { // must be running:
-        if(bitrate)
-            memcpy(bitrate, &can[handle].bitrate, sizeof(can_bitrate_t));
-        if(speed)
-            memset(speed, 0, sizeof(can_speed_t)); // TODO: calculate this!
-    }
-    return can_status(handle, NULL);    // current status
+    if(bitrate)
+        memcpy(bitrate, &can[handle].bitrate, sizeof(can_bitrate_t));
+    if (speed)
+        memset(speed, 0, sizeof(can_speed_t)); // TODO: calculate this!
+
+    return CANERR_NOERROR;
 }
 
 int can_interface(int handle, int *board, unsigned char *mode, void *param)
