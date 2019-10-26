@@ -210,6 +210,11 @@ int can_test(int board, unsigned char mode, const void *param, int *result)
         return CANERR_ILLPARA; // Non-ISO operation requested, but CAN FD not enabled
     if((mode & CANMODE_MON) && !(capacity & canCHANNEL_CAP_SILENT_MODE))
         return CANERR_ILLPARA; // listen-only mode requested, but not supported
+    /*if((mode & CANMODE_ERR)) {} // error frame reporting can be turned on and off by ioctrl */
+    if((mode & CANMODE_NXTD))  // TODO: how?
+        return CANERR_ILLPARA; // suppressing 29-bit id's is not supported
+    if((mode & CANMODE_NRTR))  // TODO: how? + fdoe
+        return CANERR_ILLPARA; // suppressing remote frames is not supported
     (void)param;
     return CANERR_NOERROR;
 }
@@ -254,6 +259,11 @@ int can_init(int board, unsigned char mode, const void *param)
 #ifdef _VIRTUAL_CHANNELS
     // TODO: flags |= canOPEN_ACCEPT_VIRTUAL;
 #endif
+    /*if((mode & CANMODE_ERR)) {} // error frame reporting is handled later */
+    if((mode & CANMODE_NXTD))  // TODO: how?
+        return CANERR_ILLPARA; // suppressing 29-bit id's is not supported
+    if((mode & CANMODE_NRTR))  // TODO: how? + fdoe
+        return CANERR_ILLPARA; // suppressing remote frames is not supported
     if((result = canOpenChannel(board, flags)) < canOK)
         return kvaser_error(result);
 
@@ -319,6 +329,7 @@ int can_start(int handle, const can_bitrate_t *bitrate)
     unsigned int fast_tseg1 = 0;        // Time segement 1 (data)
     unsigned int fast_tseg2 = 0;        // Time segement 2 (data)
     unsigned int fast_sjw = 0;          // sync. jump width (data)
+    unsigned char error_frames;         // error frame retorting
     canStatus rc;                       // return value
 
     if(!init)                           // must be initialized
@@ -376,7 +387,11 @@ int can_start(int handle, const can_bitrate_t *bitrate)
                 return kvaser_error(rc);
         }
     }
-    if((rc = canBusOn(can[handle].handle)) != canOK)
+    error_frames = can[handle].mode.b.err ? 1 : 0; // error frames
+    if((rc = canIoCtl(can[handle].handle, canIOCTL_SET_ERROR_FRAMES_REPORTING,
+                     (void*)&error_frames, sizeof(error_frames))) != canOK)
+        return kvaser_error(rc);
+    if((rc = canBusOn(can[handle].handle)) != canOK) // go bus on!
         return kvaser_error(rc);
     
     memcpy(&can[handle].bitrate, bitrate, sizeof(can_bitrate_t));
@@ -552,7 +567,7 @@ int can_read(int handle, can_msg_t *msg, unsigned short timeout)
     }
     if((flags & canMSG_ERROR_FRAME)) {  // error frame?  
         can[handle].status.b.receiver_empty = 1;
-        return CANERR_RX_EMPTY;         //   receiver empty
+        return CANERR_ERR_FRAME;        //   receiver empty
     }
     msg->id = id;
     msg->ext = (flags & canMSG_EXT)? 1 : 0;
