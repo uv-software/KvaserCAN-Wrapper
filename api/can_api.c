@@ -64,7 +64,7 @@ static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION_STRI
   */
 
 #define _BLOCKING_READ                  // blocking read via wait event
-#define _OPEN_EXCLUSIVE                 // permit only exclusive access
+#define _SHARED_ACCESS                  // permit non-exclusive access
 #define _VIRTUAL_CHANNELS               // support of virtual channels
 //#define _SIMULATED_CHANNELS             // support of simulated channels
 
@@ -116,7 +116,7 @@ static int kvaser_error(canStatus);    // Kvaser specific errors
 #else
 #define ATTRIB
 #endif
-ATTRIB can_board_t can_board[KVASER_BOARDS]=// list of CAN Interface boards:
+ATTRIB can_board_t can_board[KVASER_BOARDS]= // list of CAN Interface boards:
 {
     {KVASER_CAN_CHANNEL0,                 "Kvaser CAN Channel 0"},
     {KVASER_CAN_CHANNEL1,                 "Kvaser CAN Channel 1"},
@@ -131,9 +131,7 @@ static const BYTE dlc_table[16] = {     // DLC to length
     0,1,2,3,4,5,6,7,8,12,16,20,24,32,48,64
 };
 static can_interface_t can[KVASER_MAX_HANDLES]; // interface handles 
-static char hardware[256] = "";         // hardware version of the CAN interface board
-static char software[256] = "";         // software version of the CAN interface driver
-static int  init = 0;                   // initialization flag
+static int init = 0;                    // initialization flag
 
 
 /*  -----------  functions  ----------------------------------------------
@@ -184,18 +182,22 @@ int can_test(int board, unsigned char mode, const void *param, int *result)
                                (void*)&flags, sizeof(flags))) != canOK)
         return kvaser_error(rc);
     if(result) {
-#ifdef _OPEN_EXCLUSIVE
+#ifndef _SHARED_ACCESS
         if(flags & canCHANNEL_IS_OPEN)
-#else
-        if(flags & canCHANNEL_IS_EXCLUSIVE)
-#endif
             *result = CANBRD_OCCUPIED;  // CAN board occupied by another process
         else
             *result = CANBRD_PRESENT;   // CAN board present and available
-
+#else
+        if (flags & canCHANNEL_IS_EXCLUSIVE)
+            *result = CANBRD_OCCUPIED;  // CAN board occupied by another process
+        else if ((flags & canCHANNEL_IS_OPEN) && !(mode & CANMODE_SHRD))
+            *result = CANBRD_OCCUPIED;  // CAN board occupied by another process
+        else
+            *result = CANBRD_PRESENT;   // CAN board present and available
+#endif
         for(i = 0; i < KVASER_MAX_HANDLES; i++)
             if((can[i].handle != canINVALID_HANDLE) &&
-               (can[i].channel == board))
+               (can[i].channel == board) && !(mode & CANMODE_SHRD))
                 *result = CANBRD_OCCUPIED; // CAN board occupied by ourself
     }
     if((mode & CANMODE_FDOE) && !(capacity & canCHANNEL_CAP_CAN_FD))
@@ -241,14 +243,16 @@ int can_init(int board, unsigned char mode, const void *param)
     if(!IS_HANDLE_VALID(i))             // no free handle found
         return CANERR_HANDLE;
 
-#ifdef _OPEN_EXCLUSIVE
+#ifndef _SHARED_ACCESS
     flags |= canOPEN_EXCLUSIVE;
+#else
+    flags |= (mode & CANMODE_SHRD)? 0 : canOPEN_EXCLUSIVE;
 #endif
     flags |= (mode & CANMODE_FDOE)? canOPEN_CAN_FD : 0;
     flags |= (mode & CANMODE_FDOE)? canOPEN_ACCEPT_LARGE_DLC : 0;// why?
     flags |= (mode & CANMODE_NISO)? canOPEN_CAN_FD_NONISO : 0;
 #ifdef _VIRTUAL_CHANNELS
-    // TODO: flags |= (mode & CANMODE_VIRT) ? canOPEN_ACCEPT_VIRTUAL : 0;
+    // TODO: flags |= canOPEN_ACCEPT_VIRTUAL;
 #endif
     if((result = canOpenChannel(board, flags)) < canOK)
         return kvaser_error(result);
@@ -653,6 +657,8 @@ int can_interface(int handle, int *board, unsigned char *mode, void *param)
 
 char *can_hardware(int handle)
 {
+    static char hardware[256] = "";     // hardware version
+
     if(!init)                           // must be initialized
         return NULL;
     if(!IS_HANDLE_VALID(handle))        // must be a valid handle
@@ -668,6 +674,7 @@ char *can_hardware(int handle)
 
 char *can_software(int handle)
 {
+    static char software[256] = "";     // software version
     unsigned short version;             // version number
 
     if(!init)                           // must be initialized
