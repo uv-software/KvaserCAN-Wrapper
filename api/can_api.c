@@ -93,18 +93,6 @@ static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION_STRI
 /*  -----------  types  --------------------------------------------------
  */
 
-typedef union {
-    BYTE byte;                          // byte access
-    struct {                            // bit access:
-        BYTE mon : 1;                   //   monitor mode enable/disable
-        BYTE : 3;                       //   (reserved)
-        BYTE niso : 1;                  //   Non-ISO CAN FD enable
-        BYTE : 1;                       //   (reserved)
-        BYTE brse : 1;                  //   bit-rate switch enable
-        BYTE fdoe : 1;                  //   CAN FD operation enable
-    }   b;
-}   can_mode_t;
-
 typedef struct {
     CanHandle  handle;                  // hardware channel handle (Kvaser)
     int        channel;                 // channel number ot the CAN board
@@ -283,20 +271,35 @@ int can_init(int board, unsigned char mode, const void *param)
 
 int can_exit(int handle)
 {
+    int i;
+
     if(!init)                           // must be initialized
         return CANERR_NOTINIT;
-    if(!IS_HANDLE_VALID(handle))        // must be a valid handle
-        return CANERR_HANDLE;
-    if(can[handle].handle == canINVALID_HANDLE) // must be an opened handle
-        return CANERR_HANDLE;
+    if(handle != CANEXIT_ALL) {
+        if(!IS_HANDLE_VALID(handle))    // must be a valid handle
+            return CANERR_HANDLE;
+        if(can[handle].handle == canINVALID_HANDLE) // must be an opened handle
+            return CANERR_HANDLE;
+        /*if(!can[handle].status.b.can_stopped) // go to CAN INIT mode (bus off)*/
+            (void)canBusOff(can[handle].handle);
+        (void)canClose(can[handle].handle);     // release the CAN interface!
 
-    /*if(!can[handle].status.b.can_stopped) // go to CAN INIT mode (bus off)*/
-        (void)canBusOff(can[handle].handle);
-    (void)canClose(can[handle].handle);     // release the CAN interface!
+        can[handle].status.byte |= CANSTAT_RESET;// CAN controller in INIT state
+        can[handle].handle = canINVALID_HANDLE; // handle can be used again
+    }
+    else {
+        for(i = 0; i < KVASER_BOARDS; i++) {
+            if(can[i].handle != canINVALID_HANDLE) // must be an opened handle
+            {
+                /*if(!can[handle].status.b.can_stopped) // go to CAN INIT mode (bus off)*/
+                   (void)canBusOff(can[i].handle);
+                (void)canClose(can[i].handle);     // release the CAN interface!
 
-    can[handle].status.byte |= CANSTAT_RESET;// CAN controller in INIT state
-    can[handle].handle = canINVALID_HANDLE; // handle can be used again
-
+                can[i].status.byte |= CANSTAT_RESET;// CAN controller in INIT state
+                can[i].handle = canINVALID_HANDLE; // handle can be used again
+            }
+        }
+    }
     return CANERR_NOERROR;
 }
 
