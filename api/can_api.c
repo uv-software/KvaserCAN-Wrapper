@@ -67,11 +67,34 @@ static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION_STRI
 #define _SHARED_ACCESS                  // permit non-exclusive access
 #define _VIRTUAL_CHANNELS               // support of virtual channels
 //#define _SIMULATED_CHANNELS             // support of simulated channels
+//#define  _CiA_BIT_TIMING                // CiA bit-timing (from CANopen)
 
 
 /*  -----------  defines  ------------------------------------------------
  */
 
+#define KVASER_FREQ_DEFAULT     (80000000)
+#define KVASER_CHANNEL_DEFAULT  (0)
+
+#ifndef _CiA_BIT_TIMING
+#define KVASER_BDR_1000(btr)    do{ btr.baud=canBITRATE_1M; } while(0)
+#define KVASER_BDR_500(btr)     do{ btr.baud=canBITRATE_500K; } while(0)
+#define KVASER_BDR_250(btr)     do{ btr.baud=canBITRATE_250K; } while(0)
+#define KVASER_BDR_125(btr)     do{ btr.baud=canBITRATE_125K; } while(0)
+#define KVASER_BDR_100(btr)     do{ btr.baud=canBITRATE_100K; } while(0)
+#define KVASER_BDR_50(btr)      do{ btr.baud=canBITRATE_50K; } while(0)
+#define KVASER_BDR_20(btr)      do{ btr.baud=20000; btr.tseg1=11; btr.tseg2=4; btr.sjw=1; btr.sam=1; btr.sync=0; } while(0)
+#define KVASER_BDR_10(btr)      do{ btr.baud=canBITRATE_10K; } while(0)
+#else
+#define KVASER_BDR_1000(btr)    do{ btr.baud=1000000; btr.tseg1=?; btr.tseg2=?; btr.sjw=1; btr.sam=1; btr.sync=0; } while(0)
+#define KVASER_BDR_500(btr)     do{ btr.baud=500000;  btr.tseg1=?; btr.tseg2=?; btr.sjw=1; btr.sam=1; btr.sync=0; } while(0)
+#define KVASER_BDR_250(btr)     do{ btr.baud=250000;  btr.tseg1=?; btr.tseg2=?; btr.sjw=1; btr.sam=1; btr.sync=0; } while(0)
+#define KVASER_BDR_125(btr)     do{ btr.baud=125000;  btr.tseg1=?; btr.tseg2=?; btr.sjw=1; btr.sam=1; btr.sync=0; } while(0)
+#define KVASER_BDR_100(btr)     do{ btr.baud=100000;  btr.tseg1=?; btr.tseg2=?; btr.sjw=2; btr.sam=1; btr.sync=0; } while(0)
+#define KVASER_BDR_50(btr)      do{ btr.baud=50000;   btr.tseg1=?; btr.tseg2=?; btr.sjw=2; btr.sam=1; btr.sync=0; } while(0)
+#define KVASER_BDR_20(btr)      do{ btr.baud=20000,   btr.tseg1=?; btr.tseg2=?; btr.sjw=2; btr.sam=1; btr.sync=0; } while(0)
+#define KVASER_BDR_10(btr)      do{ btr.baud=10000;   btr.tseg1=?; btr.tseg2=?; btr.sjw=2; btr.sam=1; btr.sync=0; } while(0)
+#endif
 #ifndef KVASER_MAX_HANDLES
 #define KVASER_MAX_HANDLES      (8)     // maximum number of open handles
 #endif
@@ -93,12 +116,28 @@ static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION_STRI
 /*  -----------  types  --------------------------------------------------
  */
 
-typedef struct {
-    CanHandle  handle;                  // hardware channel handle (Kvaser)
-    int        channel;                 // channel number ot the CAN board
-    can_mode_t mode;                    // operation mode of the CAN channel
-    can_status_t status;                // 8-bit status register
-    can_bitrate_t bitrate;              // bit-rate setting 
+typedef struct {                        // nominal bit-rate:
+    long baud;                          //   bit-rate in [bps]
+    unsigned int tseg1;                 //   time segement 1
+    unsigned int tseg2;                 //   time segement 2
+    unsigned int sjw;                   //   sync. jump width
+    unsigned int sam;                   //   no. of samples
+    unsigned int sync;                  //   unsupported
+}   btr_nominal_t;
+
+typedef struct {                        // data bit-rate:
+    long baud;                          //   bit-rate in [bps]
+    unsigned int tseg1;                 //   time segement 1
+    unsigned int tseg2;                 //   time segement 2
+    unsigned int sjw;                   //   sync. jump width
+}   btr_data_t;
+
+typedef struct {                        // Kvaser CAN interface:
+    CanHandle  handle;                  //   hardware channel handle
+    int        channel;                 //   channel number of the CAN board
+    long       frequency;               //   frequency of the CAN controller
+    can_mode_t mode;                    //   operation mode of the CAN channel
+    can_status_t status;                //   8-bit status register
 }   can_interface_t;
 
 
@@ -106,6 +145,14 @@ typedef struct {
  */
 
 static int kvaser_error(canStatus);    // Kvaser specific errors
+
+static int index2params(int index, btr_nominal_t *params);
+static int bitrate2params(const can_bitrate_t *bitrate, btr_nominal_t *params);
+static int params2bitrate(const btr_nominal_t *params, long frequency, can_bitrate_t *bitrate);
+static int bitrate2paramsFd(const can_bitrate_t *bitrate, btr_data_t *params);
+static int paramsFd2bitrate(const btr_data_t *params, long frequency, can_bitrate_t *bitrate);
+
+static int calc_speed(can_bitrate_t *bitrate, can_speed_t *speed, int modify);
 
 
 /*  -----------  variables  ----------------------------------------------
@@ -147,9 +194,10 @@ int can_test(int board, unsigned char mode, const void *param, int *result)
     if(!init) {                         // when not init before:
         for(i = 0; i < KVASER_MAX_HANDLES; i++) {
             can[i].handle = canINVALID_HANDLE;
+            can[i].channel = KVASER_CHANNEL_DEFAULT;
+            can[i].frequency = KVASER_FREQ_DEFAULT;
             can[i].mode.byte = CANMODE_DEFAULT;
             can[i].status.byte = CANSTAT_RESET;
-            can[i].bitrate.index = -CANBDR_250;
         }
         canInitializeLibrary();         //   initialize the driver
         init = 1;                       //   set initialization flag
@@ -229,9 +277,10 @@ int can_init(int board, unsigned char mode, const void *param)
     if(!init) {                         // when not init before:
         for(i = 0; i < KVASER_MAX_HANDLES; i++) {
             can[i].handle = canINVALID_HANDLE;
+            can[i].channel = KVASER_CHANNEL_DEFAULT;
+            can[i].frequency = KVASER_FREQ_DEFAULT;
             can[i].mode.byte = CANMODE_DEFAULT;
             can[i].status.byte = CANSTAT_RESET;
-            can[i].bitrate.index = -CANBDR_250;
         }
         canInitializeLibrary();         // initialize the driver
         init = 1;                       // set initialization flag
@@ -319,17 +368,9 @@ int can_exit(int handle)
 
 int can_start(int handle, const can_bitrate_t *bitrate)
 {
-    long slow_baud = 0;                 // bausrate in [bps] (nominal)
-    unsigned int slow_tseg1 = 0;        // Time segement 1 (nominal)
-    unsigned int slow_tseg2 = 0;        // Time segement 2 (nominal)
-    unsigned int slow_sjw = 0;          // sync. jump width (nominal)
-    unsigned int slow_sam = 0;          // no. of samples (nominal)
-    unsigned int slow_sync = 0;         // unsupported (nominal)
-    long fast_baud = 0;                 // bausrate in [bps] (data)
-    unsigned int fast_tseg1 = 0;        // Time segement 1 (data)
-    unsigned int fast_tseg2 = 0;        // Time segement 2 (data)
-    unsigned int fast_sjw = 0;          // sync. jump width (data)
-    unsigned char error_frames;         // error frame retorting
+    unsigned char error_frames;         // error frame reporting
+    btr_nominal_t nominal;              // nominal bit-rate
+    btr_data_t data;                    // data bit-rate
     canStatus rc;                       // return value
 
     if(!init)                           // must be initialized
@@ -343,49 +384,32 @@ int can_start(int handle, const can_bitrate_t *bitrate)
     if(!can[handle].status.b.can_stopped) // must be stopped
         return CANERR_ONLINE;
 
+    memset(&nominal, 0, sizeof(btr_nominal_t));
+    memset(&data, 0, sizeof(btr_data_t));
+
     if(bitrate->index <= 0) {           // bit-rate from index
-        switch(bitrate->index * (-1)) {
-        case CANBDR_1000: slow_baud = canBITRATE_1M; break;
-        case CANBDR_800: return CANERR_BAUDRATE;
-        case CANBDR_500: slow_baud = canBITRATE_500K; break;
-        case CANBDR_250: slow_baud = canBITRATE_250K; break;
-        case CANBDR_125: slow_baud = canBITRATE_125K; break;
-        case CANBDR_100: slow_baud = canBITRATE_100K; break;
-        case CANBDR_50: slow_baud = canBITRATE_50K; break;
-        case CANBDR_20: slow_baud = 20000; slow_tseg1 = 11; slow_tseg2 = 4; slow_sjw = 1; slow_sam = 1; break;
-        case CANBDR_10: slow_baud = canBITRATE_10K; break;
-        default: return CANERR_BAUDRATE;
-        }
-        if((rc = canSetBusParams(can[handle].handle, slow_baud, slow_tseg1, slow_tseg2, slow_sjw, slow_sam, slow_sync)) != canOK)
+        if((rc = index2params(bitrate->index, &nominal)) != CANERR_NOERROR)
+            return rc;
+        if((rc = canSetBusParams(can[handle].handle, nominal.baud, nominal.tseg1, nominal.tseg2, 
+                                                     nominal.sjw, nominal.sam, nominal.sync)) != canOK)
             return kvaser_error(rc);
+
+        can[handle].frequency = KVASER_FREQ_DEFAULT;
     }
     else {                              // bit-rate from parameter
-        if(bitrate->btr.nominal.brp == 0)
-            return CANERR_BAUDRATE;     //   divide-by-zero!
-
-        /* nominal bit-rate = frequency / (brp * (1 + tseg1 + tseg2)) */
-        slow_baud = bitrate->btr.frequency / (((long)bitrate->btr.nominal.brp) * (1l + (long)bitrate->btr.nominal.tseg1 + (long)bitrate->btr.nominal.tseg2));
-        slow_tseg1 = bitrate->btr.nominal.tseg1;
-        slow_tseg2 = bitrate->btr.nominal.tseg2;
-        slow_sjw = bitrate->btr.nominal.sjw;
-        slow_sam = bitrate->btr.nominal.sam;
-        
-        if((rc = canSetBusParams(can[handle].handle, slow_baud, slow_tseg1, slow_tseg2, slow_sjw, slow_sam, slow_sync)) != canOK)
+        if((rc = bitrate2params(bitrate, &nominal)) != CANERR_NOERROR)
+            return rc;
+        if((rc = canSetBusParams(can[handle].handle, nominal.baud, nominal.tseg1, nominal.tseg2, 
+                                                     nominal.sjw, nominal.sam, nominal.sync)) != canOK)
             return kvaser_error(rc);
-        /* bit-rate for CAN FD data */
+        /* bit-rate for CAN FD data (BRSE) */
         if(can[handle].mode.b.fdoe && can[handle].mode.b.brse) {
-            if(bitrate->btr.nominal.brp == 0)
-                return CANERR_BAUDRATE; //   divide-by-zero!
-
-            /* data bit-rate = frequency / (brp * (1 + tseg1 + tseg2)) */
-            fast_baud = bitrate->btr.frequency / (((long)bitrate->btr.data.brp) * (1l + (long)bitrate->btr.data.tseg1 + (long)bitrate->btr.data.tseg2));
-            fast_tseg1 = bitrate->btr.data.tseg1;
-            fast_tseg2 = bitrate->btr.data.tseg2;
-            fast_sjw = bitrate->btr.data.sjw;
-            
-            if((rc = canSetBusParamsFd(can[handle].handle, fast_baud, fast_tseg1, fast_tseg2, fast_sjw)) != canOK)
+            if((rc = bitrate2paramsFd(bitrate, &data)) != CANERR_NOERROR)
+                return rc;
+            if((rc = canSetBusParamsFd(can[handle].handle, data.baud, data.tseg1, data.tseg2, data.sjw)) != canOK)
                 return kvaser_error(rc);
         }
+        can[handle].frequency = bitrate->btr.frequency;
     }
     error_frames = can[handle].mode.b.err ? 1 : 0; // error frames
     if((rc = canIoCtl(can[handle].handle, canIOCTL_SET_ERROR_FRAMES_REPORTING,
@@ -394,7 +418,6 @@ int can_start(int handle, const can_bitrate_t *bitrate)
     if((rc = canBusOn(can[handle].handle)) != canOK) // go bus on!
         return kvaser_error(rc);
     
-    memcpy(&can[handle].bitrate, bitrate, sizeof(can_bitrate_t));
     can[handle].status.byte = 0x00;     // clear old status bits
     can[handle].status.b.can_stopped = 0;// CAN controller started!
 
@@ -634,21 +657,58 @@ int can_busload(int handle, unsigned char *load, unsigned char *status)
 
 int can_bitrate(int handle, can_bitrate_t *bitrate, can_speed_t *speed)
 {
+    can_bitrate_t temporary;            // bit-rate settings
+    btr_nominal_t nominal;              // nominal bit-rate
+    btr_data_t data;                    // data bit-rate
+    int rc;                             // return value
+
+    if((!init || !IS_HANDLE_VALID(handle)) && (bitrate && speed)) {
+        speed->nominal.fdoe = 1;
+        speed->data.brse = 1;
+        (void)calc_speed(bitrate, speed, 1);
+        if(!init)
+            return CANERR_NOTINIT;
+        else
+            return CANERR_HANDLE;
+    }
     if(!init)                           // must be initialized
         return CANERR_NOTINIT;
     if(!IS_HANDLE_VALID(handle))        // must be a valid handle
         return CANERR_HANDLE;
     if(can[handle].handle == canINVALID_HANDLE) // must be an opened handle
         return CANERR_HANDLE;
-    if(can[handle].status.b.can_stopped) // must be running
-        return CANERR_OFFLINE;
 
-    if(bitrate)
-        memcpy(bitrate, &can[handle].bitrate, sizeof(can_bitrate_t));
-    if (speed)
-        memset(speed, 0, sizeof(can_speed_t)); // TODO: calculate this!
+    memset(&temporary, 0, sizeof(can_bitrate_t));
+    memset(&nominal, 0, sizeof(btr_nominal_t));
+    memset(&data, 0, sizeof(btr_data_t));
 
-    return CANERR_NOERROR;
+    /* bit-rate for CAN 2.0 & CAN FD */
+    if((rc = canGetBusParams(can[handle].handle, &nominal.baud, &nominal.tseg1, &nominal.tseg2, 
+                                                 &nominal.sjw, &nominal.sam, &nominal.sync)) != canOK)
+        return kvaser_error(rc);
+    if ((rc = params2bitrate(&nominal, can[handle].frequency, &temporary)) != CANERR_NOERROR)
+        return rc;
+    /* bit-rate for CAN FD data (BRSE) */
+    if(can[handle].mode.b.fdoe && can[handle].mode.b.brse) {
+        if((rc = canGetBusParamsFd(can[handle].handle, &data.baud, &data.tseg1, &data.tseg2, &data.sjw)) != canOK)
+            return kvaser_error(rc);
+        if ((rc = paramsFd2bitrate(&data, can[handle].frequency, &temporary)) != CANERR_NOERROR)
+            return rc;
+    }
+    if(bitrate) {
+        memcpy(bitrate, &temporary, sizeof(can_bitrate_t));
+    }
+    if(speed) {
+        if((rc = calc_speed(&temporary, speed, 0)) != CANERR_NOERROR)
+            return rc;
+        speed->nominal.fdoe = can[handle].mode.b.fdoe;
+        speed->data.brse = can[handle].mode.b.brse;
+    }
+    if(!can[handle].status.b.can_stopped)
+        rc = CANERR_NOERROR;
+    else
+        rc = CANERR_OFFLINE;
+    return rc;
 }
 
 int can_interface(int handle, int *board, unsigned char *mode, void *param)
@@ -725,6 +785,184 @@ static int kvaser_error(canStatus status)
     return KVASER_ERR_UNKNOWN;
 }
 
+static int index2params(int index, btr_nominal_t *params)
+{
+    switch(index) {
+    case CANBTR_INDEX_1M: KVASER_BDR_1000((*params)); break;
+    case CANBTR_INDEX_800K: return CANERR_BAUDRATE;
+    case CANBTR_INDEX_500K: KVASER_BDR_500((*params)); break;
+    case CANBTR_INDEX_250K: KVASER_BDR_250((*params)); break;
+    case CANBTR_INDEX_125K: KVASER_BDR_125((*params)); break;
+    case CANBTR_INDEX_100K: KVASER_BDR_100((*params)); break;
+    case CANBTR_INDEX_50K: KVASER_BDR_50((*params)); break;
+    case CANBTR_INDEX_20K: KVASER_BDR_20((*params)); break;
+    case CANBTR_INDEX_10K: KVASER_BDR_10((*params)); break;
+    default: return CANERR_BAUDRATE;
+    }
+    return CANERR_NOERROR;
+}
+
+static int bitrate2params(const can_bitrate_t *bitrate, btr_nominal_t *params)
+{
+    if((bitrate->btr.nominal.brp < CANBTR_NOMINAL_BRP_MIN) || (CANBTR_NOMINAL_BRP_MAX < bitrate->btr.nominal.brp))
+        return CANERR_BAUDRATE;
+    if((bitrate->btr.nominal.tseg1 < CANBTR_NOMINAL_TSEG1_MIN) || (CANBTR_NOMINAL_TSEG1_MAX < bitrate->btr.nominal.tseg1))
+        return CANERR_BAUDRATE;
+    if((bitrate->btr.nominal.tseg2 < CANBTR_NOMINAL_TSEG2_MIN) || (CANBTR_NOMINAL_TSEG2_MAX < bitrate->btr.nominal.tseg2))
+        return CANERR_BAUDRATE;
+    if((bitrate->btr.nominal.sjw < CANBTR_NOMINAL_SJW_MIN) || (CANBTR_NOMINAL_SJW_MAX < bitrate->btr.nominal.sjw))
+        return CANERR_BAUDRATE;
+    if(bitrate->btr.nominal.brp == 0)   // devide-by-zero!
+        return CANERR_BAUDRATE;
+
+    /* nominal bit-rate = frequency / (brp * (1 + tseg1 + tseg2)) */
+    params->baud = bitrate->btr.frequency
+                 / ((long)bitrate->btr.nominal.brp * (1l + (long)bitrate->btr.nominal.tseg1 + (long)bitrate->btr.nominal.tseg2));
+    params->tseg1 = bitrate->btr.nominal.tseg1;
+    params->tseg2 = bitrate->btr.nominal.tseg2;
+    params->sjw = bitrate->btr.nominal.sjw;
+    params->sam = bitrate->btr.nominal.sam;
+
+    return CANERR_NOERROR;
+}
+
+static int params2bitrate(const btr_nominal_t *params, long frequency, can_bitrate_t *bitrate)
+{
+    /* Kvaser canLin32 doesn't offer the used controller frequency and bit-rate prescaler.
+     * We suppose it's running with 80MHz and calculate the bit-rate prescaler as follows:
+     *
+     * (1) brp = 80HHz / baud * ((1- tseg1 + tseq2))
+     */
+    if(params->baud == 0)   // divide-by-zero!
+        return CANERR_BAUDRATE;
+    bitrate->btr.frequency = frequency;
+    bitrate->btr.nominal.brp = (unsigned short)(frequency
+                             / (params->baud * (long)(1u + params->tseg1 + params->tseg2)));
+    bitrate->btr.nominal.tseg1 = params->tseg1;
+    bitrate->btr.nominal.tseg2 = params->tseg2;
+    bitrate->btr.nominal.sjw = params->sjw;
+    bitrate->btr.nominal.sam = params->sam;
+
+    return CANERR_NOERROR;
+}
+
+static int bitrate2paramsFd(const can_bitrate_t *bitrate, btr_data_t *params)
+{
+    if((bitrate->btr.data.brp < CANBTR_DATA_BRP_MIN) || (CANBTR_DATA_BRP_MAX < bitrate->btr.data.brp))
+        return CANERR_BAUDRATE;
+    if((bitrate->btr.data.tseg1 < CANBTR_DATA_TSEG1_MIN) || (CANBTR_DATA_TSEG1_MAX < bitrate->btr.data.tseg1))
+        return CANERR_BAUDRATE;
+    if((bitrate->btr.data.tseg2 < CANBTR_DATA_TSEG2_MIN) || (CANBTR_DATA_TSEG2_MAX < bitrate->btr.data.tseg2))
+        return CANERR_BAUDRATE;
+    if((bitrate->btr.data.sjw < CANBTR_DATA_SJW_MIN) || (CANBTR_DATA_SJW_MAX < bitrate->btr.data.sjw))
+        return CANERR_BAUDRATE;
+    if(bitrate->btr.nominal.brp == 0)   // divide-by-zero!
+        return CANERR_BAUDRATE;
+
+    /* data bit-rate = frequency / (brp * (1 + tseg1 + tseg2)) */
+    params->baud = bitrate->btr.frequency
+                 / ((long)bitrate->btr.data.brp * (1l + (long)bitrate->btr.data.tseg1 + (long)bitrate->btr.data.tseg2));
+    params->tseg1 = bitrate->btr.data.tseg1;
+    params->tseg2 = bitrate->btr.data.tseg2;
+    params->sjw = bitrate->btr.data.sjw;
+
+    return CANERR_NOERROR;
+}
+
+static int paramsFd2bitrate(const btr_data_t *params, long frequency, can_bitrate_t *bitrate)
+{
+    /* Kvaser canLin32 doesn't offer the used controller frequency and bit-rate prescaler.
+     * We suppose it's running with 80MHz and calculate the bit-rate prescaler as follows:
+     *
+     * (1) brp = 80HHz / baud * ((1- tseg1 + tseq2))
+     */
+    if(params->baud == 0)   // divide-by-zero!
+        return CANERR_BAUDRATE;
+    bitrate->btr.data.brp = (unsigned short)(frequency
+                          / (params->baud * (long)(1u + params->tseg1 + params->tseg2)));
+    bitrate->btr.data.tseg1 = params->tseg1;
+    bitrate->btr.data.tseg2 = params->tseg2;
+    bitrate->btr.data.sjw = params->sjw;
+
+    return CANERR_NOERROR;
+}
+
+static int calc_speed(can_bitrate_t *bitrate, can_speed_t *speed, int modify)
+{
+    can_bitrate_t temporary;            // bit-rate settings
+    btr_nominal_t nominal;              // nominal bit-rate
+    int rc;
+
+    memset(&temporary, 0, sizeof(can_bitrate_t));
+    memset(&nominal, 0, sizeof(btr_nominal_t));
+
+    if (bitrate->index <= 0) {
+        if((rc = index2params(bitrate->index, &nominal)) != CANERR_NOERROR)
+            return rc;
+        if(nominal.baud < 0) {          // translate Kvaser defaults
+            if((rc = canTranslateBaud(&nominal.baud, &nominal.tseg1, &nominal.tseg2, 
+                                      &nominal.sjw, &nominal.sam, &nominal.sync)) != canOK)
+                return rc;
+        }
+        if((rc = params2bitrate(&nominal, KVASER_FREQ_DEFAULT, &temporary)) != CANERR_NOERROR)
+            return rc;
+
+        if(modify)                      // translate index to bit-rate
+            memcpy(bitrate, &temporary, sizeof(can_bitrate_t));
+
+        speed->nominal.fdoe = 0;
+        speed->data.brse = 0;
+    }
+    else {
+        memcpy(&temporary, bitrate, sizeof(can_bitrate_t));
+
+        speed->data.brse = temporary.btr.data.brp ? 1 : 0;
+    }
+    /* nominal bit-rate:
+     *
+     * (1) speed = freq / (brp * (1 + tseg1 +tseg2))
+     *
+     * (2) sp = (1 + tseg1) / (1 + tseg1 +tseg2)
+     */
+    if((temporary.btr.nominal.brp < CANBTR_NOMINAL_BRP_MIN) || (CANBTR_NOMINAL_BRP_MAX < temporary.btr.nominal.brp))
+        return CANERR_BAUDRATE;
+    if((temporary.btr.nominal.tseg1 < CANBTR_NOMINAL_TSEG1_MIN) || (CANBTR_NOMINAL_TSEG1_MAX < temporary.btr.nominal.tseg1))
+        return CANERR_BAUDRATE;
+    if((temporary.btr.nominal.tseg2 < CANBTR_NOMINAL_TSEG2_MIN) || (CANBTR_NOMINAL_TSEG2_MAX < temporary.btr.nominal.tseg2))
+        return CANERR_BAUDRATE;
+    if((temporary.btr.nominal.sjw < CANBTR_NOMINAL_SJW_MIN) || (CANBTR_NOMINAL_SJW_MAX < temporary.btr.nominal.sjw))
+        return CANERR_BAUDRATE;
+    speed->nominal.speed = (float)(temporary.btr.frequency)
+                         / (float)(temporary.btr.nominal.brp * (1u + temporary.btr.nominal.tseg1 + temporary.btr.nominal.tseg2));
+    speed->nominal.samplepoint = (float)(1u + temporary.btr.nominal.tseg1)
+                               / (float)(1u + temporary.btr.nominal.tseg1 + temporary.btr.nominal.tseg2);
+
+    /* data bit-rate (CAN FD only):
+     *
+     * (1) speed = freq / (brp * (1 + tseg1 +tseg2))
+     *
+     * (2) sp = (1 + tseg1) / (1 + tseg1 +tseg2)
+     */
+    if(speed->data.brse) {
+        if((temporary.btr.data.brp < CANBTR_DATA_BRP_MIN) || (CANBTR_DATA_BRP_MAX < temporary.btr.data.brp))
+            return CANERR_BAUDRATE;
+        if((temporary.btr.data.tseg1 < CANBTR_DATA_TSEG1_MIN) || (CANBTR_DATA_TSEG1_MAX < temporary.btr.data.tseg1))
+            return CANERR_BAUDRATE;
+        if((temporary.btr.data.tseg2 < CANBTR_DATA_TSEG2_MIN) || (CANBTR_DATA_TSEG2_MAX < temporary.btr.data.tseg2))
+            return CANERR_BAUDRATE;
+        if((temporary.btr.data.sjw < CANBTR_DATA_SJW_MIN) || (CANBTR_DATA_SJW_MAX < temporary.btr.data.sjw))
+            return CANERR_BAUDRATE;
+        speed->data.speed = (float)(temporary.btr.frequency)
+                          / (float)(temporary.btr.data.brp * (1u + temporary.btr.data.tseg1 + temporary.btr.data.tseg2));
+        speed->data.samplepoint = (float)(1u + temporary.btr.data.tseg1)
+                                / (float)(1u + temporary.btr.data.tseg1 + temporary.btr.data.tseg2);
+    }
+    else {
+        speed->data.speed = 0.0;
+        speed->data.samplepoint = 0.0;
+    }
+    return CANERR_NOERROR;
+}
 /*  -----------  revision control  ---------------------------------------
  */
 
