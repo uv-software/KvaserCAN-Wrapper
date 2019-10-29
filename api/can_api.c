@@ -67,7 +67,7 @@ static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION_STRI
 #define _SHARED_ACCESS                  // permit non-exclusive access
 #define _VIRTUAL_CHANNELS               // support of virtual channels
 //#define _SIMULATED_CHANNELS             // support of simulated channels
-//#define  _CiA_BIT_TIMING                // CiA bit-timing (from CANopen)
+//#define  _CiA_BIT_TIMING                // CiA bit-timing (from CANopen spec.)
 
 
 /*  -----------  defines  ------------------------------------------------
@@ -507,7 +507,7 @@ int can_write(int handle, const can_msg_t *msg)
         memcpy(data, msg->data, msg->dlc);
     }
     else {
-        if(msg->dlc > CANFD_MAX_LEN)    //   data length 0 .. 64!
+        if(msg->dlc > CANFD_MAX_DLC)    //   data length 0 .. 0Fh!
             return CANERR_ILLPARA;
         if(msg->ext)                    //   29-bit identifier
             flags = canMSG_EXT;
@@ -520,7 +520,7 @@ int can_write(int handle, const can_msg_t *msg)
         if(msg->brs && can[handle].mode.b.brse) //   bit-rate switching
             flags |= canFDMSG_BRS;
         id = (long)(msg->id);
-        dlc = (unsigned int)(DLC2LEN(msg->dlc));
+        dlc = (unsigned int)(DLC2LEN(msg->dlc)); // why? acc. to docu is dlc DLC, not length 
         memcpy(data, msg->data, DLC2LEN(msg->dlc));
     }
     if((rc = canWriteWait(can[handle].handle, id, &data, dlc, flags, KVASER_TRM_TIEMOUT)) != canOK)
@@ -543,8 +543,8 @@ int can_write(int handle, const can_msg_t *msg)
 int can_read(int handle, can_msg_t *msg, unsigned short timeout)
 {
     long id;                            // the message:
-    unsigned int len, flags;
-    unsigned char data[CANFD_MAX_LEN];
+    unsigned int len, flags;            //   length and flags
+    unsigned char data[CANFD_MAX_LEN];  //   data payload
     unsigned long timestamp;            // time stamp (in [ms])
     canStatus rc;                       // return value
 
@@ -598,7 +598,7 @@ int can_read(int handle, can_msg_t *msg, unsigned short timeout)
     msg->fdf = (flags & canFDMSG_FDF)? 1 : 0;
     msg->brs = (flags & canFDMSG_BRS)? 1 : 0;
     msg->esi = (flags & canFDMSG_ESI)? 1 : 0;
-    msg->dlc = LEN2DLC(len);
+    msg->dlc = LEN2DLC(len); // unclear: is it a length od a DLC?
 #ifndef CAN_20_ONLY
     memcpy(msg->data, data, CANFD_MAX_LEN);
 #else

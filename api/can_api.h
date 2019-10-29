@@ -426,6 +426,10 @@ typedef struct _can_msg_t {
  *                             > 0 - board is present, but in use
  *
  *  @returns     0 if successful, or a negative value on error.
+ *
+ *  @retval      CANERR_ILLPARA   - illegal parameter value
+ *  @retval      CANERR_NOTSUPP   - function not supported
+ *  @retval      others           - vendor-specific
  */
 CANAPI int can_test(int board, unsigned char mode, const void *param, int *result);
 
@@ -442,6 +446,10 @@ CANAPI int can_test(int board, unsigned char mode, const void *param, int *resul
  *
  *  @returns     handle of the CAN interface if successful, 
  *               or a negative value on error.
+ *
+ *  @retval      CANERR_YETINIT   - interface already in use
+ *  @retval      CANERR_HANDLE    - no free handle found
+ *  @retval      others           - vendor-specific
  */
 CANAPI int can_init(int board, unsigned char mode, const void *param);
 
@@ -455,6 +463,10 @@ CANAPI int can_init(int board, unsigned char mode, const void *param);
  *  @param[in]   handle  - handle of the CAN interface
  *
  *  @returns     0 if successful, or a negative value on error.
+ *
+ *  @retval      CANERR_NOTINIT   - interface not initialized
+ *  @retval      CANERR_HANDLE    - invalid interface handle
+ *  @retval      others           - vendor-specific
  */
 CANAPI int can_exit(int handle);
 
@@ -467,6 +479,13 @@ CANAPI int can_exit(int handle);
  *  @param[in]   bitrate - bit-rate as btr register or baud rate index
  *
  *  @returns     0 if successful, or a negative value on error.
+ *
+ *  @retval      CANERR_NOTINIT   - interface not initialized
+ *  @retval      CANERR_HANDLE    - invalid interface handle
+ *  @retval      CANERR_NULLPTR   - null-pointer assignment
+ *  @retval      CANERR_BAUDRATE  - illegal bit-rate settings
+ *  @retval      CANERR_ONLINE    - interface already started
+ *  @retval      others           - vendor-specific
  */
 CANAPI int can_start(int handle, const can_bitrate_t *bitrate);
 
@@ -477,6 +496,11 @@ CANAPI int can_start(int handle, const can_bitrate_t *bitrate);
  *  @param[in]   handle  - handle of the CAN interface
  *
  *  @returns     0 if successful, or a negative value on error.
+ *
+ *  @retval      CANERR_NOTINIT   - interface not initialized
+ *  @retval      CANERR_HANDLE    - invalid interface handle
+ *  @retval      CANERR_OFFLINE   - interface already stopped
+ *  @retval      others           - vendor-specific
  */
 CANAPI int can_reset(int handle);
 
@@ -488,6 +512,14 @@ CANAPI int can_reset(int handle);
  *  @param[in]   msg     - pointer to the message to send
  *
  *  @returns     0 if successful, or a negative value on error.
+ *
+ *  @retval      CANERR_NOTINIT   - interface not initialized
+ *  @retval      CANERR_HANDLE    - invalid interface handle
+ *  @retval      CANERR_NULLPTR   - null-pointer assignment
+ *  @retval      CANERR_ILLPARA   - illegal data length code
+ *  @retval      CANERR_OFFLINE   - interface not started
+ *  @retval      CANERR_TX_BUSY   - transmitter busy
+ *  @retval      others           - vendor-specific
  */
 CANAPI int can_write(int handle, const can_msg_t *msg);
 
@@ -504,6 +536,14 @@ CANAPI int can_write(int handle, const can_msg_t *msg);
  *                              value means the time to wait im milliseconds
  *
  *  @returns     0 if successful, or a negative value on error.
+ *
+ *  @retval      CANERR_NOTINIT   - interface not initialized
+ *  @retval      CANERR_HANDLE    - invalid interface handle
+ *  @retval      CANERR_NULLPTR   - null-pointer assignment
+ *  @retval      CANERR_OFFLINE   - interface not started
+ *  @retval      CANERR_RX_EMPTY  - message queue empty
+ *  @retval      CANERR_ERR_FRAME - error frame received
+ *  @retval      others           - vendor-specific
  */
 CANAPI int can_read(int handle, can_msg_t *msg, unsigned short timeout);
 
@@ -521,6 +561,11 @@ CANAPI int can_read(int handle, can_msg_t *msg, unsigned short timeout);
  *  @param[in]   handle  - handle of the CAN interface, or (-1) to signal all
  *
  *  @returns     0 if successful, or a negative value on error.
+ *
+ *  @retval      CANERR_NOTINIT   - interface not initialized
+ *  @retval      CANERR_HANDLE    - invalid interface handle
+ *  @retval      CANERR_NOTSUPP   - function not supported
+ *  @retval      others           - vendor-specific
  */
 #if defined (_WIN32) || defined(_WIN64)
  CANAPI int can_kill(int handle);
@@ -533,6 +578,10 @@ CANAPI int can_read(int handle, can_msg_t *msg, unsigned short timeout);
  *  @param[out]  status  - 8-bit status register.
  *
  *  @returns     0 if successful, or a negative value on error.
+ *
+ *  @retval      CANERR_NOTINIT   - interface not initialized
+ *  @retval      CANERR_HANDLE    - invalid interface handle
+ *  @retval      others           - vendor-specific
  */
 CANAPI int can_status(int handle, unsigned char *status);
 
@@ -544,6 +593,10 @@ CANAPI int can_status(int handle, unsigned char *status);
  *  @param[out]  status  - 8-bit status register
  *
  *  @returns     0 if successful, or a negative value on error.
+ *
+ *  @retval      CANERR_NOTINIT   - interface not initialized
+ *  @retval      CANERR_HANDLE    - invalid interface handle
+ *  @retval      others           - vendor-specific
  */
 CANAPI int can_busload(int handle, unsigned char *load, unsigned char *status);
 
@@ -556,6 +609,13 @@ CANAPI int can_busload(int handle, unsigned char *load, unsigned char *status);
  *  @param[out]  speed   - transmission rate
  *
  *  @returns     0 if successful, or a negative value on error.
+ *
+ *  @retval      CANERR_NOTINIT   - interface not initialized
+ *  @retval      CANERR_HANDLE    - invalid interface handle
+ *  @retval      CANERR_OFFLINE   - interface not started
+ *  @retval      CANERR_BAUDRATE  - invalid bit-rate settings
+ *  @retval      CANERR_NOTSUPP   - function not supported
+ *  @retval      others           - vendor-specific
  */
 CANAPI int can_bitrate(int handle, can_bitrate_t *bitrate, can_speed_t *speed);
 
@@ -568,6 +628,11 @@ CANAPI int can_bitrate(int handle, can_bitrate_t *bitrate, can_speed_t *speed);
  *  @param[out]  param   - pointer to board-specific parameters
  *
  *  @returns     0 if successful, or a negative value on error.
+ *
+ *  @retval      CANERR_NOTINIT   - interface not initialized
+ *  @retval      CANERR_HANDLE    - invalid interface handle
+ *  @retval      CANERR_NOTSUPP   - function not supported
+ *  @retval      others           - vendor-specific
  */
 CANAPI int can_interface(int handle, int *board, unsigned char *mode, void *param);
 
@@ -598,7 +663,7 @@ CANAPI char *can_software(int handle);
  *  @param[out]  revision - revision number (e.g. for service releases)
  *  @param[out]  build    - build number (taken from svn or git)
  *
- *  @returns     library id if successful, or a negative value on error.
+ *  @returns     the library id.
  */
 CANAPI int can_library(unsigned short *version, unsigned char *revision, unsigned long *build);
 
