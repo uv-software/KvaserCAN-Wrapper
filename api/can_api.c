@@ -171,7 +171,7 @@ ATTRIB can_board_t can_board[KVASER_BOARDS]= // list of CAN Interface boards:
 static const BYTE dlc_table[16] = {     // DLC to length
     0,1,2,3,4,5,6,7,8,12,16,20,24,32,48,64
 };
-static can_interface_t can[KVASER_MAX_HANDLES]; // interface handles 
+static can_interface_t can[KVASER_MAX_HANDLES]; // interface handles
 static int init = 0;                    // initialization flag
 
 
@@ -203,7 +203,7 @@ int can_test(int board, unsigned char mode, const void *param, int *result)
             *result = CANBRD_NOT_PRESENT;
         return CANERR_NOERROR;
     }
-    if((rc = canGetChannelData(board, canCHANNELDATA_CHANNEL_CAP, 
+    if((rc = canGetChannelData(board, canCHANNELDATA_CHANNEL_CAP,
                                (void*)&capacity, sizeof(capacity))) != canOK)
         return kvaser_error(rc);
 #ifndef _VIRTUAL_CHANNELS
@@ -280,7 +280,7 @@ int can_init(int board, unsigned char mode, const void *param)
         init = 1;                       // set initialization flag
     }
     for(i = 0; i < KVASER_MAX_HANDLES; i++) {
-        if((can[i].handle != canINVALID_HANDLE) && 
+        if((can[i].handle != canINVALID_HANDLE) &&
            (can[i].channel == board))   // channel already in use
             return CANERR_YETINIT;
     }
@@ -384,7 +384,7 @@ int can_start(int handle, const can_bitrate_t *bitrate)
     if(bitrate->index <= 0) {           // bit-rate from index
         if((rc = index2params(bitrate->index, &nominal)) != CANERR_NOERROR)
             return rc;
-        if((rc = canSetBusParams(can[handle].handle, nominal.baud, nominal.tseg1, nominal.tseg2, 
+        if((rc = canSetBusParams(can[handle].handle, nominal.baud, nominal.tseg1, nominal.tseg2,
                                                      nominal.sjw, nominal.sam, nominal.sync)) != canOK)
             return kvaser_error(rc);
 
@@ -393,7 +393,7 @@ int can_start(int handle, const can_bitrate_t *bitrate)
     else {                              // bit-rate from parameter
         if((rc = bitrate2params(bitrate, &nominal)) != CANERR_NOERROR)
             return rc;
-        if((rc = canSetBusParams(can[handle].handle, nominal.baud, nominal.tseg1, nominal.tseg2, 
+        if((rc = canSetBusParams(can[handle].handle, nominal.baud, nominal.tseg1, nominal.tseg2,
                                                      nominal.sjw, nominal.sam, nominal.sync)) != canOK)
             return kvaser_error(rc);
         /* bit-rate for CAN FD data (BRSE) */
@@ -411,7 +411,7 @@ int can_start(int handle, const can_bitrate_t *bitrate)
         return kvaser_error(rc);
     if((rc = canBusOn(can[handle].handle)) != canOK) // go bus on!
         return kvaser_error(rc);
-    
+
     can[handle].status.byte = 0x00;     // clear old status bits
     can[handle].status.b.can_stopped = 0;// CAN controller started!
 
@@ -430,7 +430,7 @@ int can_kill(int handle)
             return CANERR_HANDLE;
 #ifdef _BLOCKING_READ
         if(can[handle].handle != canINVALID_HANDLE) {
-            if((canIoCtl(can[handle].handle, canIOCTL_GET_EVENTHANDLE, 
+            if((canIoCtl(can[handle].handle, canIOCTL_GET_EVENTHANDLE,
                          (void*)&hEvent, sizeof(hEvent)) == canOK) &&
                (hEvent != NULL)) {
                 (void)SetEvent(hEvent);     // signal the event object
@@ -514,13 +514,13 @@ int can_write(int handle, const can_msg_t *msg)
         if(msg->brs && can[handle].mode.b.brse) //   bit-rate switching
             flags |= canFDMSG_BRS;
         id = (long)(msg->id);
-        dlc = (unsigned int)(DLC2LEN(msg->dlc)); // why? acc. to docu is dlc DLC, not length 
+        dlc = (unsigned int)(DLC2LEN(msg->dlc)); // why? acc. to docu is dlc DLC, not length
         memcpy(data, msg->data, DLC2LEN(msg->dlc));
     }
 #ifdef _ASYNCHRONOUS_WRITE
     if((rc = canWrite(can[handle].handle, id, &data, dlc, flags)) != canOK)
 #else
-    if((rc = canWriteWait(can[handle].handle, id, &data, dlc, flags, KVASER_TRM_TIEMOUT)) != canOK)
+    if((rc = canWriteWait(can[handle].handle, id, &data, dlc, flags, KVASER_TRM_TIMEOUT)) != canOK)
 #endif
     {
         if((rc & canERR_TXBUFOFL)) {    //   transmit queue full?
@@ -584,9 +584,9 @@ int can_read(int handle, can_msg_t *msg, unsigned short timeout)
     }
     if(rc < canOK)                      // receive error?
     {
-        return kvaser_error(rc);        //   something´s wrong
+        return kvaser_error(rc);        //   something's wrong
     }
-    if((flags & canMSG_ERROR_FRAME)) {  // error frame?  
+    if((flags & canMSG_ERROR_FRAME)) {  // error frame?
         can[handle].status.b.receiver_empty = 1;
         return CANERR_ERR_FRAME;        //   receiver empty
     }
@@ -633,7 +633,7 @@ int can_status(int handle, unsigned char *status)
     can[handle].status.b.transmitter_busy |= (flags & canSTAT_TX_PENDING)? 1 : 0;
     if(status)                          // status-register
       *status = can[handle].status.byte;
-      
+
     return CANERR_NOERROR;
 }
 
@@ -681,7 +681,7 @@ int can_bitrate(int handle, can_bitrate_t *bitrate, can_speed_t *speed)
     memset(&data, 0, sizeof(btr_data_t));
 
     /* bit-rate for CAN 2.0 & CAN FD */
-    if((rc = canGetBusParams(can[handle].handle, &nominal.baud, &nominal.tseg1, &nominal.tseg2, 
+    if((rc = canGetBusParams(can[handle].handle, &nominal.baud, &nominal.tseg1, &nominal.tseg2,
                                                  &nominal.sjw, &nominal.sam, &nominal.sync)) != canOK)
         return kvaser_error(rc);
     if ((rc = params2bitrate(&nominal, can[handle].frequency, &temporary)) != CANERR_NOERROR)
@@ -898,7 +898,7 @@ static int calc_speed(can_bitrate_t *bitrate, can_speed_t *speed, int modify)
         if((rc = index2params(bitrate->index, &nominal)) != CANERR_NOERROR)
             return rc;
         if(nominal.baud < 0) {          // translate Kvaser defaults
-            if((rc = canTranslateBaud(&nominal.baud, &nominal.tseg1, &nominal.tseg2, 
+            if((rc = canTranslateBaud(&nominal.baud, &nominal.tseg1, &nominal.tseg2,
                                       &nominal.sjw, &nominal.sam, &nominal.sync)) != canOK)
                 return rc;
         }

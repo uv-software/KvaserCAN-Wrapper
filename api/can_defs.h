@@ -62,12 +62,12 @@
 
  #define KVASER_MAX_HANDLES        (8)  //   maximum number of interface handles
 
- #define KVASER_TRM_TIEMOUT         55  //   time-out for canWriteWait (in [ms])
-
  #define KVASER_ERR_OFFSET         -600 //   offset for Kvaser-specific errors
  #define KVASER_ERR_UNKNOWN        -699 //   unknown error
 
- #define KVASER_LIB_ID              600 //   library ID (CAN/COP API V1 compatible) 
+ #define KVASER_TRM_TIMEOUT         55  //   time-out for canWriteWait (in [ms])
+
+ #define KVASER_LIB_ID              600 //   library ID (CAN/COP API V1 compatible)
  #define KVASER_LIB_CANLIB         "canLib32.DLL"
 #endif
 #endif /* __CAN_DEFS_H */

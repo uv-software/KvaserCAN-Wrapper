@@ -103,7 +103,7 @@
 #define BITRATE_500K4M      "f_clock_mhz=80,nom_brp=2,nom_tseg1=63,nom_tseg2=16,nom_sjw=8,data_brp=2,data_tseg1=7,data_tseg2=2,data_sjw=2"
 #define BITRATE_1M8M        "f_clock_mhz=80,nom_brp=2,nom_tseg1=31,nom_tseg2=8,nom_sjw=8,data_brp=2,data_tseg1=3,data_tseg2=1,data_sjw=1"
 #define BITRATE_125K        "f_clock_mhz=80,nom_brp=4,nom_tseg1=127,nom_tseg2=32,nom_sjw=8"
-//#define BITRATE_250K        "f_clock_mhz=80,nom_brp=2,nom_tseg1=127,nom_tseg2=32,nom_sjw=8"
+#define BITRATE_250K        "f_clock_mhz=80,nom_brp=2,nom_tseg1=127,nom_tseg2=32,nom_sjw=8"
 #define BITRATE_500K        "f_clock_mhz=80,nom_brp=2,nom_tseg1=63,nom_tseg2=16,nom_sjw=8"
 #define BITRATE_1M          "f_clock_mhz=80,nom_brp=2,nom_tseg1=31,nom_tseg2=8,nom_sjw=8"
 
@@ -111,8 +111,6 @@
 #define BR_CiA_250K2M       "f_clock_mhz=80,nom_brp=4,nom_tseg1=63,nom_tseg2=16,nom_sjw=16,data_brp=4,data_tseg1=6,data_tseg2=3,data_sjw=3"
 #define BR_CiA_500K2M       "f_clock_mhz=80,nom_brp=2,nom_tseg1=63,nom_tseg2=16,nom_sjw=16,data_brp=2,data_tseg1=14,data_tseg2=5,data_sjw=5"
 #define BR_CiA_1M5M         "f_clock_mhz=80,nom_brp=2,nom_tseg1=31,nom_tseg2=8,nom_sjw=8,data_brp=2,data_tseg1=5,data_tseg2=2,data_sjw=2"
-
-#define BITRATE_250K        "f_clock_mhz=80,nom_brp=7,nom_tseg1=30,nom_tseg2=7,nom_sjw=8"
 
 
 
@@ -325,6 +323,9 @@ int main(int argc, char *argv[])
         printf("+++ error(%i): can_interface failed\n", rc);
         goto end;
     }
+	if(option_info) {
+        // TODO: ...
+    }
     /* channel status */
     if(option_test) {
         if((rc = can_test(channel, op_mode, NULL, &opt)) == CANERR_NOERROR)
@@ -343,7 +344,9 @@ int main(int argc, char *argv[])
         printf("+++ error(%i): can_bitrate failed\n", rc);
         goto end;
     }
-    verbose(&bitrate, &speed);
+	if(option_info) {
+        verbose(&bitrate, &speed);
+    }
     /* transmit messages */
     if(option_transmit > 0) {
         if(option_mode == OPTION_MODE_CAN_20) {
