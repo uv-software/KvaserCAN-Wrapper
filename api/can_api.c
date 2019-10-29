@@ -63,12 +63,6 @@ static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION_STRI
  /*  -----------  options  ------------------------------------------------
   */
 
-#define _BLOCKING_READ                  // blocking read via wait event
-#define _SHARED_ACCESS                  // permit non-exclusive access
-#define _VIRTUAL_CHANNELS               // support of virtual channels
-//#define _SIMULATED_CHANNELS             // support of simulated channels
-//#define  _CiA_BIT_TIMING                // CiA bit-timing (from CANopen spec.)
-
 
 /*  -----------  defines  ------------------------------------------------
  */
@@ -523,7 +517,11 @@ int can_write(int handle, const can_msg_t *msg)
         dlc = (unsigned int)(DLC2LEN(msg->dlc)); // why? acc. to docu is dlc DLC, not length 
         memcpy(data, msg->data, DLC2LEN(msg->dlc));
     }
+#ifdef _ASYNCHRONOUS_WRITE
+    if((rc = canWrite(can[handle].handle, id, &data, dlc, flags)) != canOK)
+#else
     if((rc = canWriteWait(can[handle].handle, id, &data, dlc, flags, KVASER_TRM_TIEMOUT)) != canOK)
+#endif
     {
         if((rc & canERR_TXBUFOFL)) {    //   transmit queue full?
             can[handle].status.b.transmitter_busy = 1;

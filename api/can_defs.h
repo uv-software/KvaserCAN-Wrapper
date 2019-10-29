@@ -23,7 +23,7 @@
  *
  *  @brief       CAN API V3 for Kvaser CAN Interfaces - Defines
  *
- *               For Kvaser CANLIB API Interfaces (canlib32.dll V5.25).
+ *               For Kvaser CANLIB API Interfaces (canlib32.dll V5.28).
  *
  *  @author      $Author$
  *
@@ -37,6 +37,13 @@
 
 /*  -----------  options  ------------------------------------------------
  */
+
+#define _ASYNCHRONOUS_WRITE             // w/o transmit acknowledge
+#define _BLOCKING_READ                  // blocking read via wait event
+#define _SHARED_ACCESS                  // permit non-exclusive access
+#define _VIRTUAL_CHANNELS               // support of virtual channels
+/*#define _SIMULATED_CHANNELS           // support of simulated channels */
+/*#define _CiA_BIT_TIMING               // CiA bit-timing (from CANopen spec.) */
 
 
 /*  -----------  defines  ------------------------------------------------

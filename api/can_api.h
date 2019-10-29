@@ -37,7 +37,7 @@
  *
  *  @brief       CAN API V3 for Kvaser CAN Interfaces - API
  *
- *               For Kvaser CANLIB API Interfaces (canlib32.dll 5.28.846).
+ *               For Kvaser CANLIB API Interfaces (canLib32.dll 5.28).
  *
  *  @author      $Author$
  *
