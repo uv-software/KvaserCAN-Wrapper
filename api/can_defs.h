@@ -43,7 +43,7 @@
 #define _SHARED_ACCESS                  // permit non-exclusive access
 #define _VIRTUAL_CHANNELS               // support of virtual channels
 /*#define _SIMULATED_CHANNELS           // support of simulated channels */
-/*#define _CiA_BIT_TIMING               // CiA bit-timing (from CANopen spec.) */
+#define _CiA_BIT_TIMING                 // CiA bit-timing (from CANopen spec.)
 
 
 /*  -----------  defines  ------------------------------------------------

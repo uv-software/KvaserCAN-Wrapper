@@ -80,14 +80,15 @@ static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION_STRI
 #define KVASER_BDR_20(btr)      do{ btr.baud=20000; btr.tseg1=11; btr.tseg2=4; btr.sjw=1; btr.sam=1; btr.sync=0; } while(0)
 #define KVASER_BDR_10(btr)      do{ btr.baud=canBITRATE_10K; } while(0)
 #else
-#define KVASER_BDR_1000(btr)    do{ btr.baud=1000000; btr.tseg1=?; btr.tseg2=?; btr.sjw=1; btr.sam=1; btr.sync=0; } while(0)
-#define KVASER_BDR_500(btr)     do{ btr.baud=500000;  btr.tseg1=?; btr.tseg2=?; btr.sjw=1; btr.sam=1; btr.sync=0; } while(0)
-#define KVASER_BDR_250(btr)     do{ btr.baud=250000;  btr.tseg1=?; btr.tseg2=?; btr.sjw=1; btr.sam=1; btr.sync=0; } while(0)
-#define KVASER_BDR_125(btr)     do{ btr.baud=125000;  btr.tseg1=?; btr.tseg2=?; btr.sjw=1; btr.sam=1; btr.sync=0; } while(0)
-#define KVASER_BDR_100(btr)     do{ btr.baud=100000;  btr.tseg1=?; btr.tseg2=?; btr.sjw=2; btr.sam=1; btr.sync=0; } while(0)
-#define KVASER_BDR_50(btr)      do{ btr.baud=50000;   btr.tseg1=?; btr.tseg2=?; btr.sjw=2; btr.sam=1; btr.sync=0; } while(0)
-#define KVASER_BDR_20(btr)      do{ btr.baud=20000,   btr.tseg1=?; btr.tseg2=?; btr.sjw=2; btr.sam=1; btr.sync=0; } while(0)
-#define KVASER_BDR_10(btr)      do{ btr.baud=10000;   btr.tseg1=?; btr.tseg2=?; btr.sjw=2; btr.sam=1; btr.sync=0; } while(0)
+#define KVASER_BDR_1000(btr)    do{ btr.baud=1000000; btr.tseg1=5 ; btr.tseg2=2; btr.sjw=1; btr.sam=0; btr.sync=0; } while(0)
+#define KVASER_BDR_800(btr)     do{ btr.baud=800000;  btr.tseg1=7 ; btr.tseg2=2; btr.sjw=1; btr.sam=0; btr.sync=0; } while(0)
+#define KVASER_BDR_500(btr)     do{ btr.baud=500000;  btr.tseg1=13; btr.tseg2=2; btr.sjw=1; btr.sam=0; btr.sync=0; } while(0)
+#define KVASER_BDR_250(btr)     do{ btr.baud=250000;  btr.tseg1=13; btr.tseg2=2; btr.sjw=1; btr.sam=0; btr.sync=0; } while(0)
+#define KVASER_BDR_125(btr)     do{ btr.baud=125000;  btr.tseg1=13; btr.tseg2=2; btr.sjw=1; btr.sam=0; btr.sync=0; } while(0)
+#define KVASER_BDR_100(btr)     do{ btr.baud=100000;  btr.tseg1=13; btr.tseg2=2; btr.sjw=2; btr.sam=0; btr.sync=0; } while(0)
+#define KVASER_BDR_50(btr)      do{ btr.baud=50000;   btr.tseg1=13; btr.tseg2=2; btr.sjw=2; btr.sam=0; btr.sync=0; } while(0)
+#define KVASER_BDR_20(btr)      do{ btr.baud=20000,   btr.tseg1=13; btr.tseg2=2; btr.sjw=2; btr.sam=0; btr.sync=0; } while(0)
+#define KVASER_BDR_10(btr)      do{ btr.baud=10000;   btr.tseg1=13; btr.tseg2=2; btr.sjw=2; btr.sam=0; btr.sync=0; } while(0)
 #endif
 #ifndef KVASER_MAX_HANDLES
 #define KVASER_MAX_HANDLES      (8)     // maximum number of open handles
@@ -387,8 +388,11 @@ int can_start(int handle, const can_bitrate_t *bitrate)
         if((rc = canSetBusParams(can[handle].handle, nominal.baud, nominal.tseg1, nominal.tseg2,
                                                      nominal.sjw, nominal.sam, nominal.sync)) != canOK)
             return kvaser_error(rc);
-
+#ifndef _CiA_BIT_TIMING
         can[handle].frequency = KVASER_FREQ_DEFAULT;
+#else
+        can[handle].frequency = CANBTR_FREQ_SJA1000;
+#endif
     }
     else {                              // bit-rate from parameter
         if((rc = bitrate2params(bitrate, &nominal)) != CANERR_NOERROR)
@@ -787,7 +791,11 @@ static int index2params(int index, btr_nominal_t *params)
 {
     switch(index) {
     case CANBTR_INDEX_1M: KVASER_BDR_1000((*params)); break;
+#ifndef _CiA_BIT_TIMING
     case CANBTR_INDEX_800K: return CANERR_BAUDRATE;
+#else
+    case CANBTR_INDEX_800K: KVASER_BDR_800((*params)); break;
+#endif
     case CANBTR_INDEX_500K: KVASER_BDR_500((*params)); break;
     case CANBTR_INDEX_250K: KVASER_BDR_250((*params)); break;
     case CANBTR_INDEX_125K: KVASER_BDR_125((*params)); break;
@@ -902,7 +910,11 @@ static int calc_speed(can_bitrate_t *bitrate, can_speed_t *speed, int modify)
                                       &nominal.sjw, &nominal.sam, &nominal.sync)) != canOK)
                 return rc;
         }
+#ifndef _CiA_BIT_TIMING
         if((rc = params2bitrate(&nominal, KVASER_FREQ_DEFAULT, &temporary)) != CANERR_NOERROR)
+#else
+        if((rc = params2bitrate(&nominal, CANBTR_FREQ_SJA1000, &temporary)) != CANERR_NOERROR)
+#endif
             return rc;
 
         if(modify)                      // translate index to bit-rate
