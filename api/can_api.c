@@ -664,15 +664,6 @@ int can_bitrate(int handle, can_bitrate_t *bitrate, can_speed_t *speed)
     btr_data_t data;                    // data bit-rate
     int rc;                             // return value
 
-    if((!init || !IS_HANDLE_VALID(handle)) && (bitrate && speed)) {
-        speed->nominal.fdoe = 1;
-        speed->data.brse = 1;
-        (void)calc_speed(bitrate, speed, 1);
-        if(!init)
-            return CANERR_NOTINIT;
-        else
-            return CANERR_HANDLE;
-    }
     if(!init)                           // must be initialized
         return CANERR_NOTINIT;
     if(!IS_HANDLE_VALID(handle))        // must be a valid handle
@@ -713,25 +704,6 @@ int can_bitrate(int handle, can_bitrate_t *bitrate, can_speed_t *speed)
     return rc;
 }
 
-int can_interface(int handle, int *board, unsigned char *mode, void *param)
-{
-
-    if(!init)                           // must be initialized
-        return CANERR_NOTINIT;
-    if(!IS_HANDLE_VALID(handle))        // must be a valid handle
-        return CANERR_HANDLE;
-    if(can[handle].handle == canINVALID_HANDLE) // must be an opened handle
-        return CANERR_HANDLE;
-
-    if(board)                           // handle of the CAN channel
-        *board = can[handle].channel;
-    if(mode)                            // current opperation mode
-        *mode = can[handle].mode.byte;
-    (void)param;                        // no parameters available
-
-    return CANERR_NOERROR;
-}
-
 char *can_hardware(int handle)
 {
     static char hardware[256] = "";     // hardware version
@@ -762,18 +734,6 @@ char *can_software(int handle)
     _snprintf_s(software, 256, 256, "Kvaser CANLIB API V%u.%u (canlib32.dll)", (version >> 8), (version & 0xFF));
 
     return (char*)software;             // software version
-}
-
-int can_library(unsigned short *version, unsigned char *revision, unsigned long *build)
-{
-    if(version)
-        *version = ((unsigned short)VERSION_MAJOR << 8) | ((unsigned short)VERSION_MINOR & 0x00FFu);
-    if(revision)
-        *revision = (unsigned char)VERSION_REVISION;
-    if(build)
-        *build = (unsigned long)BUILD_NO;
-
-    return KVASER_LIB_ID;               // library ID
 }
 
 /*  -----------  local functions  ----------------------------------------
