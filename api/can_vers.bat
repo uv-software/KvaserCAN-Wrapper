@@ -3,7 +3,7 @@ echo /*  --  Do not commit this file!  -- > can_vers.h
 echo  * >> can_vers.h
 echo  *  project   :  CAN - Controller Area Network >> can_vers.h
 echo  * >> can_vers.h
-echo  *  purpose   :  CAN Interface API, Version 3 (Kvaser canlib32) >> can_vers.h
+echo  *  purpose   :  CAN Interface API, Version 3 (Kvaser canLib32) >> can_vers.h
 echo  * >> can_vers.h
 echo  *  copyright :  (C) 2018-2019, UV Software, Berlin >> can_vers.h
 echo  * >> can_vers.h

@@ -2,7 +2,7 @@
  *
  *  project   :  CAN - Controller Area Network
  *
- *  purpose   :  CAN Interface API, Version 3 (Kvaser canlib32)
+ *  purpose   :  CAN Interface API, Version 3 (Kvaser canLib32)
  *
  *  copyright :  (C) 2017-2019, UV Software, Berlin
  *
@@ -55,13 +55,16 @@ static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION_STRI
 #include "can_api.h"
 
 #include <stdio.h>
+#include <string.h>
+#include <assert.h>
+#include <windows.h>
 
 #include "canlib.h"
 #include "canstat.h"
 
 
- /*  -----------  options  ------------------------------------------------
-  */
+/*  -----------  options  ------------------------------------------------
+ */
 
 
 /*  -----------  defines  ------------------------------------------------
@@ -146,6 +149,9 @@ static int bitrate2params(const can_bitrate_t *bitrate, btr_nominal_t *params);
 static int params2bitrate(const btr_nominal_t *params, long frequency, can_bitrate_t *bitrate);
 static int bitrate2paramsFd(const can_bitrate_t *bitrate, btr_data_t *params);
 static int paramsFd2bitrate(const btr_data_t *params, long frequency, can_bitrate_t *bitrate);
+
+static int lib_parameter(int param, void *value, size_t nbytes);
+static int drv_parameter(int handle, int param, void *value, size_t nbytes);
 
 static int calc_speed(can_bitrate_t *bitrate, can_speed_t *speed, int modify);
 
@@ -704,6 +710,21 @@ int can_bitrate(int handle, can_bitrate_t *bitrate, can_speed_t *speed)
     return rc;
 }
 
+int can_property(int handle, int param, void *value, int nbytes)
+{
+    int rc = CANERR_FATAL;              // return value
+
+    if(!init || !IS_HANDLE_VALID(handle)) {
+        return lib_parameter(param, value, (size_t)nbytes);
+    }
+    if(!init)                           // must be initialized
+        return CANERR_NOTINIT;
+    if(!IS_HANDLE_VALID(handle))        // must be a valid handle
+        return CANERR_HANDLE;
+
+    return drv_parameter(handle, param, value, (size_t)nbytes);
+}
+
 char *can_hardware(int handle)
 {
     static char hardware[256] = "";     // hardware version
@@ -853,6 +874,99 @@ static int paramsFd2bitrate(const btr_data_t *params, long frequency, can_bitrat
     return CANERR_NOERROR;
 }
 
+/*  - - - - - -  CAN API V3 properties  - - - - - - - - - - - - - - - - -
+ */
+static int lib_parameter(int param, void *value, size_t nbytes)
+{
+    int rc = CANERR_ILLPARA;            // suppose an invalid parameter
+
+    if(value == NULL)                   // check for null-pointer
+        return CANERR_NULLPTR;
+
+    /* CAN library properties */
+    switch(param) {
+    case CANPROP_GET_SPEC:              // version of the wrapper specification (USHORT)
+        if(nbytes == sizeof(unsigned short)) {
+            *(unsigned short*)value = (unsigned short)CAN_API_SPEC;
+            rc = CANERR_NOERROR;
+        }
+        break;
+    case CANPROP_GET_VERSION:           // version number of the library (USHORT)
+        if(nbytes == sizeof(unsigned short)) {
+            *(unsigned short*)value = ((unsigned short)VERSION_MAJOR << 8)
+                | ((unsigned short)VERSION_MINOR & 0xFu);
+            rc = CANERR_NOERROR;
+        }
+        break;
+    case CANPROP_GET_REVISION:          // revision number of the library (UCHAR)
+        if(nbytes == sizeof(unsigned char)) {
+            *(unsigned char*)value = (unsigned char)VERSION_REVISION;
+            rc = CANERR_NOERROR;
+        }
+        break;
+    case CANPROP_GET_BUILD_NO:          // build number of the library (ULONG)
+        if(nbytes == sizeof(unsigned long)) {
+            *(unsigned long*)value = (unsigned long)BUILD_NO;
+            rc = CANERR_NOERROR;
+        }
+        break;
+    case CANPROP_GET_LIBRARY_ID:        // library id of the library (int)
+        if(nbytes == sizeof(int)) {
+            *(int*)value = (int)KVASER_LIB_ID;
+            rc = CANERR_NOERROR;
+        }
+        break;
+    case CANPROP_GET_LIBRARY_DLL:       // filename of the library (CHAR[256])
+        if((nbytes > strlen(KVASER_LIB_CANLIB)) && (nbytes <= CANPROP_BUF_MAX_SIZE)) {
+            strcpy_s((char*)value, strlen(KVASER_LIB_CANLIB) + 1, KVASER_LIB_CANLIB);
+            rc = CANERR_NOERROR;
+        }
+        break;
+    case CANPROP_GET_VENDOR_NAME:       // vendor name of the interface (CHAR[256])
+        if((nbytes > strlen(KVASER_LIB_VENDOR)) && (nbytes <= CANPROP_BUF_MAX_SIZE)) {
+            strcpy_s((char*)value, strlen(KVASER_LIB_VENDOR) + 1, KVASER_LIB_VENDOR);
+            rc = CANERR_NOERROR;
+        }
+        break;
+    default:
+        rc = CANERR_NOTSUPP;
+        break;
+    }
+    return rc;
+}
+
+static int drv_parameter(int handle, int param, void *value, size_t nbytes)
+{
+    int rc = CANERR_ILLPARA;            // suppose an invalid parameter
+
+    assert(IS_HANDLE_VALID(handle));    // just to make sure
+
+    if(value == NULL)                   // check for null-pointer
+        return CANERR_NULLPTR;
+
+    /* CAN interface properties */
+    switch(param) {
+    case CANPROP_GET_BOARD_TYPE:        // board type of the interface (int)
+    case CANPROP_GET_BOARD_NAME:        // board name of the interface (CHAR[256])
+    case CANPROP_GET_BOARD_PARAM:       // board parameter of the interface (CHAR[256])
+    case CANPROP_GET_OP_CAPABILITY:     // supported operation modes of the interface (UCHAR)
+    case CANPROP_GET_OP_MODE:           // active operation mode of the interface (UCHAR)
+    case CANPROP_GET_BITRATE:           // active bit-rate of the interface (can_bitrate_t)
+    case CANPROP_GET_SPEED:             // active bus speed of the interface (can_speed_t)
+    case CANPROP_GET_STATUS:            // current status register of the interface (UCHAR)
+    case CANPROP_GET_BUSLOAD:           // current bus load of the interface (UCHAR)
+    case CANPROP_GET_TX_COUNTER:        // total number of sent messages (ULONGONG)
+    case CANPROP_GET_RX_COUNTER:        // total number of reveice messages (ULONGONG)
+    case CANPROP_GET_ERR_COUNTER:       // total number of reveice error frames (ULONGONG)
+    default:                            // or general library properties (see lib_parameter)
+        rc = lib_parameter(param, value, nbytes);
+        break;
+    }
+    return rc;
+}
+
+/*  - - - - - -  Bus-speed calculator  - - - - - - - - - - - - - - - - - -
+ */
 static int calc_speed(can_bitrate_t *bitrate, can_speed_t *speed, int modify)
 {
     can_bitrate_t temporary;            // bit-rate settings

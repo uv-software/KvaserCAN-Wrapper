@@ -2,11 +2,11 @@
  *
  *  project   :  CAN - Controller Area Network
  *
- *  purpose   :  CAN Interface API, Version 3 (Kvaser canlib32)
+ *  purpose   :  CAN Interface API, Version 3 (Kvaser canLib32)
  *
  *  copyright :  (C) 2017-2018, UV Software, Berlin
  *
- *  compiler  :  Microsoft Visual C/C++ Compiler (Version 19.15.267300)
+ *  compiler  :  Microsoft Visual C/C++ Compiler (Version 19.16)
  *
  *  export    :  (see below)
  *
@@ -68,7 +68,8 @@
  #define KVASER_TRM_TIMEOUT         55  //   time-out for canWriteWait (in [ms])
 
  #define KVASER_LIB_ID              600 //   library ID (CAN/COP API V1 compatible)
- #define KVASER_LIB_CANLIB         "canLib32.DLL"
+ #define KVASER_LIB_CANLIB                  "canLib32.DLL"
+ #define KVASER_LIB_VENDOR                  "Kvaser AB"
 #endif
 #endif /* __CAN_DEFS_H */
 /** @}
