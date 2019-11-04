@@ -83,15 +83,15 @@ static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION_STRI
 #define KVASER_BDR_20(btr)      do{ btr.baud=20000; btr.tseg1=11; btr.tseg2=4; btr.sjw=1; btr.sam=1; btr.sync=0; } while(0)
 #define KVASER_BDR_10(btr)      do{ btr.baud=canBITRATE_10K; } while(0)
 #else
-#define KVASER_BDR_1000(btr)    do{ btr.baud=1000000; btr.tseg1=5 ; btr.tseg2=2; btr.sjw=1; btr.sam=0; btr.sync=0; } while(0)
-#define KVASER_BDR_800(btr)     do{ btr.baud=800000;  btr.tseg1=7 ; btr.tseg2=2; btr.sjw=1; btr.sam=0; btr.sync=0; } while(0)
-#define KVASER_BDR_500(btr)     do{ btr.baud=500000;  btr.tseg1=13; btr.tseg2=2; btr.sjw=1; btr.sam=0; btr.sync=0; } while(0)
-#define KVASER_BDR_250(btr)     do{ btr.baud=250000;  btr.tseg1=13; btr.tseg2=2; btr.sjw=1; btr.sam=0; btr.sync=0; } while(0)
-#define KVASER_BDR_125(btr)     do{ btr.baud=125000;  btr.tseg1=13; btr.tseg2=2; btr.sjw=1; btr.sam=0; btr.sync=0; } while(0)
-#define KVASER_BDR_100(btr)     do{ btr.baud=100000;  btr.tseg1=13; btr.tseg2=2; btr.sjw=2; btr.sam=0; btr.sync=0; } while(0)
-#define KVASER_BDR_50(btr)      do{ btr.baud=50000;   btr.tseg1=13; btr.tseg2=2; btr.sjw=2; btr.sam=0; btr.sync=0; } while(0)
-#define KVASER_BDR_20(btr)      do{ btr.baud=20000,   btr.tseg1=13; btr.tseg2=2; btr.sjw=2; btr.sam=0; btr.sync=0; } while(0)
-#define KVASER_BDR_10(btr)      do{ btr.baud=10000;   btr.tseg1=13; btr.tseg2=2; btr.sjw=2; btr.sam=0; btr.sync=0; } while(0)
+#define KVASER_BDR_1000(btr)    do{ btr.baud=1000000; btr.tseg1=5 ; btr.tseg2=2; btr.sjw=1; btr.sam=1; btr.sync=0; } while(0)
+#define KVASER_BDR_800(btr)     do{ btr.baud=800000;  btr.tseg1=7 ; btr.tseg2=2; btr.sjw=1; btr.sam=1; btr.sync=0; } while(0)
+#define KVASER_BDR_500(btr)     do{ btr.baud=500000;  btr.tseg1=13; btr.tseg2=2; btr.sjw=1; btr.sam=1; btr.sync=0; } while(0)
+#define KVASER_BDR_250(btr)     do{ btr.baud=250000;  btr.tseg1=13; btr.tseg2=2; btr.sjw=1; btr.sam=1; btr.sync=0; } while(0)
+#define KVASER_BDR_125(btr)     do{ btr.baud=125000;  btr.tseg1=13; btr.tseg2=2; btr.sjw=1; btr.sam=1; btr.sync=0; } while(0)
+#define KVASER_BDR_100(btr)     do{ btr.baud=100000;  btr.tseg1=13; btr.tseg2=2; btr.sjw=2; btr.sam=1; btr.sync=0; } while(0)
+#define KVASER_BDR_50(btr)      do{ btr.baud=50000;   btr.tseg1=13; btr.tseg2=2; btr.sjw=2; btr.sam=1; btr.sync=0; } while(0)
+#define KVASER_BDR_20(btr)      do{ btr.baud=20000,   btr.tseg1=13; btr.tseg2=2; btr.sjw=2; btr.sam=1; btr.sync=0; } while(0)
+#define KVASER_BDR_10(btr)      do{ btr.baud=10000;   btr.tseg1=13; btr.tseg2=2; btr.sjw=2; btr.sam=1; btr.sync=0; } while(0)
 #endif
 #ifndef KVASER_MAX_HANDLES
 #define KVASER_MAX_HANDLES      (8)     // maximum number of open handles
