@@ -32,18 +32,17 @@
  *  @defgroup    can_defs Options and Definitions
  *  @{
  */
-#ifndef __CAN_DEFS_H
-#define __CAN_DEFS_H
+#ifndef CAN_DEFS_H_INCLUDED
+#define CAN_DEFS_H_INCLUDED
 
 /*  -----------  options  ------------------------------------------------
  */
 
-#define _ASYNCHRONOUS_WRITE             // w/o transmit acknowledge
-#define _BLOCKING_READ                  // blocking read via wait event
-#define _SHARED_ACCESS                  // permit non-exclusive access
-#define _VIRTUAL_CHANNELS               // support of virtual channels
-/*#define _SIMULATED_CHANNELS           // support of simulated channels */
-#define _CiA_BIT_TIMING                 // CiA bit-timing (from CANopen spec.)
+#define CANAPI_CiA_BIT_TIMING           // CiA bit-timing (from CANopen spec.)
+#define KVASER_ASYNCHRONOUS_WRITE       // w/o transmit acknowledge
+#define KVASER_SHARED_ACCESS            // permit non-exclusive access
+#define KVASER_VIRTUAL_CHANNELS         // support of virtual channels
+/*#define KVASER_SIMULATED_CHANNELS     // support of simulated channels */
 
 
 /*  -----------  defines  ------------------------------------------------
@@ -69,9 +68,9 @@
 
  #define KVASER_LIB_ID              600 //   library ID (CAN/COP API V1 compatible)
  #define KVASER_LIB_CANLIB                  "canLib32.DLL"
- #define KVASER_LIB_VENDOR                  "Kvaser AB"
+ #define KVASER_LIB_VENDOR                  "Kvaser AB, Sweden"
 #endif
-#endif /* __CAN_DEFS_H */
+#endif /* CAN_DEFS_H_INCLUDED */
 /** @}
  */
 /*  ----------------------------------------------------------------------
