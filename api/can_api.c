@@ -967,25 +967,25 @@ static int lib_parameter(int param, void *value, size_t nbytes)
             rc = CANERR_NOERROR;
         }
         break;
-    case CANPROP_GET_LIBRARY_VENDOR:    // vendor name of the library (CHAR[256])
+    case CANPROP_GET_LIBRARY_VENDOR:    // vendor name of the library (char[256])
         if((nbytes > strlen(CAN_API_VENDOR)) && (nbytes <= CANPROP_BUFFER_SIZE)) {
             strcpy((char*)value, CAN_API_VENDOR);
             rc = CANERR_NOERROR;
         }
         break;
-    case CANPROP_GET_LIBRARY_DLLNAME:   // file name of the library (CHAR[256])
+    case CANPROP_GET_LIBRARY_DLLNAME:   // file name of the library (char[256])
         if ((nbytes > strlen(KVASER_LIB_WRAPPER)) && (nbytes <= CANPROP_BUFFER_SIZE)) {
             strcpy((char*)value, KVASER_LIB_WRAPPER);
             rc = CANERR_NOERROR;
         }
         break;
-    case CANPROP_GET_BOARD_VENDOR:      // vendor name of the CAN interface (CHAR[256])
+    case CANPROP_GET_BOARD_VENDOR:      // vendor name of the CAN interface (char[256])
         if((nbytes > strlen(KVASER_LIB_VENDOR)) && (nbytes <= CANPROP_BUFFER_SIZE)) {
             strcpy((char*)value, KVASER_LIB_VENDOR);
             rc = CANERR_NOERROR;
         }
         break;
-    case CANPROP_GET_BOARD_DLLNAME:     // file name of the CAN interface (CHAR[256])
+    case CANPROP_GET_BOARD_DLLNAME:     // file name of the CAN interface (char[256])
         if((nbytes > strlen(KVASER_LIB_CANLIB)) && (nbytes <= CANPROP_BUFFER_SIZE)) {
             strcpy((char*)value, KVASER_LIB_CANLIB);
             rc = CANERR_NOERROR;
@@ -1022,7 +1022,7 @@ static int drv_parameter(int handle, int param, void *value, size_t nbytes)
             rc = CANERR_NOERROR;
         }
         break;
-    case CANPROP_GET_BOARD_NAME:        // board name of the CAN interface (CHAR[256])
+    case CANPROP_GET_BOARD_NAME:        // board name of the CAN interface (char[256])
         for(i = 0; i < KVASER_BOARDS; i++) {
             if(can_board[i].type == (unsigned long)can[handle].channel) {
                 if((nbytes > strlen(can_board[i].name)) && (nbytes <= CANPROP_BUFFER_SIZE)) {
@@ -1100,7 +1100,7 @@ static int drv_parameter(int handle, int param, void *value, size_t nbytes)
         }
         break;
     default:
-        if((CANPROP_GET_VENDOR_PROP <= param) &&  // get a vendor-specific property value (VOID)
+        if((CANPROP_GET_VENDOR_PROP <= param) &&  // get a vendor-specific property value (void*)
            (param < (CANPROP_GET_VENDOR_PROP + CANPROP_VENDOR_PROP_RANGE))) {
             if((sts = canIoCtl(can[handle].handle, (unsigned int)(param - CANPROP_GET_VENDOR_PROP),
                                                            (void*)value, (DWORD)nbytes)) == canOK)
@@ -1108,7 +1108,7 @@ static int drv_parameter(int handle, int param, void *value, size_t nbytes)
             else
                 rc = kvaser_error(sts);
         }
-        else if((CANPROP_SET_VENDOR_PROP <= param) &&  // set a vendor-specific property value (VOID)
+        else if((CANPROP_SET_VENDOR_PROP <= param) &&  // set a vendor-specific property value (void*)
                 (param < (CANPROP_SET_VENDOR_PROP + CANPROP_VENDOR_PROP_RANGE))) {
             if((sts = canIoCtl(can[handle].handle, (unsigned int)(param - CANPROP_SET_VENDOR_PROP),
                                                            (void*)value, (DWORD)nbytes)) == canOK)
