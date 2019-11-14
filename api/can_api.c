@@ -30,11 +30,16 @@
  *  @addtogroup  can_api
  *  @{
  */
+/*  -----------  version  ------------------------------------------------
+ */
+
+#include "can_vers.h"
 
 #define VERSION_MAJOR     1
 #define VERSION_MINOR     1
-#define VERSION_REVISION  0
-#define VERSION_STRING    TOSTRING(VERSION_MAJOR)"." TOSTRING(VERSION_MINOR)"."TOSTRING(VERSION_REVISION)
+#define VERSION_PATCH     0
+#define VERSION_BUILD     BUILD_NO
+#define VERSION_STRING    TOSTRING(VERSION_MAJOR)"." TOSTRING(VERSION_MINOR)"."TOSTRING(VERSION_PATCH)"-"TOSTRING(BUILD_NO)
 #if defined(_WIN64)
 #define PLATFORM    "x64"
 #elif defined(_WIN32)
@@ -42,11 +47,10 @@
 #else
 #error Unsupported architecture
 #endif
-#include "can_vers.h"
 #ifdef _DEBUG
-static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION_STRING"-"TOSTRING(BUILD_NO)" ("PLATFORM") _DEBUG";
+static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION_STRING" ("PLATFORM") _DEBUG";
 #else
-static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION_STRING"-"TOSTRING(BUILD_NO)" ("PLATFORM")";
+static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION_STRING" ("PLATFORM")";
 #endif
 
 /*  -----------  includes  -----------------------------------------------
@@ -949,15 +953,15 @@ static int lib_parameter(int param, void *value, size_t nbytes)
             rc = CANERR_NOERROR;
         }
         break;
-    case CANPROP_GET_REVISION:          // revision number of the library (UCHAR)
+    case CANPROP_GET_PATCH_NO:          // patch number of the library (UCHAR)
         if(nbytes == sizeof(unsigned char)) {
-            *(unsigned char*)value = (unsigned char)VERSION_REVISION;
+            *(unsigned char*)value = (unsigned char)VERSION_PATCH;
             rc = CANERR_NOERROR;
         }
         break;
     case CANPROP_GET_BUILD_NO:          // build number of the library (ULONG)
         if(nbytes == sizeof(unsigned long)) {
-            *(unsigned long*)value = (unsigned long)BUILD_NO;
+            *(unsigned long*)value = (unsigned long)VERSION_BUILD;
             rc = CANERR_NOERROR;
         }
         break;
