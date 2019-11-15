@@ -363,6 +363,7 @@ int can_init(int board, unsigned char mode, const void *param)
 
 int can_exit(int handle)
 {
+    canStatus rc;                       // return value
     int i;
 
     if(!init)                           // must be initialized
@@ -374,7 +375,8 @@ int can_exit(int handle)
             return CANERR_HANDLE;
         /*if(!can[handle].status.b.can_stopped) // go to CAN INIT mode (bus off)*/
             (void)canBusOff(can[handle].handle);
-        (void)canClose(can[handle].handle);     // release the CAN interface!
+        if((rc = canClose(can[handle].handle)) != canOK) // release the CAN interface!
+            return kvaser_error(rc);
 
         can[handle].status.byte |= CANSTAT_RESET;// CAN controller in INIT state
         can[handle].handle = canINVALID_HANDLE; // handle can be used again
@@ -385,7 +387,7 @@ int can_exit(int handle)
             {
                 /*if(!can[handle].status.b.can_stopped) // go to CAN INIT mode (bus off)*/
                    (void)canBusOff(can[i].handle);
-                (void)canClose(can[i].handle);     // release the CAN interface!
+                (void)canClose(can[i].handle);     // resistance is futile!
 
                 can[i].status.byte |= CANSTAT_RESET;// CAN controller in INIT state
                 can[i].handle = canINVALID_HANDLE; // handle can be used again
