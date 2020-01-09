@@ -4,7 +4,7 @@
  *
  *  purpose   :  CAN Interface API, Version 3 (Kvaser canLib32)
  *
- *  copyright :  (C) 2017-2019, UV Software, Berlin
+ *  copyright :  (C) 2017-2020, UV Software, Berlin
  *
  *  compiler  :  Microsoft Visual C/C++ Compiler (Version 19.16)
  *
@@ -34,7 +34,6 @@
  */
 
 #include "can_vers.h"
-
 #define VERSION_MAJOR     1
 #define VERSION_MINOR     1
 #define VERSION_PATCH     0
@@ -109,7 +108,7 @@ static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION_STRI
 #define INVALID_HANDLE          (-1)
 #define IS_HANDLE_VALID(hnd)    ((0 <= (hnd)) && ((hnd) < KVASER_MAX_HANDLES))
 #ifndef DLC2LEN
-#define DLC2LEN(x)              dlc_table[x & 0xF]
+#define DLC2LEN(x)              dlc_table[(x) & 0xF]
 #endif
 #ifndef LEN2DLC
 #define LEN2DLC(x)              ((x) > 48) ? 0xF : \
@@ -119,9 +118,6 @@ static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION_STRI
                                 ((x) > 16) ? 0xB : \
                                 ((x) > 12) ? 0xA : \
                                 ((x) > 8) ?  0x9 : (x)
-#endif
-#ifndef QWORD
-#define QWORD                   unsigned long long
 #endif
 
 /*  -----------  types  --------------------------------------------------
@@ -143,10 +139,10 @@ typedef struct {                        // data bit-rate:
     unsigned int sjw;                   //   sync. jump width
 }   btr_data_t;
 
-typedef struct {
-    QWORD tx;                           // number of transmitted CAN frames
-    QWORD rx;                           // number of received CAN frames
-    QWORD err;                          // number of receiced error frames
+typedef struct {                        // frame counters:
+    uint64_t tx;                        //   number of transmitted CAN frames
+    uint64_t rx;                        //   number of received CAN frames
+    uint64_t err;                       //   number of receiced error frames
 }   can_counter_t;
 
 typedef struct {                        // Kvaser CAN interface:
@@ -172,8 +168,8 @@ static int params2bitrate(const btr_nominal_t *params, long frequency, can_bitra
 static int bitrate2paramsFd(const can_bitrate_t *bitrate, btr_data_t *params);
 static int paramsFd2bitrate(const btr_data_t *params, long frequency, can_bitrate_t *bitrate);
 
-static int lib_parameter(int param, void *value, size_t nbytes);
-static int drv_parameter(int handle, int param, void *value, size_t nbytes);
+static int lib_parameter(uint16_t param, void *value, size_t nbytes);
+static int drv_parameter(int handle, uint16_t param, void *value, size_t nbytes);
 
 static int calc_speed(can_bitrate_t *bitrate, can_speed_t *speed, int modify);
 
@@ -186,7 +182,7 @@ static int calc_speed(can_bitrate_t *bitrate, can_speed_t *speed, int modify);
 #else
 #define ATTRIB
 #endif
-ATTRIB can_board_t can_board[KVASER_BOARDS]= // list of CAN Interface boards:
+ATTRIB can_board_t can_boards[KVASER_BOARDS+1]=// list of CAN Interface boards:
 {
     {KVASER_CAN_CHANNEL0,                 "Kvaser CAN Channel 0"},
     {KVASER_CAN_CHANNEL1,                 "Kvaser CAN Channel 1"},
@@ -195,9 +191,10 @@ ATTRIB can_board_t can_board[KVASER_BOARDS]= // list of CAN Interface boards:
     {KVASER_CAN_CHANNEL4,                 "Kvaser CAN Channel 4"},
     {KVASER_CAN_CHANNEL5,                 "Kvaser CAN Channel 5"},
     {KVASER_CAN_CHANNEL6,                 "Kvaser CAN Channel 6"},
-    {KVASER_CAN_CHANNEL7,                 "Kvaser CAN Channel 7"}
+    {KVASER_CAN_CHANNEL7,                 "Kvaser CAN Channel 7"},
+    {EOF, NULL}
 };
-static const BYTE dlc_table[16] = {     // DLC to length
+static const uint8_t dlc_table[16] = {  // DLC to length
     0,1,2,3,4,5,6,7,8,12,16,20,24,32,48,64
 };
 static can_interface_t can[KVASER_MAX_HANDLES]; // interface handles
@@ -207,7 +204,7 @@ static int init = 0;                    // initialization flag
 /*  -----------  functions  ----------------------------------------------
  */
 
-int can_test(int board, unsigned char mode, const void *param, int *result)
+int can_test(int32_t board, uint8_t mode, const void *param, int *result)
 {
     int capa  = 0x0000;                 // channel capability
     int flags = 0x0000;                 // channel flags
@@ -293,7 +290,7 @@ int can_test(int board, unsigned char mode, const void *param, int *result)
     return CANERR_NOERROR;
 }
 
-int can_init(int board, unsigned char mode, const void *param)
+int can_init(int32_t board, uint8_t mode, const void *param)
 {
     int flags = 0x0000;                 // flags for canOpenChannel()
     canHandle result;                   // Kvaser handle or error
@@ -582,7 +579,7 @@ int can_write(int handle, const can_msg_t *msg)
     return CANERR_NOERROR;
 }
 
-int can_read(int handle, can_msg_t *msg, unsigned short timeout)
+int can_read(int handle, can_msg_t *msg, uint16_t timeout)
 {
     long id;                            // the message:
     unsigned int len, flags;            //   length and flags
@@ -630,13 +627,13 @@ int can_read(int handle, can_msg_t *msg, unsigned short timeout)
             can[handle].counters.err++;
             return CANERR_ERR_FRAME;    //   error frame received
     }
-    msg->id = id;
+    msg->id = (int32_t)id;
     msg->ext = (flags & canMSG_EXT)? 1 : 0;
     msg->rtr = (flags & canMSG_RTR)? 1 : 0;
     msg->fdf = (flags & canFDMSG_FDF)? 1 : 0;
     msg->brs = (flags & canFDMSG_BRS)? 1 : 0;
     msg->esi = (flags & canFDMSG_ESI)? 1 : 0;
-    msg->dlc = LEN2DLC(len); // unclear: is it a length od a DLC?
+    msg->dlc = (uint8_t)LEN2DLC(len); // unclear: is it a length or a DLC?
 #ifndef CAN_20_ONLY
     memcpy(msg->data, data, CANFD_MAX_LEN);
 #else
@@ -650,7 +647,7 @@ int can_read(int handle, can_msg_t *msg, unsigned short timeout)
     return CANERR_NOERROR;
 }
 
-int can_status(int handle, unsigned char *status)
+int can_status(int handle, uint8_t *status)
 {
     unsigned long flags;                // status flags
     canStatus rc;                       // return value
@@ -678,7 +675,7 @@ int can_status(int handle, unsigned char *status)
     return CANERR_NOERROR;
 }
 
-int can_busload(int handle, unsigned char *load, unsigned char *status)
+int can_busload(int handle, uint8_t *load, uint8_t *status)
 {
     float busload = 0.0;                // bus-load (in [percent])
 
@@ -693,7 +690,7 @@ int can_busload(int handle, unsigned char *load, unsigned char *status)
         (void)busload; //  TODO: measure bus load
     }
     if(load)                            // bus-load (in [percent])
-        *load = (unsigned char)busload;
+        *load = (uint8_t)busload;
      return can_status(handle, status); // status-register
 }
 
@@ -744,7 +741,7 @@ int can_bitrate(int handle, can_bitrate_t *bitrate, can_speed_t *speed)
     return rc;
 }
 
-int can_property(int handle, int param, void *value, int nbytes)
+int can_property(int handle, uint16_t param, void *value, uint32_t nbytes)
 {
     int rc = CANERR_FATAL;              // return value
 
@@ -933,7 +930,7 @@ static int paramsFd2bitrate(const btr_data_t *params, long frequency, can_bitrat
 
 /*  - - - - - -  CAN API V3 properties  - - - - - - - - - - - - - - - - -
  */
-static int lib_parameter(int param, void *value, size_t nbytes)
+static int lib_parameter(uint16_t param, void *value, size_t nbytes)
 {
     int rc = CANERR_ILLPARA;            // suppose an invalid parameter
 
@@ -942,34 +939,34 @@ static int lib_parameter(int param, void *value, size_t nbytes)
 
     /* CAN library properties */
     switch(param) {
-    case CANPROP_GET_SPEC:              // version of the wrapper specification (USHORT)
-        if(nbytes == sizeof(unsigned short)) {
-            *(unsigned short*)value = (unsigned short)CAN_API_SPEC;
+    case CANPROP_GET_SPEC:              // version of the wrapper specification (uint16_t)
+        if(nbytes == sizeof(uint16_t)) {
+            *(uint16_t*)value = (uint16_t)CAN_API_SPEC;
             rc = CANERR_NOERROR;
         }
         break;
-    case CANPROP_GET_VERSION:           // version number of the library (USHORT)
-        if(nbytes == sizeof(unsigned short)) {
-            *(unsigned short*)value = ((unsigned short)VERSION_MAJOR << 8)
-                | ((unsigned short)VERSION_MINOR & 0xFu);
+    case CANPROP_GET_VERSION:           // version number of the library (uint16_t)
+        if(nbytes == sizeof(uint16_t)) {
+            *(uint16_t*)value = ((uint16_t)VERSION_MAJOR << 8)
+                                    | ((uint16_t)VERSION_MINOR & 0xFu);
             rc = CANERR_NOERROR;
         }
         break;
-    case CANPROP_GET_PATCH_NO:          // patch number of the library (UCHAR)
-        if(nbytes == sizeof(unsigned char)) {
-            *(unsigned char*)value = (unsigned char)VERSION_PATCH;
+    case CANPROP_GET_PATCH_NO:          // patch number of the library (uint8_t)
+        if(nbytes == sizeof(uint8_t)) {
+            *(uint8_t*)value = (uint8_t)VERSION_PATCH;
             rc = CANERR_NOERROR;
         }
         break;
-    case CANPROP_GET_BUILD_NO:          // build number of the library (ULONG)
-        if(nbytes == sizeof(unsigned long)) {
-            *(unsigned long*)value = (unsigned long)VERSION_BUILD;
+    case CANPROP_GET_BUILD_NO:          // build number of the library (uint32_t)
+        if(nbytes == sizeof(uint32_t)) {
+            *(uint32_t*)value = (uint32_t)VERSION_BUILD;
             rc = CANERR_NOERROR;
         }
         break;
-    case CANPROP_GET_LIBRARY_ID:        // library id of the library (int)
-        if(nbytes == sizeof(int)) {
-            *(int*)value = (int)KVASER_LIB_ID;
+    case CANPROP_GET_LIBRARY_ID:        // library id of the library (int32_t)
+        if(nbytes == sizeof(int32_t)) {
+            *(int32_t*)value = (int32_t)KVASER_LIB_ID;
             rc = CANERR_NOERROR;
         }
         break;
@@ -1004,14 +1001,14 @@ static int lib_parameter(int param, void *value, size_t nbytes)
     return rc;
 }
 
-static int drv_parameter(int handle, int param, void *value, size_t nbytes)
+static int drv_parameter(int handle, uint16_t param, void *value, size_t nbytes)
 {
     int rc = CANERR_ILLPARA;            // suppose an invalid parameter
     can_bitrate_t bitrate;
     can_speed_t speed;
     can_mode_t mode;
-    unsigned char status;
-    unsigned char load;
+    uint8_t status;
+    uint8_t load;
     canStatus sts;
     int i;
 
@@ -1041,17 +1038,17 @@ static int drv_parameter(int handle, int param, void *value, size_t nbytes)
         if((i == KVASER_BOARDS) || (rc = CANERR_NOERROR))
             rc = CANERR_FATAL;
         break;
-    case CANPROP_GET_OP_CAPABILITY:     // supported operation modes of the CAN controller (UCHAR)
+    case CANPROP_GET_OP_CAPABILITY:     // supported operation modes of the CAN controller (uint8_t)
         if((rc = kvaser_capability(can[handle].channel, &mode)) == CANERR_NOERROR) {
-            if(nbytes == sizeof(unsigned char)) {
-                *(unsigned char*)value = (unsigned char)mode.byte;
+            if(nbytes == sizeof(uint8_t)) {
+                *(uint8_t*)value = (uint8_t)mode.byte;
                 rc = CANERR_NOERROR;
             }
         }
         break;
-    case CANPROP_GET_OP_MODE:           // active operation mode of the CAN controller (UCHAR)
-        if (nbytes == sizeof(unsigned char)) {
-            *(unsigned char*)value = (unsigned char)can[handle].mode.byte;
+    case CANPROP_GET_OP_MODE:           // active operation mode of the CAN controller (uint8_t)
+        if (nbytes == sizeof(uint8_t)) {
+            *(uint8_t*)value = (uint8_t)can[handle].mode.byte;
             rc = CANERR_NOERROR;
         }
         break;
@@ -1071,7 +1068,7 @@ static int drv_parameter(int handle, int param, void *value, size_t nbytes)
             }
         }
         break;
-    case CANPROP_GET_STATUS:            // current status register of the CAN controller (UCHAR)
+    case CANPROP_GET_STATUS:            // current status register of the CAN controller (uint8_t)
         if((rc = can_status(handle, &status)) == CANERR_NOERROR) {
             if(nbytes == sizeof(unsigned char)) {
                 *(unsigned char*)value = (unsigned char)status;
@@ -1079,29 +1076,29 @@ static int drv_parameter(int handle, int param, void *value, size_t nbytes)
             }
         }
         break;
-    case CANPROP_GET_BUSLOAD:           // current bus load of the CAN controller (UCHAR)
+    case CANPROP_GET_BUSLOAD:           // current bus load of the CAN controller (uint8_t)
         if((rc = can_busload(handle, &load, NULL)) == CANERR_NOERROR) {
-            if(nbytes == sizeof(unsigned char)) {
-                *(unsigned char*)value = (unsigned char)load;
+            if(nbytes == sizeof(uint8_t)) {
+                *(uint8_t*)value = (uint8_t)load;
                 rc = CANERR_NOERROR;
             }
         }
         break;
-    case CANPROP_GET_TX_COUNTER:        // total number of sent messages (ULONGONG)
-        if(nbytes == sizeof(unsigned long long)) {
-            *(unsigned long long*)value = (unsigned long long)can[handle].counters.tx;
+    case CANPROP_GET_TX_COUNTER:        // total number of sent messages (uint64_t)
+        if(nbytes == sizeof(uint64_t)) {
+            *(uint64_t*)value = (uint64_t)can[handle].counters.tx;
             rc = CANERR_NOERROR;
         }
         break;
-    case CANPROP_GET_RX_COUNTER:        // total number of reveiced messages (ULONGONG)
-        if(nbytes == sizeof(unsigned long long)) {
-            *(unsigned long long*)value = (unsigned long long)can[handle].counters.rx;
+    case CANPROP_GET_RX_COUNTER:        // total number of reveiced messages (uint64_t)
+        if(nbytes == sizeof(uint64_t)) {
+            *(uint64_t*)value = (uint64_t)can[handle].counters.rx;
             rc = CANERR_NOERROR;
         }
         break;
-    case CANPROP_GET_ERR_COUNTER:       // total number of reveiced error frames (ULONGONG)
-        if(nbytes == sizeof(unsigned long long)) {
-            *(unsigned long long*)value = (unsigned long long)can[handle].counters.err;
+    case CANPROP_GET_ERR_COUNTER:       // total number of reveiced error frames (uint64_t)
+        if(nbytes == sizeof(uint64_t)) {
+            *(uint64_t*)value = (uint64_t)can[handle].counters.err;
             rc = CANERR_NOERROR;
         }
         break;

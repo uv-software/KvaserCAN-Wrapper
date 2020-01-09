@@ -4,13 +4,13 @@
  *
  *  purpose   :  CAN Interface API, Version 3 (Kvaser canLib32)
  *
- *  copyright :  (C) 2017-2018, UV Software, Berlin
+ *  copyright :  (C) 2017-2020, UV Software, Berlin
  *
  *  compiler  :  Microsoft Visual C/C++ Compiler (Version 19.16)
  *
  *  export    :  (see below)
  *
- *  includes  :  (none)
+ *  includes  :  stdint.h, stdbool.h
  *
  *  author    :  Uwe Vogt, UV Software
  *
@@ -19,7 +19,7 @@
  *
  *  -----------  description  --------------------------------------------
  */
-/** @file        can_api.h
+/** @file        can_defs.h
  *
  *  @brief       CAN API V3 for Kvaser CAN Interfaces - Defines
  *
@@ -34,6 +34,19 @@
  */
 #ifndef CAN_DEFS_H_INCLUDED
 #define CAN_DEFS_H_INCLUDED
+
+/*  -----------  includes  ------------------------------------------------
+ */
+
+#ifdef _MSC_VER
+//no Microsoft extensions please!
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS 1
+#endif
+#endif
+#include <stdint.h>                     // C99 header for sized integer types
+#include <stdbool.h>                    // C99 header for boolean type
+
 
 /*  -----------  options  ------------------------------------------------
  */
