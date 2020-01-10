@@ -172,11 +172,11 @@ copy .\x64\Release\u3cankvl.lib ..\x64\u3cankvl.lib</Command>
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\api\build_no.h" />
     <ClInclude Include="..\api\canlib.h" />
     <ClInclude Include="..\api\canstat.h" />
     <ClInclude Include="..\api\can_api.h" />
     <ClInclude Include="..\api\can_defs.h" />
-    <ClInclude Include="..\api\can_vers.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
