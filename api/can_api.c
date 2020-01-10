@@ -55,14 +55,15 @@ static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION_STRI
 /*  -----------  includes  -----------------------------------------------
  */
 
-#include "can_api.h"
-
 #ifdef _MSC_VER
 //no Microsoft extensions please!
 #ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS 1
 #endif
 #endif
+
+#include "can_api.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
