@@ -24,5 +24,7 @@ Libraries/KvaserCAN/Release
 Libraries/KvaserCAN/*.sln
 Libraries/KvaserCAN/*.aps
 Libraries/KvaserCAN/*.vcxproj.user
+Binaries
+Includes
 Testing
 Utilities
