@@ -19,21 +19,18 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\api\can_api.c" />
-    <ClCompile Include="main.c" />
-    <ClCompile Include="misc\printmsg.c" />
+    <ClCompile Include="..\Sources\Wrapper\can_api.c" />
+    <ClCompile Include="Sources\main.c" />
+    <ClCompile Include="Sources\printmsg.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\api\build_no.h" />
-    <ClInclude Include="..\api\CANAPI_Types.h" />
-    <ClInclude Include="..\api\canlib.h" />
-    <ClInclude Include="..\api\canstat.h" />
-    <ClInclude Include="..\api\can_api.h" />
-    <ClInclude Include="..\api\can_defs.h" />
-    <ClInclude Include="misc\printmsg.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="..\x86\canlib32.lib" />
+    <ClInclude Include="..\Sources\build_no.h" />
+    <ClInclude Include="..\Sources\CANAPI\CANAPI_KvaserCAN.h" />
+    <ClInclude Include="..\Sources\CANAPI\CANAPI_Types.h" />
+    <ClInclude Include="..\Sources\CANAPI\can_api.h" />
+    <ClInclude Include="..\Sources\CANlib\canlib.h" />
+    <ClInclude Include="..\Sources\Wrapper\can_defs.h" />
+    <ClInclude Include="Sources\printmsg.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{212CE9B5-4040-4682-A5CA-D29A055ECE1B}</ProjectGuid>
@@ -104,12 +101,13 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CANAPI_EXTERN;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\api;.\misc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;OPTION_CAN_2_0_ONLY=0;OPTION_CANAPI_DLLIMPORT=0;OPTION_CANAPI_DRIVER=1;OPTION_CANAPI_COMPANIONS=0</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>./Sources;../Sources;../Sources/CANAPI;../Sources/CANlib;../Sources/Wrapper;.\misc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>../Sources/CANlib/x86/canlib32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -118,12 +116,13 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CANAPI_EXTERN</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;OPTION_CAN_2_0_ONLY=0;OPTION_CANAPI_DLLIMPORT=0;OPTION_CANAPI_DRIVER=1;OPTION_CANAPI_COMPANIONS=0</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>./Sources;../Sources;../Sources/CANAPI;../Sources/CANlib;../Sources/Wrapper;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>../Sources/CANlib/x64/canlib32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -134,14 +133,15 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\api;.\misc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;OPTION_CAN_2_0_ONLY=0;OPTION_CANAPI_DLLIMPORT=0;OPTION_CANAPI_DRIVER=1;OPTION_CANAPI_COMPANIONS=0</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>./Sources;../Sources;../Sources/CANAPI;../Sources/CANlib;../Sources/Wrapper;.\misc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>../Sources/CANlib/x86/canlib32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -152,14 +152,15 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;OPTION_CAN_2_0_ONLY=0;OPTION_CANAPI_DLLIMPORT=0;OPTION_CANAPI_DRIVER=1;OPTION_CANAPI_COMPANIONS=0</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>./Sources;../Sources;../Sources/CANAPI;../Sources/CANlib;../Sources/Wrapper;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>../Sources/CANlib/x64/canlib32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
