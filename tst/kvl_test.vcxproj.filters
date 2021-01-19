@@ -44,6 +44,9 @@
     <ClInclude Include="..\api\build_no.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="..\api\CANAPI_Types.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\x86\canlib32.lib" />

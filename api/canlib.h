@@ -64,7 +64,7 @@
  *
  * The CAN bus API (CANlib) is used to interact with Kvaser CAN devices
  * connected to your computer and the CAN bus. At its core you have functions
- * to set bus parameters (e.g. bit rate), go bus on/o and read/write CAN
+ * to set bus parameters (e.g. bit rate), go bus on/off and read/write CAN
  * messages. You can also use CANlib to download and start t programs on
  * supported devices. If you can see your device listed in the Kvaser Device
  * Guide tool, it is connected and you can communicate with it through CANlib.
@@ -75,6 +75,7 @@
  *  - \subpage page_user_guide_init
  *  - \subpage page_user_guide_device_and_channel
  *  - \subpage page_user_guide_chips_channels
+ *  - \subpage page_user_guide_can_frame_types_types
  *  - \subpage page_user_guide_send_recv
  *  - \subpage page_user_guide_bus_errors
  *  - \subpage page_user_guide_time
@@ -101,6 +102,7 @@
 #include "canevt.h"
 
 #include "canstat.h"
+#include "bus_params_tq.h"
 
 /** Handle to an opened circuit, created with \ref canOpenChannel(). */
 typedef int canHandle;
@@ -402,7 +404,7 @@ extern "C" {
 /**
  * \ingroup can_general
  *
- * \source_cs       <b>static void canInitializeLibrary(void);</b>
+ * \source_cs       <b>static void canInitializeLibrary();</b>
  *
  * \source_delphi   <b>procedure canInitializeLibrary;    </b>
  * \source_end
@@ -423,9 +425,32 @@ extern "C" {
 void CANLIBAPI canInitializeLibrary (void);
 
 /**
+ * \ingroup can_general
+ *
+ * \source_cs       <b>static Canlib.canStatus canEnumHardwareEx(out Int32 channelCount);</b>
+ *
+ * \source_delphi   <b>function canEnumHardwareEx(var channelCount: Cardinal): canStatus;</b>
+ * \source_end
+ *
+ * \param[out]  channelCount Number of channels present.
+ *
+ * This function will re-enumerate all currently available CAN channels while
+ * not affecting already opened channel handles.
+ *
+ * \note When using this function, make sure your program does not keep any
+ * references to CANlib channel numbers since these numbers may change.<br>
+ * On Linux, no re-enumeration is needed since enumeration takes place
+ * when a device is plugged in or unplugged.
+ *
+ * \sa \ref section_user_guide_enumerate_hw
+ *
+ */
+canStatus CANLIBAPI canEnumHardwareEx (int *channelCount);
+
+/**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canClose(int handle);</b>
+ * \source_cs       <b>static Canlib.canStatus canClose(CanHandle handle);</b>
  *
  * \source_delphi   <b>function canClose(handle: canHandle): canStatus;</b>
  * \source_end
@@ -451,7 +476,7 @@ canStatus CANLIBAPI canClose (const CanHandle hnd);
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canBusOn(int handle);</b>
+ * \source_cs       <b>static Canlib.canStatus canBusOn(CanHandle handle);</b>
  *
  * \source_delphi   <b>function canBusOn(handle: canHandle): canStatus;    </b>
  * \source_end
@@ -477,7 +502,7 @@ canStatus CANLIBAPI canBusOn (const CanHandle hnd);
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canBusOff(int handle);</b>
+ * \source_cs       <b>static Canlib.canStatus canBusOff(CanHandle handle);</b>
  *
  * \source_delphi   <b>function canBusOff(handle: canHandle): canStatus; </b>
  * \source_end
@@ -499,7 +524,7 @@ canStatus CANLIBAPI canBusOff (const CanHandle hnd);
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canSetBusParams(int handle, int freq, int tseg1, int tseg2, int sjw, int noSamp, int syncmode); </b>
+ * \source_cs       <b>static Canlib.canStatus canSetBusParams(CanHandle handle, Int32 freq, Int32 tseg1, Int32 tseg2, Int32 sjw, Int32 noSamp); </b>
  *
  * \source_delphi   <b>function canSetBusParams(handle: canHandle; freq: Longint; tseg1, tseg2, sjw, noSamp, syncmode: Cardinal): canStatus;     </b>
  * \source_end
@@ -542,6 +567,7 @@ canStatus CANLIBAPI canBusOff (const CanHandle hnd);
  * \sa \ref section_user_guide_init_bit_rate_can,
  * \ref section_user_guide_init_bit_rate_canfd,
  * \sa \ref canSetBusParamsFd(), \ref canSetBusParamsC200(), \ref canGetBusParams()
+ * \sa \ref canSetBusParamsTq(), \ref canSetBusParamsFdTq(), \ref canGetBusParamsTq()
  *
  */
 canStatus CANLIBAPI canSetBusParams (const CanHandle hnd,
@@ -555,7 +581,35 @@ canStatus CANLIBAPI canSetBusParams (const CanHandle hnd,
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canSetBusParamsFd(int hnd, int freq_brs, int tseg1_brs, int tseg2_brs, int sjw_brs);</b>
+ * \source_cs       <b>static Canlib.canStatus canSetBusParamsTq(CanHandle handle, kvBusParamsTq nominal);</b>
+ *
+ * \source_delphi   <b>function canSetBusParamsTq(hnd: canHandle; nominal: kvBusParamsTq): canStatus;</b>
+ * \source_end
+ *
+ * Set bus parameters for the specified CAN controller (classic CAN).
+ *
+ * If the channel is opened (see \ref canOpenChannel()) with flags \ref canOPEN_CAN_FD or \ref canOPEN_CAN_FD_NONISO,
+ * use \ref canSetBusParamsFdTq() instead.
+ *
+ * To get device specific limits of bus parameters, see \ref canCHANNELDATA_BUS_PARAM_LIMITS.
+ * 
+ * The <a href="https://www.kvaser.com/support/calculators/can-fd-bit-timing-calculator/"> Kvaser Bit Timing calculator</a>, 
+ * available on the Kvaser website, can be used to calculate specific bit rates.
+ *
+ * \param[in] hnd      A handle to an open CAN circuit.
+ * \param[in] nominal  See \ref kvBusParamsTq
+ *
+ *
+ * return  canOK (zero)  if success
+ * return  canERR_xxx    (negative) if failure
+ */
+ canStatus CANLIBAPI canSetBusParamsTq(const CanHandle     hnd,
+                                       const kvBusParamsTq nominal);
+
+/**
+ * \ingroup CAN
+ *
+ * \source_cs       <b>static Canlib.canStatus canSetBusParamsFd(CanHandle handle, Int32 freq_brs, Int32 tseg1_brs, Int32 tseg2_brs, Int32 sjw_brs);</b>
  *
  * \source_delphi   <b>function canSetBusParamsFd(hnd: canHandle; freq_brs: Longint; tseg1_brs, tseg2_brs, sjw_brs: Cardinal): canStatus;</b>
  * \source_end
@@ -582,6 +636,8 @@ canStatus CANLIBAPI canSetBusParams (const CanHandle hnd,
  *
  * \return \ref canOK (zero) if success
  * \return \ref canERR_xxx (negative) if failure
+ *
+ * \sa \ref canSetBusParamsFdTq(), \ref canGetBusParamsFdTq()
  */
 canStatus CANLIBAPI canSetBusParamsFd (const CanHandle hnd,
                                        long freq_brs,
@@ -589,11 +645,41 @@ canStatus CANLIBAPI canSetBusParamsFd (const CanHandle hnd,
                                        unsigned int tseg2_brs,
                                        unsigned int sjw_brs);
 
+/**
+ * \ingroup CAN
+ *
+ * \source_cs       <b>static Canlib.canStatus canSetBusParamsFdTq(CanHandle handle, kvBusParamsTq arbitration, kvBusParamsTq data);</b>
+ *
+ * \source_delphi   <b>function canSetBusParamsFdTq(hnd: canHandle; arbitration: kvBusParamsTq; data: kvBusParamsTq): canStatus;</b>
+ * \source_end
+ *
+ * Set bus parameters for the specified CAN controller.
+ *
+ * The channel \b MUST be opened with flags \ref canOPEN_CAN_FD or \ref canOPEN_CAN_FD_NONISO, see \ref canOpenChannel().
+ * In the case of classic can, use \ref canSetBusParamsTq() instead.
+ *
+ * To get device specific limits of bus parameters, see \ref canCHANNELDATA_BUS_PARAM_LIMITS.
+ *
+ * The <a href="https://www.kvaser.com/support/calculators/can-fd-bit-timing-calculator/"> Kvaser Bit Timing calculator</a>, 
+ * available on the Kvaser website, can be used to calculate specific bit rates.
+ *
+ * \param[in] hnd      A handle to an open CAN circuit.
+ * \param[in] arbitration  See \ref kvBusParamsTq
+ * \param[in] data     See \ref kvBusParamsTq
+ *
+ *
+ * return  canOK (zero)  if success
+ * return  canERR_xxx    (negative) if failure
+ */
+canStatus CANLIBAPI canSetBusParamsFdTq(const CanHandle     hnd,
+                                        const kvBusParamsTq arbitration,
+                                        const kvBusParamsTq data);
+
 
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canGetBusParams(int handle, out long freq, out int tseg1, out int tseg2, out int sjw, out int noSamp, out int syncmode);</b>
+ * \source_cs       <b>static Canlib.canStatus canGetBusParams(CanHandle handle, out Int64 freq, out Int32 tseg1, out Int32 tseg2, out Int32 sjw, out Int32 noSamp);</b>
  *
  * \source_delphi   <b>function canGetBusParams(handle: canHandle; var freq: Longint; var tseg1, tseg2, sjw, noSamp, syncmode: Cardinal): canStatus;     </b>
  * \source_end
@@ -629,11 +715,32 @@ canStatus CANLIBAPI canGetBusParams (const CanHandle hnd,
                                      unsigned int *noSamp,
                                      unsigned int *syncmode);
 
+/**
+ * \ingroup CAN
+ *
+ * \source_cs       <b>static Canlib.canStatus canGetBusParamsTq(CanHandle handle, out kvBusParamsTq nominal);</b>
+ *
+ * \source_delphi   <b>function canGetBusParamsTq(handle: canHandle; var nominal: kvBusParamsTq): canStatus;     </b>
+ * \source_end
+ *
+ * Get bus parameters for the specified CAN controller.
+ *
+ * If the channel is opened (see \ref canOpenChannel()) with flags \ref canOPEN_CAN_FD or \ref canOPEN_CAN_FD_NONISO,
+ * use \ref canGetBusParamsFdTq() instead.
+ *
+ * \param[in]  hnd      A handle to an open CAN circuit.
+ * \param[out] nominal  See \ref kvBusParamsTq.
+ *
+ * return  canOK (zero)  if success
+ * return  canERR_xxx    (negative) if failure
+ */
+canStatus CANLIBAPI canGetBusParamsTq(const CanHandle      hnd,
+                                            kvBusParamsTq *nominal);
 
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canGetBusParamsFd(int hnd, out long freq_brs, out int tseg1_brs, out int tseg2_brs, out int sjw_brs);</b>
+ * \source_cs       <b>static Canlib.canStatus canGetBusParamsFd(CanHandle handle, out Int64 freq_brs, out Int32 tseg1_brs, out Int32 tseg2_brs, out Int32 sjw_brs);</b>
  *
  * \source_delphi   <b>function canGetBusParamsFd(hnd: canHandle; var freq_brs: Longint; var tseg1_brs, tseg2_brs, sjw_brs: Cardinal): canStatus;</b>
  * \source_end
@@ -657,10 +764,35 @@ canStatus CANLIBAPI canGetBusParamsFd(const CanHandle hnd,
                                       unsigned int *tseg1_brs,
                                       unsigned int *tseg2_brs,
                                       unsigned int *sjw_brs);
+
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canSetBusOutputControl(int handle, int drivertype);</b>
+ * \source_cs       <b>static Canlib.canStatus canGetBusParamsFdTq(CanHandle handle, out kvBusParamsTq nominal, out kvBusParamsTq data);</b>
+ *
+ * \source_delphi   <b>function canGetBusParamsFdTq(handle: canHandle; var nominal: kvBusParamsTq; var data: kvBusParamsTq): canStatus;     </b>
+ * \source_end
+ *
+ * Get bus parameters for the specified CAN controller.
+ *
+ * If the channel is \b NOT opened (see \ref canOpenChannel()) with flags \ref canOPEN_CAN_FD or \ref canOPEN_CAN_FD_NONISO,
+ * use \ref canGetBusParamsTq() instead.
+ *
+ * \param[in]  hnd      A handle to an open CAN circuit.
+ * \param[out] nominal  See \ref kvBusParamsTq.
+ * \param[out] data     See \ref kvBusParamsTq.
+ *
+ * return  canOK (zero)  if success
+ * return  canERR_xxx    (negative) if failure
+ */
+canStatus CANLIBAPI canGetBusParamsFdTq(const CanHandle      hnd,
+                                              kvBusParamsTq *nominal,
+                                              kvBusParamsTq *data);
+
+/**
+ * \ingroup CAN
+ *
+ * \source_cs       <b>static Canlib.canStatus canSetBusOutputControl(CanHandle handle, Int32 drivertype);</b>
  *
  * \source_delphi   <b>function canSetBusOutputControl(handle: canHandle; drivertype: Cardinal): canStatus;     </b>
  * \source_end
@@ -687,7 +819,7 @@ canStatus CANLIBAPI canSetBusOutputControl (const CanHandle hnd,
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canGetBusOutputControl(int handle, out int drivertype);</b>
+ * \source_cs       <b>static Canlib.canStatus canGetBusOutputControl(CanHandle handle, out Int32 drivertype);</b>
  *
  * \source_delphi   <b>function canGetBusOutputControl(handle: canHandle; var drivertype: Cardinal): canStatus;  </b>
  * \source_end
@@ -724,7 +856,7 @@ canStatus CANLIBAPI canGetBusOutputControl (const CanHandle hnd,
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canAccept(int handle, int envelope, int flag);</b>
+ * \source_cs       <b>static Canlib.canStatus canAccept(CanHandle handle, Int32 envelope, Int32 flag);</b>
  *
  * \source_delphi   <b>function canAccept(handle: canHandle; envelope: Longint; flag: Cardinal): canStatus;     </b>
  * \source_end
@@ -744,6 +876,9 @@ canStatus CANLIBAPI canGetBusOutputControl (const CanHandle hnd,
  * \note You can set the extended code and mask only on CAN boards that support
  *       extended identifiers.
  *
+ * \note Acceptance filters for 11-bit and 29-bit (ext) are independent, meaning 11-bit filters
+ *  will not affect 29-bit can frames and vice versa.
+ *
  * \note Not all CAN boards support different masks for standard and extended
  *       CAN identifiers.
  *
@@ -758,6 +893,7 @@ canStatus CANLIBAPI canGetBusOutputControl (const CanHandle hnd,
  * \return \ref canERR_xxx (negative) if failure
  *
  * \sa \ref section_user_guide_send_recv_filters
+ * \sa \ref canSetAcceptanceFilter()
  */
 canStatus CANLIBAPI canAccept (const CanHandle hnd,
                                const long envelope,
@@ -766,7 +902,7 @@ canStatus CANLIBAPI canAccept (const CanHandle hnd,
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canReadStatus(int handle, out long flags);</b>
+ * \source_cs       <b>static Canlib.canStatus canReadStatus(CanHandle handle, out Int64 flags);</b>
  *
  * \source_delphi   <b>function canReadStatus(handle: canHandle; var flags: Cardinal): canStatus;     </b>
  * \source_end
@@ -792,7 +928,7 @@ canStatus CANLIBAPI canReadStatus (const CanHandle hnd,
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canReadErrorCounters(int handle, out int txErr, out int rxErr, out int ovErr);</b>
+ * \source_cs       <b>static Canlib.canStatus canReadErrorCounters(CanHandle handle, out Int32 txErr, out Int32 rxErr, out Int32 ovErr);</b>
  *
  * \source_delphi   <b>function canReadErrorCounters(handle: canHandle; var txErr, rxErr, ovErr: Cardinal): canStatus;     </b>
  * \source_end
@@ -833,7 +969,7 @@ canStatus CANLIBAPI canReadErrorCounters (const CanHandle hnd,
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canWrite(int handle, int id, byte[] msg, int dlc, int flag);</b>
+ * \source_cs       <b>static Canlib.canStatus canWrite(CanHandle handle, Int32 id, Byte[] msg, Int32 dlc, Int32 flag);</b>
  *
  * \source_delphi   <b>function canWrite(handle: canHandle; id: Longint; msg: Pointer; dlc: Cardinal; flag: Cardinal): canStatus;     </b>
  * \source_end
@@ -880,7 +1016,7 @@ canStatus CANLIBAPI canWrite (const CanHandle hnd,
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canWriteSync(int handle, long timeout);</b>
+ * \source_cs       <b>static Canlib.canStatus canWriteSync(CanHandle handle, Int64 timeout);</b>
  *
  * \source_delphi   <b>function canWriteSync(handle: canHandle; timeout: Cardinal): canStatus;     </b>
  * \source_end
@@ -909,7 +1045,7 @@ canStatus CANLIBAPI canWriteSync (const CanHandle hnd, unsigned long timeout);
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canRead(int handle, out int id, byte[] msg, out int dlc, out int flag, out long time);</b>
+ * \source_cs       <b>static Canlib.canStatus canRead(CanHandle handle, out Int32 id, Byte[] msg, out Int32 dlc, out Int32 flag, out Int64 time);</b>
  *
  * \source_delphi   <b>function canRead(handle: canHandle; var id: Longint; msg: Pointer; var dlc: Cardinal; var flag: Cardinal; var time: Cardinal): canStatus;     </b>
  * \source_end
@@ -966,7 +1102,7 @@ canStatus CANLIBAPI canRead (const CanHandle hnd,
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canReadWait(int handle, out int id, byte[] msg, out int dlc, out int flag, out long time, long timeout);</b>
+ * \source_cs       <b>static Canlib.canStatus canReadWait(CanHandle handle, out Int32 id, Byte[] msg, out Int32 dlc, out Int32 flag, out Int64 time, Int64 timeout);</b>
  *
  * \source_delphi   <b>function canReadWait(handle: canHandle; var id: Longint; msg: Pointer; var dlc: Cardinal; var flag: Cardinal; var time: Cardinal; timeout: Cardinal): canStatus;     </b>
  * \source_end
@@ -1024,7 +1160,7 @@ canStatus CANLIBAPI canReadWait (const CanHandle hnd,
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canReadSpecific(int handle, int id, byte[] msg, out int dlc, out int flag, out long time);</b>
+ * \source_cs       <b>static Canlib.canStatus canReadSpecific(CanHandle handle, Int32 id, Byte[] msg, out Int32 dlc, out Int32 flag, out Int64 time);</b>
  *
  * \source_delphi   <b>function canReadSpecific(handle: canHandle; id: Longint; msg: Pointer; var dlc: Cardinal; var flag: Cardinal; var time: Cardinal): canStatus;     </b>
  * \source_end
@@ -1079,7 +1215,7 @@ canStatus CANLIBAPI canReadSpecific (const CanHandle hnd, long id, void * msg,
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canReadSync(int handle, long timeout);</b>
+ * \source_cs       <b>static Canlib.canStatus canReadSync(CanHandle handle, Int64 timeout);</b>
  *
  * \source_delphi   <b>function canReadSync(handle: canHandle; timeout: Cardinal): canStatus;     </b>
  * \source_end
@@ -1111,7 +1247,7 @@ canStatus CANLIBAPI canReadSync (const CanHandle hnd, unsigned long timeout);
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canReadSyncSpecific(int handle, int id, long timeout);</b>
+ * \source_cs       <b>static Canlib.canStatus canReadSyncSpecific(CanHandle handle, Int32 id, Int64 timeout);</b>
  *
  * \source_delphi   <b>function canReadSyncSpecific(handle: canHandle; id: Longint; timeout: Cardinal): canStatus;  </b>
  * \source_end
@@ -1146,7 +1282,7 @@ canStatus CANLIBAPI canReadSyncSpecific (const CanHandle hnd,
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canReadSpecificSkip(int hnd, int id, byte[] msg, out int dlc, out int flag, out long time);</b>
+ * \source_cs       <b>static Canlib.canStatus canReadSpecificSkip(CanHandle hnd, Int32 id, Byte[] msg, out Int32 dlc, out Int32 flag, out Int64 time);</b>
  *
  * \source_delphi   <b>function canReadSpecificSkip(handle: canHandle; id: Longint; msg: Pointer; var dlc: Cardinal; var flag: Cardinal; var time: Cardinal): canStatus;     </b>
  * \source_end
@@ -1199,7 +1335,7 @@ canStatus CANLIBAPI canReadSpecificSkip (const CanHandle hnd,
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canSetNotify(int handle, IntPtr win_handle, int aNotifyFlags);</b>
+ * \source_cs       <b>static Canlib.canStatus canSetNotify(CanHandle handle, IntPtr win_handle, Int32 aNotifyFlags);</b>
  *
  * \source_delphi   <b>function canSetNotify(handle: canHandle; aHWnd: HWND; aNotifyFlags: Cardinal): canStatus;     </b>
  * \source_end
@@ -1242,7 +1378,7 @@ canStatus CANLIBAPI canSetNotify (const CanHandle hnd,
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canTranslateBaud(ref int freq, out int tseg1, out int tseg2, out int sjw, out int nosamp, out int syncMode);</b>
+ * \source_cs       <b>static Canlib.canStatus canTranslateBaud(int bitrate, out Int32 freq, out Int32 tseg1, out Int32 tseg2, out Int32 sjw, out Int32 nosamp);</b>
  *
  * \source_delphi   <b>function canTranslateBaud(var freq: Longint; var tseg1, tseg2, sjw, noSamp, syncMode: Cardinal): canStatus;     </b>
  * \source_end
@@ -1285,7 +1421,7 @@ canStatus CANLIBAPI canTranslateBaud (long *const freq,
  *
  * \source_cs       <b>static Canlib.canStatus canGetErrorText(Canlib.canStatus err, out string buf_str);</b>
  *
- * \source_delphi   <b>function canGetErrorText(err: canStatus; buf: PChar; bufsiz: Cardinal): canStatus;     </b>
+ * \source_delphi   <b>function canGetErrorText(err: canStatus; buf: PAnsiChar; bufsiz: Cardinal): canStatus;     </b>
  * \source_end
  *
  * This function translates an error code (\ref canERR_xxx)
@@ -1307,7 +1443,7 @@ canStatus CANLIBAPI canGetErrorText (canStatus err, char *buf, unsigned int bufs
 /**
  * \ingroup  can_general
  *
- * \source_cs       <b>static short canGetVersion();</b>
+ * \source_cs       <b>static Int16 canGetVersion();</b>
  *
  * \source_delphi   <b>function canGetVersion: Word;     </b>
  * \source_end
@@ -1339,10 +1475,9 @@ unsigned short CANLIBAPI canGetVersion (void);
 /**
  * \ingroup can_general
  *
- * \source_cs       <b>static Canlib.canStatus canIoCtl(int handle, int func, int val);<br>
-      static Canlib.canStatus canIoCtl(int handle, int func, out int val);<br>
-      static Canlib.canStatus canIoCtl(int handle, int func, out string str_buf);<br>
-      static Canlib.canStatus canIoCtl(int handle, int func, ref object obj_buf);</b>
+ * \source_cs       <b>static Canlib.canStatus canIoCtl(CanHandle handle, Int32 func, out Int32 val);<br>
+                       static Canlib.canStatus canIoCtl(CanHandle handle, Int32 func, out String str_buf);<br>
+                       static Canlib.canStatus canIoCtl(CanHandle handle, Int32 func, ref object obj_buf);</b>
  *
  * \source_delphi   <b>function canIoCtl(handle: canHandle; func: Cardinal; buf: Pointer; buflen: Cardinal): canStatus;     </b>
  * \source_end
@@ -1374,8 +1509,6 @@ canStatus CANLIBAPI canIoCtl (const CanHandle hnd,
 /**
  * \ingroup Obsolete
  *
- * \source_cs       <b>static long canReadTimer(int hnd);</b>
- *
  * \source_delphi   <b>function canReadTimer(handle: canHandle): Longint;     </b>
  * \source_end
  *
@@ -1386,7 +1519,7 @@ unsigned long CANLIBAPI canReadTimer (const CanHandle hnd);
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static int canOpenChannel(int channel, int flags);</b>
+ * \source_cs       <b>static CanHandle canOpenChannel(Int32 channel, Int32 flags);</b>
  *
  * \source_delphi   <b>function canOpenChannel(channel: Integer; flags: Integer): canHandle;     </b>
  * \source_end
@@ -1438,7 +1571,7 @@ CanHandle CANLIBAPI canOpenChannel (int channel, int flags);
 /**
  * \ingroup can_general
  *
- * \source_cs       <b>static Canlib.canStatus canGetNumberOfChannels(out int channelCount);</b>
+ * \source_cs       <b>static Canlib.canStatus canGetNumberOfChannels(out Int32 channelCount);</b>
  *
  * \source_delphi   <b>function canGetNumberOfChannels(var channelCount: Integer): canStatus;     </b>
  * \source_end
@@ -1486,7 +1619,7 @@ canStatus CANLIBAPI canGetNumberOfChannels (int *channelCount);
 /**
  * \ingroup can_general
  *
- * \source_cs       <b>static Canlib.canStatus canGetChannelData(int channel, int item, out object buffer);</b>
+ * \source_cs       <b>static Canlib.canStatus canGetChannelData(Int32 channel, Int32 item, out object buffer);</b>
  *
  * \source_delphi   <b>function canGetChannelData(channel, item: Integer; var buffer; bufsize: size_t): canStatus;     </b>
  * \source_end
@@ -1511,6 +1644,7 @@ canStatus CANLIBAPI canGetNumberOfChannels (int *channelCount);
  *
  * \sa \ref section_user_guide_unique_device
  * \sa \ref canGetNumberOfChannels()
+ * \sa \ref canGetHandleData()
  */
 canStatus CANLIBAPI canGetChannelData (int channel,
                                        int item,
@@ -1522,7 +1656,7 @@ canStatus CANLIBAPI canGetChannelData (int channel,
  * \anchor canCHANNELDATA_xxx
  * \name canCHANNELDATA_xxx
  *
- * These defines are used in \ref canGetChannelData().
+ * These defines are used in \ref canGetChannelData() and \ref canGetHandleData().
  *
  *  @{
  */
@@ -1552,7 +1686,9 @@ canStatus CANLIBAPI canGetChannelData (int channel,
    * This define is used in \ref canGetChannelData(), \a buffer
    * mentioned below refers to this functions argument.
    *
-   * \a buffer returns a combination of \ref canCHANNEL_IS_xxx flags.
+   * \a buffer points to a 32-bit unsigned integer that receives
+   * a combination of \ref canCHANNEL_IS_xxx flags.
+   *
    */
 #define canCHANNELDATA_CHANNEL_FLAGS              3   // available, etc
 
@@ -1916,13 +2052,12 @@ canStatus CANLIBAPI canGetChannelData (int channel,
 #  define canCHANNELDATA_BUS_TYPE                  30
 
   /**
-   * \deprecated Use \ref canCHANNELDATA_DEVDESCR_ASCII instead.
-   *
    * This define is used in \ref canGetChannelData(), \a buffer
    * mentioned below refers to this functions argument.
    *
    * \a buffer points to a CHAR array of at least 32 characters which receives
-   * the current device name as a \c NULL terminated ASCII string.
+   * the current device name as a \c NULL terminated ASCII string. The user
+   * settable device name is currently only implemented in remote devices.
    *
    * If device name is not set or the device does not support this
    * functionality, an error will be returned.
@@ -1999,11 +2134,24 @@ canStatus CANLIBAPI canGetChannelData (int channel,
    *
    * \a buffer points to a 32-bit unsigned integer that receives the
    * capabilities mask of the CAN channel. This mask specifies
-   * which capabilities corresponding device is guaranteed
+   * which capabilities the corresponding device is guaranteed
    * to support/not support at the moment, see \ref canCHANNEL_CAP_xxx
    * for info about flags.
    */
 #  define canCHANNELDATA_CHANNEL_CAP_MASK  38
+
+/**
+ * This define is used in \ref canGetChannelData(), \a buffer
+ * mentioned below refers to this functions argument.
+ *
+ * \note If no channel name is set, \ref canERR_NOT_IMPLEMENTED will be
+ * returned, regardless of channel name is supported in the device or not.
+ *
+ * \a buffer is a user supplied byte array of length 'bufsize' (at
+ * least one byte long) to which the null terminated UTF-8 coded
+ * channel name will be placed.
+ */
+#define canCHANNELDATA_CUST_CHANNEL_NAME  39
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
@@ -2062,17 +2210,74 @@ canStatus CANLIBAPI canGetChannelData (int channel,
    * This define is used in \ref canGetChannelData(), \a buffer
    * mentioned below refers to this functions argument.
    *
-   * \note If no channel name is set, \ref canERR_NOT_IMPLEMENTED will be
-   * returned, regardless of channel name is supported in the device or not.
-   *
-   * \a buffer is a user supplied byte array of length 'bufsize' (at
-   * least one byte long) to which the null terminated UTF-8 coded
-   * channel name will be placed.
+   * \a buffer is \ref kvBusParamLimits.
    */
-#define canCHANNELDATA_CUST_CHANNEL_NAME  39
+#define canCHANNELDATA_BUS_PARAM_LIMITS  45
+
+  /**
+   * This define is used in \ref canGetChannelData(), \a buffer
+   * mentioned below refers to this functions argument.
+   *
+   * \a buffer is \ref kvClockInfo.
+   */
+#define canCHANNELDATA_CLOCK_INFO  46
+
+/**
+ * This define is used in \ref canGetChannelData(), \a buffer
+ * mentioned below refers to this functions argument.
+ *
+ * \a buffer points to an array of two 64-bit unsigned integers that
+ * receives the capabilities value and capabilities mask of the CAN channel.
+ *
+ * The value specifies the capabilities of the CAN controller;
+ * this is a combination of the \ref canCHANNEL_CAP_EX_xxx flags.
+ * A one in a bit means that the capability is supported.
+ *
+ * The mask specifies which capabilities the corresponding device is guaranteed
+ * to support/not support at the moment. See \ref canCHANNEL_CAP_EX_xxx
+ * for info about flags.
+ *
+ * Contents depending on index:
+ *
+ * \li 0: value
+ * \li 1: mask
+ */
+#define canCHANNELDATA_CHANNEL_CAP_EX                47
 
  /** @} */
 
+/**
+ * Returned when using \ref canCHANNELDATA_CLOCK_INFO
+ *
+ * Returns clock characteristics for device.
+ *
+ * The device clock frequency can then be calculated as:
+ *
+ * double frequency = numerator/denominator * 10 ** power_of_ten;
+*/
+
+typedef struct kvClockInfo {
+  int version;      /**< The version of this struct, currently 1 */
+  int numerator;    /**< The numerator part of the device clock frequency. */
+  int denominator;  /**< The denominator part of the device clock frequency. */
+  int power_of_ten; /**< The power_of_ten part of the device clock frequency. */
+  int accuracy_ppm; /**< The accuracy (in ppm) of the device clock. */
+}kvClockInfo;
+
+/**
+* Returned when using \ref canCHANNELDATA_BUS_PARAM_LIMITS
+*
+* This struct shows the low level limits of the parameters.
+*
+* Note that seg1 = prop + phase1 and seg2 = phase2
+*/
+typedef struct kvBusParamLimits {
+  int version;   /**< The version of this struct, currently 1 */
+  int brp_size;  /**< Number of bits used to specify brp and d_brp */
+  int seg1_size; /**< Number of bits used to specify prop + phase1 and d_phase1. */
+  int seg2_size; /**< Number of bits used to specify phase2 and d_phase2. */
+  int sjw_size;  /**< Number of bits used to specify sjw and d_sjw */
+}kvBusParamLimits;
 
 /**
  * \name canCHANNEL_IS_xxx
@@ -2161,6 +2366,7 @@ canStatus CANLIBAPI canGetChannelData (int channel,
 #define canHWTYPE_MEMORATOR_V2       82  ///< Kvaser Memorator (2nd generation)
 #define canHWTYPE_CANLINHYBRID       84  ///< Kvaser Hybrid CAN/LIN
 #define canHWTYPE_DINRAIL            86  ///< Kvaser DIN Rail SE400S and variants
+#define canHWTYPE_U100               88  ///< Kvaser U100 and variants
 
 
 /** @} */
@@ -2171,27 +2377,35 @@ canStatus CANLIBAPI canGetChannelData (int channel,
  *
  * Channel capabilities.
  */
-#define canCHANNEL_CAP_EXTENDED_CAN      0x00000001L ///< Can use extended identifiers
-#define canCHANNEL_CAP_BUS_STATISTICS    0x00000002L ///< Can report busload etc
-#define canCHANNEL_CAP_ERROR_COUNTERS    0x00000004L ///< Can return error counters
+#define canCHANNEL_CAP_EXTENDED_CAN      0x00000001L ///< Used in \ref canGetChannelData(). Can use extended identifiers
+#define canCHANNEL_CAP_BUS_STATISTICS    0x00000002L ///< Used in \ref canGetChannelData(). Can report busload etc
+#define canCHANNEL_CAP_ERROR_COUNTERS    0x00000004L ///< Used in \ref canGetChannelData(). Can return error counters
 #define canCHANNEL_CAP_RESERVED_2        0x00000008L ///< Obsolete, only used by LAPcan driver
-#define canCHANNEL_CAP_GENERATE_ERROR    0x00000010L ///< Can send error frames
-#define canCHANNEL_CAP_GENERATE_OVERLOAD 0x00000020L ///< Can send CAN overload frame
-#define canCHANNEL_CAP_TXREQUEST         0x00000040L ///< Can report when a CAN messsage transmission is initiated
-#define canCHANNEL_CAP_TXACKNOWLEDGE     0x00000080L ///< Can report when a CAN messages has been transmitted
-#define canCHANNEL_CAP_VIRTUAL           0x00010000L ///< Virtual CAN channel
-#define canCHANNEL_CAP_SIMULATED         0x00020000L ///< Simulated CAN channel
+#define canCHANNEL_CAP_GENERATE_ERROR    0x00000010L ///< Used in \ref canGetChannelData(). Can send error frames
+#define canCHANNEL_CAP_GENERATE_OVERLOAD 0x00000020L ///< Used in \ref canGetChannelData(). Can send CAN overload frame
+#define canCHANNEL_CAP_TXREQUEST         0x00000040L ///< Used in \ref canGetChannelData(). Can report when a CAN message transmission is initiated
+#define canCHANNEL_CAP_TXACKNOWLEDGE     0x00000080L ///< Used in \ref canGetChannelData(). Can report when a CAN messages has been transmitted
+#define canCHANNEL_CAP_VIRTUAL           0x00010000L ///< Used in \ref canGetChannelData(). Virtual CAN channel
+#define canCHANNEL_CAP_SIMULATED         0x00020000L ///< Used in \ref canGetChannelData(). Simulated CAN channel
 #define canCHANNEL_CAP_RESERVED_1        0x00040000L ///< Obsolete, use canCHANNEL_CAP_REMOTE_ACCESS or \ref canGetChannelData() instead.
-#define canCHANNEL_CAP_CAN_FD            0x00080000L ///< CAN-FD ISO compliant channel
-#define canCHANNEL_CAP_CAN_FD_NONISO     0x00100000L ///< CAN-FD NON-ISO compliant channel
-#define canCHANNEL_CAP_SILENT_MODE       0x00200000L ///< Channel supports Silent mode
-#define canCHANNEL_CAP_SINGLE_SHOT       0x00400000L ///< Channel supports Single Shot messages
-#define canCHANNEL_CAP_LOGGER            0x00800000L ///< Channel has logger capabilities.
-#define canCHANNEL_CAP_REMOTE_ACCESS     0x01000000L ///< Channel has remote capabilities
-#define canCHANNEL_CAP_SCRIPT            0x02000000L ///< Channel has script capabilities.
-#define canCHANNEL_CAP_LIN_HYBRID        0x04000000L ///< Channel has LIN capabilities.
-#define canCHANNEL_CAP_IO_API            0x08000000L ///< Channel has IO API capabilities.
-#define canCHANNEL_CAP_DIAGNOSTICS       0x10000000L ///< Channel has diagnostic capabilities.
+#define canCHANNEL_CAP_CAN_FD            0x00080000L ///< Used in \ref canGetChannelData(). CAN-FD ISO compliant channel
+#define canCHANNEL_CAP_CAN_FD_NONISO     0x00100000L ///< Used in \ref canGetChannelData(). CAN-FD NON-ISO compliant channel
+#define canCHANNEL_CAP_SILENT_MODE       0x00200000L ///< Used in \ref canGetChannelData(). Channel supports Silent mode
+#define canCHANNEL_CAP_SINGLE_SHOT       0x00400000L ///< Used in \ref canGetChannelData(). Channel supports Single Shot messages
+#define canCHANNEL_CAP_LOGGER            0x00800000L ///< Used in \ref canGetChannelData(). Channel has logger capabilities.
+#define canCHANNEL_CAP_REMOTE_ACCESS     0x01000000L ///< Used in \ref canGetChannelData(). Channel has remote capabilities
+#define canCHANNEL_CAP_SCRIPT            0x02000000L ///< Used in \ref canGetChannelData(). Channel has script capabilities.
+#define canCHANNEL_CAP_LIN_HYBRID        0x04000000L ///< Used in \ref canGetChannelData(). Channel has LIN capabilities.
+#define canCHANNEL_CAP_IO_API            0x08000000L ///< Used in \ref canGetChannelData(). Channel has IO API capabilities.
+#define canCHANNEL_CAP_DIAGNOSTICS       0x10000000L ///< Used in \ref canGetChannelData(). Channel has diagnostic capabilities.
+
+/**
+ * \name canCHANNEL_CAP_EX_xxx
+ * \anchor canCHANNEL_CAP_EX_xxx
+ *
+ * Channel extended capabilities.
+ */
+#define canCHANNEL_CAP_EX_BUSPARAMS_TQ      0x0000000000000001L ///< Used in \ref canGetChannelData() with \ref canCHANNELDATA_CHANNEL_CAP_EX as the item argument. Channel has BusParams TQ API
 
 /**
  * \name canCHANNEL_OPMODE_xxx
@@ -2253,7 +2467,7 @@ canStatus CANLIBAPI canGetChannelData (int channel,
    * message with \ref canWrite() and don't specify \ref canMSG_EXT nor \ref
    * canMSG_STD, \ref canMSG_EXT will be assumed and the most significant bits
    * of the identifier will be cut off. The contents of \a buf and \a buflen
-   * are ignored. \ref canRead() et al will set \ref canMSG_EXT and/or \ref
+   * is ignored. \ref canRead() et al will set \ref canMSG_EXT and/or \ref
    * canMSG_STD as usual and are not affected by this call.
    *
    * \note Not implemented in linux.
@@ -2283,7 +2497,7 @@ canStatus CANLIBAPI canGetChannelData (int channel,
    * functions arguments.
    *
    * Tells CANlib to clear the CAN error counters. The contents of \a buf and \a
-   * buflen are ignored. CAN error counters on device side are NOT updated.
+   * buflen is ignored. CAN error counters on device side are NOT updated.
    *
    * \note It is recommended to use \ref canIOCTL_RESET_OVERRUN_COUNT to
    * reset overrun status.
@@ -2362,7 +2576,7 @@ canStatus CANLIBAPI canGetChannelData (int channel,
    * functions arguments.
    *
    * Discard the current contents of the RX queue. The values of \a buf and \a
-   * buflen are ignored.
+   * buflen is ignored.
    *
    * \note This is the same thing as calling \ref canFlushReceiveQueue()
    */
@@ -2373,7 +2587,7 @@ canStatus CANLIBAPI canGetChannelData (int channel,
    * functions arguments.
    *
    * Discard the current contents of the TX queue. The values of \a buf and \a
-   * buflen are ignored.
+   * buflen is ignored.
    *
    * \note This is the same thing as calling \ref canFlushTransmitQueue().
    */
@@ -2410,7 +2624,7 @@ canStatus CANLIBAPI canGetChannelData (int channel,
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
    * functions argument.
    *
-   * \a buf points at a \c DWORD which receives a Windows Event handle which can
+   * \a buf points at a \c HANDLE which receives a Windows Event handle which can
    * be passed to the Win32 API \c WaitForSingleObject. The event is signaled
    * when "something" (typically that a CAN message has been received or
    * transmitted) happens in the driver.
@@ -2501,8 +2715,8 @@ canStatus CANLIBAPI canGetChannelData (int channel,
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
    * functions argument.
    *
-   * Connects the handle to the virtual bus number (0..31) which the \a buf
-   * points to.
+   * Connects the handle to a virtual bus.
+   * \a buf points to a unsigned int containing the virtual bus number (0..31).
    *
    * \note Not implemented in linux.
    */
@@ -2512,8 +2726,8 @@ canStatus CANLIBAPI canGetChannelData (int channel,
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
    * functions argument.
    *
-   * Disconnects the handle from the virtual bus number (0..31) which the \a buf
-   * points to.
+   * Disconnects the handle from a virtual bus.
+   * \a buf points to a unsigned int containing the virtual bus number (0..31).
    *
    * \note Not implemented in linux.
    */
@@ -2753,7 +2967,7 @@ canStatus CANLIBAPI canGetChannelData (int channel,
    * Some hardware have a bitrate limit, which must be met when using any of \a canSetBusParams(),
    * \a canSetBusParamsC200() and \a canSetBusParamsFd() functions.
    * The bitrate limit can be overridden with this IOCTL.
-   * \a buf points to a \c long value that contains a user defined bitrate.
+   * \a buf points to a \c unsigned long value that contains a user defined bitrate.
    * A value of 0 means that the device should use its own default bitrate limit.<br>
    * To find out which devices that have a bitrate limit, see \ref canCHANNELDATA_MAX_BITRATE.
    */
@@ -2809,7 +3023,8 @@ canStatus CANLIBAPI canGetChannelData (int channel,
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
    * functions argument.
    *
-   * This ioctl resets overrun count and flags, \sa \ref canReadStatus \sa \ref canGetBusStatistics
+   * This ioctl resets overrun count and flags, \sa \ref canReadStatus \sa \ref canGetBusStatistics.
+   * The contents of \a buf and \a buflen is ignored.
    */
 #  define canIOCTL_RESET_OVERRUN_COUNT                          44
 
@@ -2833,7 +3048,7 @@ typedef struct {
 /**
  * \ingroup Notification and Waiting
  *
- * \source_cs       <b>static Canlib.canStatus canWaitForEvent(int hnd, ulong timeout);</b>
+ * \source_cs       <b>static Canlib.canStatus canWaitForEvent(CanHandle hnd, Int64 timeout);</b>
  *
  * \source_delphi   <b>function canWaitForEvent(hnd: canHandle; timeout: Cardinal): canStatus;     </b>
  * \source_end
@@ -2864,7 +3079,7 @@ canStatus CANLIBAPI canWaitForEvent (const CanHandle hnd, DWORD timeout);
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canSetBusParamsC200(int hnd, byte btr0, byte btr1);</b>
+ * \source_cs       <b>static Canlib.canStatus canSetBusParamsC200(CanHandle hnd, byte btr0, byte btr1);</b>
  *
  * \source_delphi   <b>function canSetBusParamsC200(hnd: canHandle; btr0, btr1: byte): canStatus;     </b>
  * \source_end
@@ -2899,6 +3114,7 @@ canStatus CANLIBAPI canWaitForEvent (const CanHandle hnd, DWORD timeout);
  *
  *
  * \sa \ref section_user_guide_init_bit_rate_can, \ref canSetBusParams()
+ * \sa \ref canSetBusParamsTq()
  */
 canStatus CANLIBAPI canSetBusParamsC200 (const CanHandle hnd, unsigned char btr0, unsigned char btr1);
 
@@ -2907,7 +3123,7 @@ canStatus CANLIBAPI canSetBusParamsC200 (const CanHandle hnd, unsigned char btr0
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canSetDriverMode(int hnd, int lineMode, int resNet);</b>
+ * \source_cs       <b>static Canlib.canStatus canSetDriverMode(CanHandle hnd, Int32 lineMode, Int32 resNet);</b>
  *
  * \source_delphi   <b>function canSetDriverMode(hnd: canHandle; lineMode, resNet: Integer): canStatus;     </b>
  * \source_end
@@ -2944,7 +3160,7 @@ canStatus CANLIBAPI canSetDriverMode (const CanHandle hnd, int lineMode, int res
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canGetDriverMode(int hnd, out int lineMode, out int resNet);</b>
+ * \source_cs       <b>static Canlib.canStatus canGetDriverMode(CanHandle hnd, out Int32 lineMode, out Int32 resNet);</b>
  *
  * \source_delphi   <b>function canGetDriverMode(hnd: canHandle; var lineMode: Integer; var resNet: Integer): canStatus;     </b>
  * \source_end
@@ -3042,7 +3258,7 @@ canStatus CANLIBAPI canGetDriverMode (const CanHandle hnd, int *lineMode, int *r
 /**
  * \ingroup can_general
  *
- * \source_cs       <b>static int canGetVersionEx(int itemCode);</b>
+ * \source_cs       <b>static Int32 canGetVersionEx(Int32 itemCode);</b>
  *
  * \source_delphi   <b>function canGetVersionEx(itemCode: Cardinal): Cardinal;     </b>
  * \source_end
@@ -3106,7 +3322,7 @@ canStatus CANLIBAPI canParamCommitChanges (void);
 /**
  * \ingroup NamedParameterSettings
  *
- * \source_cs       <b>static Canlib.canStatus canParamDeleteEntry(int index);</b>
+ * \source_cs       <b>static Canlib.canStatus canParamDeleteEntry(Int32 index);</b>
  *
  * \source_delphi   <b>function canParamDeleteEntry(index: Integer): canStatus;      </b>
  * \source_end
@@ -3132,7 +3348,7 @@ canStatus CANLIBAPI canParamDeleteEntry (int index);
 /**
  * \ingroup NamedParameterSettings
  *
- * \source_cs       <b>static int canParamCreateNewEntry();</b>
+ * \source_cs       <b>static Int32 canParamCreateNewEntry();</b>
  *
  * \source_delphi   <b>function canParamCreateNewEntry(): canStatus;     </b>
  * \source_end
@@ -3156,7 +3372,7 @@ canStatus CANLIBAPI canParamCreateNewEntry (void);
 /**
  * \ingroup NamedParameterSettings
  *
- * \source_cs       <b>static Canlib.canStatus canParamSwapEntries(int index1, int index2);</b>
+ * \source_cs       <b>static Canlib.canStatus canParamSwapEntries(Int32 index1, Int32 index2);</b>
  *
  * \source_delphi   <b>function canParamSwapEntries(index1, index2: Integer): canStatus;      </b>
  * \source_end
@@ -3185,9 +3401,9 @@ canStatus CANLIBAPI canParamSwapEntries (int index1, int index2);
 /**
  * \ingroup NamedParameterSettings
  *
- * \source_cs       <b>static Canlib.canStatus canParamGetName(int index, ref string str_buf);</b>
+ * \source_cs       <b>static Canlib.canStatus canParamGetName(Int32 index, ref String str_buf);</b>
  *
- * \source_delphi   <b>function canParamGetName(index: Integer; buffer: PChar; maxlen: Integer): canStatus;      </b>
+ * \source_delphi   <b>function canParamGetName(index: Integer; buffer: PAnsiChar; maxlen: Integer): canStatus;      </b>
  * \source_end
  *
  * This function returns the name of a given entry in the list of
@@ -3215,7 +3431,7 @@ canStatus CANLIBAPI canParamGetName (int index, char *buffer, int maxlen);
 /**
  * \ingroup NamedParameterSettings
  *
- * \source_cs       <b>static int canParamGetChannelNumber(int index);</b>
+ * \source_cs       <b>static Int32 canParamGetChannelNumber(Int32 index);</b>
  *
  * \source_delphi   <b>function canParamGetChannelNumber(index: Integer): canStatus;     </b>
  * \source_end
@@ -3237,7 +3453,7 @@ canStatus CANLIBAPI canParamGetChannelNumber (int index);
 /**
  * \ingroup NamedParameterSettings
  *
- * \source_cs       <b>static Canlib.canStatus canParamGetBusParams(int index, out int bitrate, out int tseg1, out int tseg2, out int sjw, out int noSamp);</b>
+ * \source_cs       <b>static Canlib.canStatus canParamGetBusParams(Int32 index, out Int32 bitrate, out Int32 tseg1, out Int32 tseg2, out Int32 sjw, out Int32 noSamp);</b>
  *
  * \source_delphi   <b>function canParamGetBusParams(index: Integer; var bitrate: Longint; var tseg1: Cardinal; var tseg2: Cardinal; var sjw: Cardinal; var nosamp: Cardinal): canStatus;    </b>
  * \source_end
@@ -3272,9 +3488,9 @@ canStatus CANLIBAPI canParamGetBusParams (int index,
 /**
  * \ingroup NamedParameterSettings
  *
- * \source_cs       <b>static Canlib.canStatus canParamSetName(int index, string str_buf);</b>
+ * \source_cs       <b>static Canlib.canStatus canParamSetName(Int32 index, String str_buf);</b>
  *
- * \source_delphi   <b>function canParamSetName(index: Integer; buffer: PChar): canStatus;    </b>
+ * \source_delphi   <b>function canParamSetName(index: Integer; buffer: PAnsiChar): canStatus;    </b>
  * \source_end
  *
  * This function sets or changes the name of a named parameter.
@@ -3296,7 +3512,7 @@ canStatus CANLIBAPI canParamSetName (int index, const char *buffer);
 /**
  * \ingroup NamedParameterSettings
  *
- * \source_cs       <b>static Canlib.canStatus canParamSetChannelNumber(int index, int channel);</b>
+ * \source_cs       <b>static Canlib.canStatus canParamSetChannelNumber(Int32 index, Int32 channel);</b>
  *
  * \source_delphi   <b>function canParamSetChannelNumber(index, channel: Integer): canStatus;     </b>
  * \source_end
@@ -3319,7 +3535,7 @@ canStatus CANLIBAPI canParamSetChannelNumber (int index, int channel);
 /**
  * \ingroup NamedParameterSettings
  *
- * \source_cs       <b>static Canlib.canStatus canParamSetBusParams(int index, int bitrate, int tseg1, int tseg2, int sjw, int noSamp);</b>
+ * \source_cs       <b>static Canlib.canStatus canParamSetBusParams(Int32 index, Int32 bitrate, Int32 tseg1, Int32 tseg2, Int32 sjw, Int32 noSamp);</b>
  *
  * \source_delphi   <b>function canParamSetBusParams(index: Integer; bitrate: Longint; tseq1, tseq2, sjw, noSamp: Cardinal): canStatus;     </b>
  * \source_end
@@ -3358,9 +3574,9 @@ canStatus CANLIBAPI canParamSetBusParams (int index,
 /**
  * \ingroup NamedParameterSettings
  *
- * \source_cs       <b>static Canlib.canStatus canParamFindByName(string str_name);</b>
+ * \source_cs       <b>static Canlib.canStatus canParamFindByName(String str_name);</b>
  *
- * \source_delphi   <b>function canParamFindByName(const Name: PChar): canStatus;     </b>
+ * \source_delphi   <b>function canParamFindByName(const Name: PAnsiChar): canStatus;     </b>
  * \source_end
  *
  * This function returns the index of the parameter setting with the
@@ -3378,7 +3594,7 @@ canStatus CANLIBAPI canParamFindByName (const char *name);
 /**
  * \ingroup ObjectBuffers
  *
- * \source_cs       <b>static Canlib.canStatus canObjBufFreeAll(int handle);</b>
+ * \source_cs       <b>static Canlib.canStatus canObjBufFreeAll(CanHandle hnd);</b>
  *
  * \source_delphi   <b>function canObjBufFreeAll(handle: canHandle): canStatus;     </b>
  * \source_end
@@ -3399,7 +3615,7 @@ canStatus CANLIBAPI canObjBufFreeAll (const CanHandle hnd);
 /**
  * \ingroup ObjectBuffers
  *
- * \source_cs       <b>static Canlib.canStatus canObjBufAllocate(int handle, int type);</b>
+ * \source_cs       <b>static Canlib.canStatus canObjBufAllocate(CanHandle hnd, Int32 type);</b>
  *
  * \source_delphi   <b>function canObjBufAllocate(handle: canHandle; tp: Integer): canStatus;     </b>
  * \source_end
@@ -3433,7 +3649,7 @@ canStatus CANLIBAPI canObjBufAllocate (const CanHandle hnd, int type);
 /**
  * \ingroup ObjectBuffers
  *
- * \source_cs       <b>static Canlib.canStatus canObjBufFree(int handle, int idx);</b>
+ * \source_cs       <b>static Canlib.canStatus canObjBufFree(CanHandle hnd, Int32 idx);</b>
  *
  * \source_delphi   <b>function canObjBufFree(handle: canHandle; idx: Integer): canStatus;      </b>
  * \source_end
@@ -3457,7 +3673,7 @@ canStatus CANLIBAPI canObjBufFree (const CanHandle hnd, int idx);
 /**
  * \ingroup ObjectBuffers
  *
- * \source_cs       <b>static Canlib.canStatus canObjBufWrite(int handle, int idx, int id, byte[] msg, int dlc, int flags);</b>
+ * \source_cs       <b>static Canlib.canStatus canObjBufWrite(CanHandle hnd, Int32 idx, Int32 id, Byte[] msg, Int32 dlc, Int32 flags);</b>
  *
  * \source_delphi   <b>function canObjBufWrite(handle: canHandle; idx, id: Integer; var msg; dlc, flags: cardinal): canStatus;     </b>
  * \source_end
@@ -3489,7 +3705,7 @@ canStatus CANLIBAPI canObjBufWrite (const CanHandle hnd,
 /**
  * \ingroup ObjectBuffers
  *
- * \source_cs       <b>static Canlib.canStatus canObjBufSetFilter(int handle, int idx, int code, int mask);</b>
+ * \source_cs       <b>static Canlib.canStatus canObjBufSetFilter(CanHandle hnd, Int32 idx, Int32 code, Int32 mask);</b>
  *
  * \source_delphi   <b>function canObjBufSetFilter(handle: canHandle; idx: Integer; code, mask: Cardinal): canStatus;      </b>
  * \source_end
@@ -3519,7 +3735,7 @@ canStatus CANLIBAPI canObjBufSetFilter (const CanHandle hnd,
 /**
  * \ingroup ObjectBuffers
  *
- * \source_cs       <b>static Canlib.canStatus canObjBufSetFlags(int handle, int idx, int flags);</b>
+ * \source_cs       <b>static Canlib.canStatus canObjBufSetFlags(CanHandle hnd, Int32 idx, Int32 flags);</b>
  *
  * \source_delphi   <b>function canObjBufSetFlags(handle: canHandle; idx: Integer; flags: Cardinal): canStatus;     </b>
  * \source_end
@@ -3563,7 +3779,7 @@ canStatus CANLIBAPI canObjBufSetFlags (const CanHandle hnd,
 /**
  * \ingroup ObjectBuffers
  *
- * \source_cs       <b>static Canlib.canStatus canObjBufSetPeriod(int hnd, int idx, int period);</b>
+ * \source_cs       <b>static Canlib.canStatus canObjBufSetPeriod(CanHandle hnd, Int32 idx, Int32 period);</b>
  *
  * \source_delphi   <b>function canObjBufSetPeriod(handle: canHandle; idx: Integer; period: Cardinal): canStatus;     </b>
  * \source_end
@@ -3587,7 +3803,7 @@ canStatus CANLIBAPI canObjBufSetPeriod (const CanHandle hnd,
 /**
  * \ingroup ObjectBuffers
  *
- * \source_cs       <b>static Canlib.canStatus canObjBufSetMsgCount(int hnd, int idx, int count);</b>
+ * \source_cs       <b>static Canlib.canStatus canObjBufSetMsgCount(CanHandle hnd, Int32 idx, Int32 count);</b>
  *
  * \source_delphi   <b>function canObjBufSetMsgCount(handle: canHandle; idx: Integer; count: Cardinal): canStatus;     </b>
  * \source_end
@@ -3611,7 +3827,7 @@ canStatus CANLIBAPI canObjBufSetMsgCount (const CanHandle hnd,
 /**
  * \ingroup ObjectBuffers
  *
- * \source_cs       <b>static Canlib.canStatus canObjBufEnable(int handle, int idx);</b>
+ * \source_cs       <b>static Canlib.canStatus canObjBufEnable(CanHandle hnd, Int32 idx);</b>
  *
  * \source_delphi   <b>function canObjBufEnable(handle: canHandle; idx: Integer): canStatus;     </b>
  * \source_end
@@ -3632,7 +3848,7 @@ canStatus CANLIBAPI canObjBufEnable (const CanHandle hnd, int idx);
 /**
  * \ingroup ObjectBuffers
  *
- * \source_cs       <b>static Canlib.canStatus canObjBufDisable(int handle, int idx);</b>
+ * \source_cs       <b>static Canlib.canStatus canObjBufDisable(CanHandle hnd, Int32 idx);</b>
  *
  * \source_delphi   <b>function canObjBufDisable(handle: canHandle; idx: Integer): canStatus;     </b>
  * \source_end
@@ -3653,7 +3869,7 @@ canStatus CANLIBAPI canObjBufDisable (const CanHandle hnd, int idx);
 /**
  * \ingroup ObjectBuffers
  *
- * \source_cs       <b>static Canlib.canStatus canObjBufSendBurst(int hnd, int idx, int burstlen);</b>
+ * \source_cs       <b>static Canlib.canStatus canObjBufSendBurst(CanHandle hnd, Int32 idx, Int32 burstlen);</b>
  *
  * \source_delphi   <b>function canObjBufSendBurst(handle: canHandle; idx: Integer; burstLen: Cardinal): canStatus;      </b>
  * \source_end
@@ -3707,7 +3923,7 @@ canStatus CANLIBAPI canObjBufSendBurst (const CanHandle hnd,
 /**
  * \ingroup can_general
  *
- * \source_cs       <b>static bool canProbeVersion(int hnd, int major, int minor, int oem_id, int flags);</b>
+ * \source_cs       <b>static bool canProbeVersion(CanHandle hnd, Int32 major, Int32 minor, Int32 oem_id, Int32 flags);</b>
  *
  * \source_delphi   <b>function canProbeVersion(handle: canHandle; major, minor, oem_id: Integer; flags: Cardinal): Boolean;     </b>
  * \source_end
@@ -3749,7 +3965,7 @@ BOOL CANLIBAPI canProbeVersion (const CanHandle hnd,
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canResetBus(int handle);</b>
+ * \source_cs       <b>static Canlib.canStatus canResetBus(CanHandle handle);</b>
  *
  * \source_delphi   <b>function canResetBus(handle: canHandle): canStatus;     </b>
  * \source_end
@@ -3773,7 +3989,7 @@ canStatus CANLIBAPI canResetBus (const CanHandle hnd);
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canWriteWait(int handle, int id, byte[] msg, int dlc, int flag, long timeout);</b>
+ * \source_cs       <b>static Canlib.canStatus canWriteWait(CanHandle handle, Int32 id, Byte[] msg, Int32 dlc, Int32 flag, Int64 timeout);</b>
  *
  * \source_delphi   <b>function canWriteWait(handle: canHandle; id: Longint; var msg; dlc, flag, timeout: Cardinal): canStatus;     </b>
  * \source_end
@@ -3850,7 +4066,7 @@ canStatus CANLIBAPI canUnloadLibrary (void);
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canSetAcceptanceFilter(int hnd, int code, int mask, int is_extended);</b>
+ * \source_cs       <b>static Canlib.canStatus canSetAcceptanceFilter(CanHandle hnd, Int32 code, Int32 mask, Int32 is_extended);</b>
  *
  * \source_delphi   <b>function canSetAcceptanceFilter(handle: canHandle; code, mask: Cardinal; is_extended: Integer): canStatus;     </b>
  * \source_end
@@ -3865,8 +4081,8 @@ canStatus CANLIBAPI canUnloadLibrary (void);
  *     relevant"
  * \li A relevant binary 1 in a code means "the corresponding bit in the
  *     identifier must be 1"
- * \li A relevant binary 1 in a code means "the corresponding bit in the
- *     identifier must be 1"
+ * \li A relevant binary 0 in a code means "the corresponding bit in the
+ *     identifier must be 0"
  *
  * In other words, the message is accepted if ((code XOR id) AND mask) == 0.
  *
@@ -3888,6 +4104,9 @@ canStatus CANLIBAPI canUnloadLibrary (void);
  *
  * \note You can set the extended code and mask only on CAN boards that support
  *       extended identifiers.
+ *
+ * \note Acceptance filters for 11-bit and 29-bit (ext) are independent, meaning 11-bit filters
+ *  will not affect 29-bit can frames and vice versa.
  *
  * \note Not all CAN boards support different masks for standard and
  *       extended CAN identifiers.
@@ -3912,7 +4131,7 @@ canStatus CANLIBAPI canSetAcceptanceFilter (const CanHandle hnd,
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canFlushReceiveQueue(int hnd);</b>
+ * \source_cs       <b>static Canlib.canStatus canFlushReceiveQueue(CanHandle hnd);</b>
  *
  * \source_delphi   <b>function canFlushReceiveQueue(handle: canHandle): canStatus;     </b>
  * \source_end
@@ -3937,7 +4156,7 @@ canStatus CANLIBAPI canFlushReceiveQueue (const CanHandle hnd);
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canFlushTransmitQueue(int hnd);</b>
+ * \source_cs       <b>static Canlib.canStatus canFlushTransmitQueue(CanHandle hnd);</b>
  *
  * \source_delphi   <b>function canFlushTransmitQueue(handle: canHandle): canStatus;     </b>
  * \source_end
@@ -3963,9 +4182,9 @@ canStatus CANLIBAPI canFlushTransmitQueue (const CanHandle hnd);
 /**
  * \ingroup can_general
  *
- * \source_cs       <b>static Canlib.canStatus kvGetApplicationMapping(int busType, string appName, int appChannel, out int resultingChannel);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvGetApplicationMapping(Int32 busType, String appName, Int32 appChannel, out Int32 resultingChannel);</b>
  *
- * \source_delphi   <b>function kvGetApplicationMapping(busType: Integer; appName: PChar; appChannel: Integer; var resultingChannel: Integer): canStatus;     </b>
+ * \source_delphi   <b>function kvGetApplicationMapping(busType: Integer; appName: PAnsiChar; appChannel: Integer; var resultingChannel: Integer): canStatus;     </b>
  * \source_end
  *
  * \note The \ref kvGetApplicationMapping function is presently not implemented.
@@ -3987,7 +4206,7 @@ canStatus CANLIBAPI kvGetApplicationMapping (int busType,
 /**
  * \ingroup can_general
  *
- * \source_cs       <b>static Canlib.canStatus kvBeep(int hnd, int freq, int duration);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvBeep(CanHandle hnd, Int32 freq, Int32 duration);</b>
  *
  * \source_delphi   <b>function kvBeep(handle: canHandle; freq: Integer; duration: Cardinal): canStatus;     </b>
  * \source_end
@@ -4012,7 +4231,7 @@ canStatus CANLIBAPI kvBeep (const CanHandle hnd,
 /**
  * \ingroup can_general
  *
- * \source_cs       <b>static Canlib.canStatus kvSelfTest(int hnd, out int presults);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvSelfTest(CanHandle hnd, out Int32 presults);</b>
  *
  * \source_delphi   <b>function kvSelfTest(handle: canHandle; var presults: Cardinal): canStatus;     </b>
  * \source_end
@@ -4070,7 +4289,7 @@ canStatus CANLIBAPI kvSelfTest (const CanHandle hnd, unsigned long *presults);
 /**
  * \ingroup can_general
  *
- * \source_cs       <b>static Canlib.canStatus kvFlashLeds(int hnd, int action, int timeout);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvFlashLeds(CanHandle hnd, Int32 action, Int32 timeout);</b>
  *
  * \source_delphi   <b>function kvFlashLeds(handle: canHandle; action: Integer; timeout: Integer): canStatus;     </b>
  * \source_end
@@ -4093,7 +4312,7 @@ canStatus CANLIBAPI kvFlashLeds (const CanHandle hnd, int action, int timeout);
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canRequestChipStatus(int hnd);</b>
+ * \source_cs       <b>static Canlib.canStatus canRequestChipStatus(CanHandle hnd);</b>
  *
  * \source_delphi   <b>function canRequestChipStatus(handle: canHandle): canStatus;     </b>
  * \source_end
@@ -4121,7 +4340,7 @@ canStatus CANLIBAPI canRequestChipStatus (const CanHandle hnd);
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canRequestBusStatistics(int hnd);</b>
+ * \source_cs       <b>static Canlib.canStatus canRequestBusStatistics(CanHandle hnd);</b>
  *
  * \source_delphi   <b>function canRequestBusStatistics(handle: canHandle): canStatus;     </b>
  * \source_end
@@ -4169,7 +4388,7 @@ typedef struct canBusStatistics_s {
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canGetBusStatistics(int hnd, out Canlib.canBusStatistics stat);</b>
+ * \source_cs       <b>static Canlib.canStatus canGetBusStatistics(CanHandle hnd, out Canlib.canBusStatistics stat);</b>
  *
  * \source_delphi   <b>function canGetBusStatistics(handle: canHandle; var stat: canBusStatistics; bufsiz: size_t): canStatus;     </b>
  * \source_end
@@ -4195,7 +4414,7 @@ canStatus CANLIBAPI canGetBusStatistics (const CanHandle hnd,
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canSetBitrate(int hnd, int bitrate);</b>
+ * \source_cs       <b>static Canlib.canStatus canSetBitrate(CanHandle hnd, Int32 bitrate);</b>
  *
  * \source_delphi   <b>function canSetBitrate(handle: canHandle; bitrate: Integer): canStatus;     </b>
  * \source_end
@@ -4217,7 +4436,7 @@ canStatus CANLIBAPI canSetBitrate (const CanHandle hnd, int bitrate);
 /**
  * \ingroup can_general
  *
- * \source_cs       <b>static Canlib.canStatus kvAnnounceIdentity(int hnd, object buffer);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvAnnounceIdentity(CanHandle hnd, Object buffer);</b>
  *
  * \source_delphi   <b>function kvAnnounceIdentity(handle: canHandle; var buf; bufsiz: size_t): canStatus;     </b>
  * \source_end
@@ -4237,9 +4456,9 @@ canStatus CANLIBAPI kvAnnounceIdentity (const CanHandle hnd,
 /**
  * \ingroup can_general
  *
- * \source_cs       <b>static Canlib.canStatus kvAnnounceIdentity(int hnd, int type, object buffer);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvAnnounceIdentityEx(CanHandle hnd, Int32 type, Byte[] data);</b>
  *
- * \source_delphi   <b>function kvAnnounceIdentity(handle: canHandle; tp: Integer; var buf; bufsiz: size_t): canStatus;     </b>
+ * \source_delphi   <b>function kvAnnounceIdentityEx(handle: canHandle; tp: Integer; var buf; bufsiz: size_t): canStatus;     </b>
  *
  * \source_end
  * The \ref kvAnnounceIdentityEx function is used by certain OEM applications.
@@ -4260,7 +4479,7 @@ canStatus CANLIBAPI kvAnnounceIdentityEx (const CanHandle hnd,
 /**
  * \ingroup CAN
  *
- * \source_cs       <b>static Canlib.canStatus canGetHandleData(int hnd, int item, out object buffer);</b>
+ * \source_cs       <b>static Canlib.canStatus canGetHandleData(CanHandle hnd, Int32 item, out object buffer);</b>
  *
  * \source_delphi   <b>function canGetHandleData(handle: canHandle; item: Integer; var Buffer; bufsize: size_t): canStatus;     </b>
  * \source_end
@@ -4275,6 +4494,7 @@ canStatus CANLIBAPI kvAnnounceIdentityEx (const CanHandle hnd,
  * \return \ref canOK (zero) if success
  * \return \ref canERR_xxx (negative) if failure
  *
+ * \sa \ref section_user_guide_unique_device
  * \sa \ref canGetChannelData()
  */
 canStatus CANLIBAPI canGetHandleData (const CanHandle hnd,
@@ -4302,7 +4522,7 @@ typedef struct kvTimeDomainData_s {
 /**
  * \ingroup TimeDomainHandling
  *
- * \source_cs       <b>static Canlib.canStatus kvTimeDomainCreate(out object domain);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvTimeDomainCreate(out object domain);</b>
  *
  * \source_delphi   <b>function kvTimeDomainCreate(var domain: kvTimeDomain): kvStatus;     </b>
  * \source_end
@@ -4332,7 +4552,7 @@ kvStatus CANLIBAPI kvTimeDomainCreate (kvTimeDomain *domain);
 /**
  * \ingroup TimeDomainHandling
  *
- * \source_cs       <b>static Canlib.canStatus kvTimeDomainDelete(object domain);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvTimeDomainDelete(object domain);</b>
  *
  * \source_delphi   <b>function kvTimeDomainDelete(domain: kvTimeDomain): kvStatus;     </b>
  * \source_end
@@ -4356,7 +4576,7 @@ kvStatus CANLIBAPI kvTimeDomainDelete (kvTimeDomain domain);
 /**
  * \ingroup TimeDomainHandling
  *
- * \source_cs       <b>static Canlib.canStatus kvTimeDomainResetTime(object domain);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvTimeDomainResetTime(object domain);</b>
  *
  * \source_delphi   <b>function kvTimeDomainResetTime(domain: kvTimeDomain): kvStatus;     </b>
  * \source_end
@@ -4383,7 +4603,7 @@ kvStatus CANLIBAPI kvTimeDomainResetTime (kvTimeDomain domain);
 /**
  * \ingroup TimeDomainHandling
  *
- * \source_cs       <b>static Canlib.canStatus kvTimeDomainGetData(object domain, Canlib.kvTimeDomainData data);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvTimeDomainGetData(object domain, Canlib.kvTimeDomainData data);</b>
  *
  * \source_delphi   <b>function kvTimeDomainGetData(domain: kvTimeDomain; var data: kvTimeDomainData; bufsiz: size_t): kvStatus;     </b>
  * \source_end
@@ -4411,7 +4631,7 @@ kvStatus CANLIBAPI kvTimeDomainGetData (kvTimeDomain domain,
 /**
  * \ingroup TimeDomainHandling
  *
- * \source_cs       <b>static Canlib.canStatus kvTimeDomainAddHandle(object domain, int handle);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvTimeDomainAddHandle(object domain, CanHandle hnd);</b>
  *
  * \source_delphi   <b>function kvTimeDomainAddHandle(domain: kvTimeDomain; handle: canHandle): kvStatus;     </b>
  * \source_end
@@ -4436,7 +4656,7 @@ kvStatus CANLIBAPI kvTimeDomainAddHandle(kvTimeDomain domain,
 /**
  * \ingroup TimeDomainHandling
  *
- * \source_cs       <b>static Canlib.canStatus kvTimeDomainRemoveHandle(object domain, int handle);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvTimeDomainRemoveHandle(object domain, CanHandle hnd);</b>
  *
  * \source_delphi   <b>function kvTimeDomainRemoveHandle(domain: kvTimeDomain; handle: canHandle): kvStatus;     </b>
  * \source_end
@@ -4474,7 +4694,7 @@ typedef void (CANLIBAPI *kvCallback_t) (CanHandle hnd, void* context, unsigned i
 /**
  * \ingroup can_general
  *
- * \source_cs       <b>static Canlib.canStatus kvSetNotifyCallback(int hnd, Canlib.kvCallbackDelegate callback, IntPtr context, uint notifyFlags);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvSetNotifyCallback(CanHandle hnd, Canlib.kvCallbackDelegate callback, IntPtr context, Int32 notifyFlags);</b>
  *
  * \source_delphi   <b>function kvSetNotifyCallback(handle: canHandle; callback: kvCallback_t; context: Pointer; notifyFlags: Cardinal): canStatus;     </b>
  * \source_end
@@ -4616,9 +4836,9 @@ kvStatus CANLIBAPI kvSetNotifyCallback (const CanHandle hnd,
 /**
  * \ingroup can_general
  *
- * \source_cs       <b>static Canlib.canStatus kvGetSupportedInterfaceInfo(int index, out string hwName, out int hwType, out int hwBusType);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvGetSupportedInterfaceInfo(Int32 index, out String hwName, out Int32 hwType, out Int32 hwBusType);</b>
  *
- * \source_delphi   <b>function kvGetSupportedInterfaceInfo(index: Integer; hwName: PChar; nameLen: size_t; var hwType: Integer; var hwBusType: Integer): kvStatus;     </b>
+ * \source_delphi   <b>function kvGetSupportedInterfaceInfo(index: Integer; hwName: PAnsiChar; nameLen: size_t; var hwType: Integer; var hwBusType: Integer): kvStatus;     </b>
  * \source_end
  *
  * The \ref kvGetSupportedInterfaceInfo function returns information about the
@@ -4674,7 +4894,7 @@ kvStatus CANLIBAPI kvGetSupportedInterfaceInfo (int index,
 /**
  * \ingroup can_general
  *
- * \source_cs       <b>static Canlib.canStatus kvReadDeviceCustomerData(int hnd, int userNumber, int itemNumber, byte[] data, int bufsize);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvReadDeviceCustomerData(CanHandle hnd, Int32 userNumber, Int32 itemNumber, Byte[] data, Int32 bufsize);</b>
  *
  * \source_delphi   <b>function kvReadDeviceCustomerData(hnd: canHandle; userNumber, itemNumber: Integer; var data; bufsize: size_t): kvStatus;     </b>
  * \source_end
@@ -4759,7 +4979,7 @@ kvStatus CANLIBAPI kvReadDeviceCustomerData (const CanHandle hnd,
 /**
  * \ingroup tScript
  *
- * \source_cs       <b>static Canlib.canStatus kvScriptStart(int hnd, int slotNo);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvScriptStart(CanHandle hnd, Int32 slotNo);</b>
  *
  * \source_delphi   <b>function kvScriptStart(const hnd: canHandle; slotNo: integer): kvStatus;     </b>
  * \source_end
@@ -4791,7 +5011,7 @@ kvStatus CANLIBAPI kvScriptStart (const CanHandle hnd, int slotNo);
 /**
  * \ingroup tScript
  *
- * \source_cs       <b>static Canlib.canStatus kvScriptStop(int hnd, int slotNo, int mode);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvScriptStop(CanHandle hnd, Int32 slotNo, Int32 mode);</b>
  *
  * \source_delphi   <b>function kvScriptStop(const hnd: canHandle; slotNo: integer; mode: integer): kvStatus;     </b>
  * \source_end
@@ -4813,7 +5033,7 @@ kvStatus CANLIBAPI kvScriptStop (const CanHandle hnd, int slotNo, int mode);
 /**
  * \ingroup tScript
  *
- * \source_cs       <b>static Canlib.canStatus kvScriptUnload(int hnd, int slotNo);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvScriptUnload(CanHandle hnd, Int32 slotNo);</b>
  *
  * \source_delphi   <b>function kvScriptUnload(const hnd: canHandle; slotNo: integer): kvStatus;     </b>
  * \source_end
@@ -4834,7 +5054,7 @@ kvStatus CANLIBAPI kvScriptUnload (const CanHandle hnd, int slotNo);
 /**
  * \ingroup tScript
  *
- * \source_cs       <b>static Canlib.canStatus kvScriptSendEvent(int hnd, int slotNo, int eventType, int eventNo, uint data);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvScriptSendEvent(CanHandle hnd, Int32 slotNo, Int32 eventType, Int32 eventNo, Int32 data);</b>
  *
  * \source_delphi   <b>function kvScriptSendEvent(const hnd: canHandle; slotNo: integer; eventType: integer; eventNo: integer; data: Cardinal): kvStatus;     </b>
  * \source_end
@@ -4864,9 +5084,9 @@ kvStatus CANLIBAPI kvScriptSendEvent (const CanHandle hnd,
 /**
  * \ingroup tScript
  *
- * \source_cs       <b>static long kvScriptEnvvarOpen(int hnd, string envvarName, out int envvarType, out int envvarSize);</b>
+ * \source_cs       <b>static kvEnvHandle kvScriptEnvvarOpen(CanHandle hnd, String envvarName, out Int32 envvarType, out Int32 envvarSize);</b>
  *
- * \source_delphi   <b>function kvScriptEnvvarOpen(const hnd: canHandle; envvarName: PChar; var envvarType: Integer; var envvarSize: Integer): \ref kvEnvHandle;     </b>
+ * \source_delphi   <b>function kvScriptEnvvarOpen(const hnd: canHandle; envvarName: PAnsiChar; var envvarType: Integer; var envvarSize: Integer): kvEnvHandle;     </b>
  * \source_end
  *
  * The \ref kvScriptEnvvarOpen() opens an existing envvar and returns a handle to it.
@@ -4879,8 +5099,6 @@ kvStatus CANLIBAPI kvScriptSendEvent (const CanHandle hnd,
  * \param[out] envvarSize  A pointer to a 32-bit integer that will receive the
  *                         size of the envvar in bytes.
  *
- * \note Not implemented in linux.
- *
  * \return A \ref kvEnvHandle handle (positive) to an envvar if success
  * \return \ref canERR_xxx (negative) if failure
  *
@@ -4888,21 +5106,19 @@ kvStatus CANLIBAPI kvScriptSendEvent (const CanHandle hnd,
  * \sa \ref kvScriptEnvvarClose()
  */
 kvEnvHandle CANLIBAPI kvScriptEnvvarOpen (const CanHandle hnd,
-                                          char* envvarName,
+                                          const char* envvarName,
                                           int *envvarType,
                                           int *envvarSize); // returns scriptHandle
 
 /**
  * \ingroup tScript
  *
- * \source_cs       <b>static Canlib.canStatus kvScriptEnvvarClose(long eHnd);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvScriptEnvvarClose(kvEnvHandle eHnd);</b>
  *
  * \source_delphi   <b>function kvScriptEnvvarClose(const eHnd: kvEnvHandle): kvStatus;     </b>
  * \source_end
  *
  * The \ref kvScriptEnvvarClose() function closes an open envvar.
- *
- * \note Not implemented in linux.
  *
  * \param[in] eHnd  An open handle to an envvar.
  *
@@ -4916,14 +5132,12 @@ kvStatus CANLIBAPI kvScriptEnvvarClose (kvEnvHandle eHnd);
 /**
  * \ingroup tScript
  *
- * \source_cs       <b>static Canlib.canStatus kvScriptEnvvarSetInt(long eHnd, int val);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvScriptEnvvarSetInt(kvEnvHandle eHnd, Int32 val);</b>
  *
  * \source_delphi   <b>function kvScriptEnvvarSetInt(const eHnd: kvEnvHandle; val: Integer): kvStatus;     </b>
  * \source_end
  *
  * The \ref kvScriptEnvvarSetInt() sets the value of an \c int envvar.
- *
- * \note Not implemented in linux.
  *
  * \param[in] eHnd  An open handle to an envvar.
  * \param[in] val   The new value.
@@ -4940,14 +5154,12 @@ kvStatus CANLIBAPI kvScriptEnvvarSetInt (kvEnvHandle eHnd, int val);
 /**
  * \ingroup tScript
  *
- * \source_cs       <b>static Canlib.canStatus kvScriptEnvvarGetInt(long eHnd, out int val);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvScriptEnvvarGetInt(kvEnvHandle eHnd, out Int32 val);</b>
  *
  * \source_delphi   <b>function kvScriptEnvvarGetInt(const eHnd: kvEnvHandle; var val: Integer): kvStatus;     </b>
  * \source_end
  *
  * The \ref kvScriptEnvvarGetInt() function retrieves the value of an \c int envvar.
- *
- * \note Not implemented in linux.
  *
  * \param[in]  eHnd An open handle to an envvar.
  * \param[out] val  The current value.
@@ -4965,7 +5177,7 @@ kvStatus CANLIBAPI kvScriptEnvvarGetInt (kvEnvHandle eHnd, int *val);
 /**
  * \ingroup tScript
  *
- * \source_cs       <b>static Canlib.canStatus kvScriptEnvvarSetFloat(long eHnd, float val);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvScriptEnvvarSetFloat(kvEnvHandle eHnd, Single val);</b>
  *
  * \source_delphi   <b>function kvScriptEnvvarSetFloat(const eHnd: kvEnvHandle; val: Single): kvStatus;     </b>
  * \source_end
@@ -4989,7 +5201,7 @@ kvStatus CANLIBAPI kvScriptEnvvarSetFloat (kvEnvHandle eHnd, float val);
 /**
  * \ingroup tScript
  *
- * \source_cs       <b>static Canlib.canStatus kvScriptEnvvarGetFloat(long eHnd, out float val);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvScriptEnvvarGetFloat(kvEnvHandle eHnd, out Single val);</b>
  *
  * \source_delphi   <b>function kvScriptEnvvarGetFloat(const eHnd: kvEnvHandle; var val: Single): kvStatus;     </b>
  * \source_end
@@ -5014,7 +5226,7 @@ kvStatus CANLIBAPI kvScriptEnvvarGetFloat (kvEnvHandle eHnd, float *val);
 /**
  * \ingroup tScript
  *
- * \source_cs       <b>static Canlib.canStatus kvScriptEnvvarSetData(long eHnd, byte[] buf, int start_index, int data_len);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvScriptEnvvarSetData(kvEnvHandle eHnd, byte[] buf, Int32 start_index, Int32 data_len);</b>
  *
  * \source_delphi   <b>function kvScriptEnvvarSetData(const eHnd: kvEnvHandle; var buf; start_index: Integer; data_len: Integer): kvStatus;     </b>
  * \source_end
@@ -5038,14 +5250,14 @@ kvStatus CANLIBAPI kvScriptEnvvarGetFloat (kvEnvHandle eHnd, float *val);
  * \ref kvScriptEnvvarSetFloat()
  */
 kvStatus CANLIBAPI kvScriptEnvvarSetData (kvEnvHandle eHnd,
-                                          void *buf,
+                                          const void *buf,
                                           int start_index,
                                           int data_len);
 
 /**
  * \ingroup tScript
  *
- * \source_cs       <b>static Canlib.canStatus kvScriptEnvvarGetData(long eHnd, out byte[] buf, int start_index, int data_len);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvScriptEnvvarGetData(kvEnvHandle eHnd, out byte[] buf, Int32 start_index, Int32 data_len);</b>
  *
  * \source_delphi   <b>function kvScriptEnvvarGetData(const eHnd: kvEnvHandle; var buf; start_index: Integer; data_len: Integer): kvStatus;     </b>
  * \source_end
@@ -5075,15 +5287,13 @@ kvStatus CANLIBAPI kvScriptEnvvarGetData (kvEnvHandle eHnd,
 /**
  * \ingroup tScript
  *
- * \source_cs       <b>static Canlib.canStatus kvScriptLoadFileOnDevice(int hnd, int slotNo, ref string localFile);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvScriptLoadFileOnDevice(CanHandle hnd, Int32 slotNo, String localFile);</b>
  *
- * \source_delphi   <b>function kvScriptLoadFileOnDevice(hnd: canHandle; slotNo: Integer; localFile: PChar): kvStatus;     </b>
+ * \source_delphi   <b>function kvScriptLoadFileOnDevice(hnd: canHandle; slotNo: Integer; localFile: PAnsiChar): kvStatus;     </b>
  * \source_end
  *
  * The \ref kvScriptLoadFileOnDevice() function loads a compiled script file (.txe)
  * stored on the device (SD card) into a script slot on the device.
- *
- * \note Not implemented in linux.
  *
  * \param[in] hnd        An open handle to a CAN channel.
  * \param[in] slotNo     The slot where to load the script.
@@ -5104,9 +5314,9 @@ kvStatus CANLIBAPI kvScriptLoadFileOnDevice (const CanHandle hnd,
 /**
  * \ingroup tScript
  *
- * \source_cs       <b>static Canlib.canStatus kvScriptLoadFile(int hnd, int slotNo, ref string filePathOnPC);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvScriptLoadFile(CanHandle hnd, Int32 slotNo, String filePathOnPC);</b>
  *
- * \source_delphi   <b>function kvScriptLoadFile(hnd: canHandle; slotNo: Integer; filePathOnPC: PChar): kvStatus;     </b>
+ * \source_delphi   <b>function kvScriptLoadFile(hnd: canHandle; slotNo: Integer; filePathOnPC: PAnsiChar): kvStatus;     </b>
  * \source_end
  *
  * The \ref kvScriptLoadFile() function loads a compiled script file (.txe) stored
@@ -5132,7 +5342,6 @@ kvStatus CANLIBAPI kvScriptLoadFileOnDevice (const CanHandle hnd,
 kvStatus CANLIBAPI kvScriptLoadFile (const CanHandle hnd,
                                      int slotNo,
                                      char *filePathOnPC);
-
 
 
 /**
@@ -5166,7 +5375,7 @@ kvStatus CANLIBAPI kvScriptLoadFile (const CanHandle hnd,
 /**
  * \ingroup tScript
  *
- * \source_cs       <b>static Canlib.canStatus kvScriptRequestText(int hnd, int slot, int request);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvScriptRequestText(CanHandle hnd, Int32 slot, Int32 request);</b>
  *
  * \source_delphi   <b>function kvScriptRequestText(hnd: canHandle; slotNo: cardinal; request: cardinal): kvStatus;     </b>
  * \source_end
@@ -5192,9 +5401,9 @@ kvStatus CANLIBAPI kvScriptRequestText(const CanHandle hnd,
 /**
  * \ingroup tScript
  *
- * \source_cs       <b>static Canlib.canStatus kvScriptGetText(int hnd, out int slot, out ulong time, out int flags, out string buf);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvScriptGetText(CanHandle hnd, out Int32 slot, out Int64 time, out Int32 flags, out String buf);</b>
  *
- * \source_delphi   <b>function kvScriptGetText(hnd: canHandle; var slot: integer; var time: Cardinal; var flags: Cardinal; buf: PChar; bufsize: size_t): kvStatus;     </b>
+ * \source_delphi   <b>function kvScriptGetText(hnd: canHandle; var slot: integer; var time: Cardinal; var flags: Cardinal; buf: PAnsiChar; bufsize: size_t): kvStatus;     </b>
  * \source_end
  *
  * The \ref kvScriptGetText() Reads a printf from a subscribed script slot.
@@ -5218,7 +5427,6 @@ kvStatus CANLIBAPI kvScriptGetText(const CanHandle hnd,
                                         char *buf,
                                         size_t bufsize);
 
-
 /**
  * Script status flag bits. Used by \ref kvScriptStatus().
  * \anchor kvSCRIPT_STATUS_xxx
@@ -5233,14 +5441,12 @@ kvStatus CANLIBAPI kvScriptGetText(const CanHandle hnd,
 /**
  * \ingroup tScript
  *
- * \source_cs       <b>static Canlib.canStatus kvScriptStatus(int hnd, int slot, out unsigned int status);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvScriptStatus(CanHandle hnd, Int32 slotNo, out Int32 status);</b>
  *
  * \source_delphi   <b>function kvScriptStatus(hnd: canHandle; slot: integer; var status: Cardinal): kvStatus;</b>
  * \source_end
  *
  * The \ref kvScriptStatus() function reads the current status of a script slot.
- *
- * \note Not implemented in linux.
  *
  * \param[in] hnd           An open handle to a CAN channel.
  * \param[in] slot          The slot which status we want.
@@ -5257,7 +5463,7 @@ kvStatus CANLIBAPI kvScriptStatus(const CanHandle hnd,
 /**
  * \ingroup tScript
  *
- * \source_cs       <b>static Canlib.canStatus kvScriptGetMaxEnvvarSize(int hnd, int *envvarSize);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvScriptGetMaxEnvvarSize(CanHandle hnd, out Int32 size);</b>
  *
  * \source_delphi   <b>function kvScriptGetMaxEnvvarSize(hnd: canHandle; var envvarSize: Integer): kvStatus;</b>
  * \source_end
@@ -5277,9 +5483,9 @@ kvStatus CANLIBAPI kvScriptGetMaxEnvvarSize(int hnd, int *envvarSize);
 /**
  * \ingroup tScript
  *
- * \source_cs       <b>static Canlib.canStatus kvScriptTxeGetData(string filePathOnPC, int item, out object buffer);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvScriptTxeGetData(String filePathOnPC, Int32 item, out object buffer);</b>
  *
- * \source_delphi   <b>function kvScriptTxeGetData(filePathOnPC: PChar; item: Integer; var buffer; var bufsize: Cardinal): canStatus;</b>
+ * \source_delphi   <b>function kvScriptTxeGetData(filePathOnPC: PAnsiChar; item: Integer; var buffer; var bufsize: Cardinal): canStatus;</b>
  * \source_end
  *
  * This function can be used to retrieve information from a compiled script file (.txe).
@@ -5429,9 +5635,9 @@ kvStatus CANLIBAPI kvScriptTxeGetData(const char *filePathOnPC,
 /**
  * \ingroup tScript
  *
- * \source_cs       <b>static Canlib.canStatus kvFileCopyToDevice(int hnd, string hostFileName, string deviceFileName);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvFileCopyToDevice(CanHandle hnd, String hostFileName, String deviceFileName);</b>
  *
- * \source_delphi   <b>function kvFileCopyToDevice(hnd: canHandle; hostFileName: PChar; deviceFileName: PChar): kvStatus;     </b>
+ * \source_delphi   <b>function kvFileCopyToDevice(hnd: canHandle; hostFileName: PAnsiChar; deviceFileName: PAnsiChar): kvStatus;     </b>
  * \source_end
  *
  * The \ref kvFileCopyToDevice() function copies an arbitrary file from the host to
@@ -5455,9 +5661,9 @@ kvStatus CANLIBAPI kvFileCopyToDevice (const CanHandle hnd,
 /**
  * \ingroup tScript
  *
- * \source_cs       <b>static Canlib.canStatus kvFileCopyFromDevice(int hnd, string deviceFileName, string hostFileName);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvFileCopyFromDevice(CanHandle hnd, String deviceFileName, String hostFileName);</b>
  *
- * \source_delphi   <b>function kvFileCopyFromDevice(hnd: canHandle; deviceFileName: PChar; hostFileName: PChar): kvStatus;     </b>
+ * \source_delphi   <b>function kvFileCopyFromDevice(hnd: canHandle; deviceFileName: PAnsiChar; hostFileName: PAnsiChar): kvStatus;     </b>
  * \source_end
  *
  * The \ref kvFileCopyFromDevice() function copies an arbitrary file from the device
@@ -5481,9 +5687,9 @@ kvStatus CANLIBAPI kvFileCopyFromDevice (const CanHandle hnd,
 /**
  * \ingroup tScript
  *
- * \source_cs       <b>static Canlib.canStatus kvFileDelete(int hnd, string deviceFileName);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvFileDelete(CanHandle hnd, String deviceFileName);</b>
  *
- * \source_delphi   <b>function kvFileDelete(hnd: canHandle; deviceFileName: PChar): kvStatus;     </b>
+ * \source_delphi   <b>function kvFileDelete(hnd: canHandle; deviceFileName: PAnsiChar): kvStatus;     </b>
  * \source_end
  *
  * The \ref kvFileDelete() function deletes a file on the device.
@@ -5504,9 +5710,9 @@ kvStatus CANLIBAPI kvFileDelete (const CanHandle hnd, char *deviceFileName);
 /**
  * \ingroup tScript
  *
- * \source_cs       <b>static Canlib.canStatus kvFileGetName(int hnd, int fileNo, out string name);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvFileGetName(CanHandle hnd, Int32 fileNo, out String name);</b>
  *
- * \source_delphi   <b>function kvFileGetName(hnd: canHandle; fileNo: Integer; name: PChar; namelen: Integer): kvStatus;     </b>
+ * \source_delphi   <b>function kvFileGetName(hnd: canHandle; fileNo: Integer; name: PAnsiChar; namelen: Integer): kvStatus;     </b>
  * \source_end
  *
  * The \ref kvFileGetName() function returns the name of the file with
@@ -5531,7 +5737,7 @@ kvStatus CANLIBAPI kvFileGetName (const CanHandle hnd,
 /**
  * \ingroup tScript
  *
- * \source_cs       <b>static Canlib.canStatus kvFileGetCount(int hnd, out int count);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvFileGetCount(CanHandle hnd, out Int32 count);</b>
  *
  * \source_delphi   <b>function kvFileGetCount(hnd: canHandle; var count: Integer): kvStatus;     </b>
  * \source_end
@@ -5552,9 +5758,9 @@ kvStatus CANLIBAPI kvFileGetCount (const CanHandle hnd, int *count);
 /**
  * \ingroup tScript
  *
- * \source_cs       <b>static Canlib.canStatus kvFileGetSystemData(int hnd, int itemCode, out int result);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvFileGetSystemData(CanHandle hnd, Int32 itemCode, out Int32 result);</b>
  *
- * \source_delphi   <b>function kvFileGetSystemData(hnd: canHandle; itemCode: Integer; var result: Integer): kvStatus;     </b>
+ * \source_delphi   <b>function kvFileGetSystemData(hnd: canHandle; itemCode: Integer; var result: Integer): kvStatus; </b>
  * \source_end
  *
  * The \ref kvFileGetSystemData() function is used for reading disk parameters,
@@ -5574,6 +5780,26 @@ kvStatus CANLIBAPI kvFileGetCount (const CanHandle hnd, int *count);
 kvStatus CANLIBAPI kvFileGetSystemData (const CanHandle hnd,
                                         int itemCode,
                                         int *result);
+
+/**
+ * \ingroup tScript
+ *
+ * \source_cs       <b>static Canlib.canStatus  kvFileDiskFormat(CanHandle hnd);</b>
+ *
+ * \source_delphi   <b>function kvFileDiskFormat(hnd: canHandle): kvStatus; </b> 
+ * \source_end 
+ *  
+ * The \ref kvFileDiskFormat() function is used for formating the disk,  
+ * back to FAT32.
+ *
+ *
+ * \param[in] hnd       An open handle to a CAN channel.      
+ *
+ * \return \ref canOK (zero) if success 
+ * \return \ref canERR_xxx (negative) if failure
+ *
+ */
+kvStatus CANLIBAPI kvFileDiskFormat(const CanHandle hnd);
 
 /**
  * \ingroup can_general
@@ -5605,7 +5831,7 @@ kvStatus CANLIBAPI kvFileGetSystemData (const CanHandle hnd,
 /**
  * \ingroup can_general
  *
- * \source_cs       <b>static Canlib.canStatus kvDeviceSetMode(int hnd, int mode);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvDeviceSetMode(CanHandle hnd, Int32 mode);</b>
  *
  * \source_delphi   <b>function kvDeviceSetMode(hnd: canHandle; mode: Integer): kvStatus;     </b>
  * \source_end
@@ -5629,7 +5855,7 @@ kvStatus CANLIBAPI kvDeviceSetMode (const CanHandle hnd, int mode);
 /**
  * \ingroup can_general
  *
- * \source_cs       <b>static Canlib.canStatus kvDeviceGetMode(int hnd, out int result);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvDeviceGetMode(CanHandle hnd, out Int32 result);</b>
  *
  * \source_delphi   <b>function kvDeviceGetMode(hnd: canHandle; var mode: Integer): kvStatus;     </b>
  * \source_end
@@ -5654,7 +5880,7 @@ kvStatus CANLIBAPI kvDeviceGetMode (const CanHandle hnd, int *result);
 /**
  * \ingroup can_general
  *
- * \source_cs       <b>static Canlib.canStatus kvPingRequest(int hnd, out uint requestTime);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvPingRequest(CanHandle hnd, out Int32 requestTime);</b>
  *
  * \source_delphi   <b>function kvPingRequest(hnd: canHandle; var requestTime: Cardinal): kvStatus;     </b>
  * \source_end
@@ -5674,7 +5900,7 @@ kvStatus CANLIBAPI kvPingRequest (const CanHandle hnd,
 /**
  * \ingroup can_general
  *
- * \source_cs       <b>static Canlib.canStatus kvPingGetLatest(int hnd, out uint requestTime, out uint pingTime);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvPingGetLatest(CanHandle hnd, out Int32 requestTime, out Int32 pingTime);</b>
  *
  * \source_delphi   <b>function kvPingGetLatest(hnd: canHandle; var requestTime: Cardinal; var pingTime: Cardinal): kvStatus;     </b>
  * \source_end
@@ -5733,7 +5959,7 @@ int CANLIBAPI canOpenMultiple (DWORD bitmask, int flags);
 /**
  * \ingroup can_general
  *
- * \source_cs       <b>static Canlib.canStatus kvReadTimer(int hnd, out int time);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvReadTimer(CanHandle hnd, out Int32 time);</b>
  *
  * \source_delphi   <b>function kvReadTimer(handle: canHandle; var time: Cardinal): kvStatus;     </b>
  * \source_end
@@ -5763,7 +5989,7 @@ kvStatus CANLIBAPI kvReadTimer (const CanHandle hnd, unsigned int *time);
 /**
  * \ingroup can_general
  *
- * \source_cs       <b>static Canlib.canStatus kvReadTimer64(int hnd, out long time);</b>
+ * \source_cs       <b>static Canlib.kvStatus kvReadTimer64(CanHandle hnd, out Int64 time);</b>
  *
  * \source_delphi   <b>function kvReadTimer64(handle: canHandle; var time: Int64): kvStatus;     </b>
  * \source_end
@@ -5984,6 +6210,11 @@ kvStatus CANLIBAPI kvReadTimer64 (const CanHandle hnd, KVINT64 *time);
    *
    */
 #define kvIO_MODULE_TYPE_RELAY          3
+  /**
+   * Kvaser built-in module with digital inputs and digital outputs
+   *
+   */
+#define kvIO_MODULE_TYPE_INTERNAL       4
  /** @} */
 
 
@@ -6036,6 +6267,11 @@ kvStatus CANLIBAPI kvReadTimer64 (const CanHandle hnd, KVINT64 *time);
 /**
  * \ingroup kv_io
  *
+ * \source_cs       <b>static Canlib.kvStatus kvIoGetNumberOfPins(CanHandle handle, out Int32 pinCount);</b>
+ *
+ * \source_delphi   <b>function kvIoGetNumberOfPins(hnd: canHandle; var pinCount: cardinal): canStatus;</b>
+ * \source_end
+ *
  * Get the number of I/O pins available from a device.
  *
  * \param[in]  hnd   An open handle to a CAN channel.
@@ -6053,6 +6289,11 @@ canStatus CANLIBAPI kvIoGetNumberOfPins (const CanHandle hnd, unsigned int *pinC
 /**
  * \ingroup kv_io
  *
+ * \source_cs       <b>static Canlib.kvStatus kvIoConfirmConfig(CanHandle handle);</b>
+ *
+ * \source_delphi   <b>function kvIoConfirmConfig(hnd: canHandle): canStatus;</b>
+ * \source_end
+ * 
  * This function is used to confirm configuration. It is required to call this function, before it is possible to use any kvIoPinSetXxx()/kvIoPinGetXxx() function. After a configuration change, module removal or insertion, it is required to confirm the new configuration.
  *
  * \param[in]  hnd   An open handle to a CAN channel.
@@ -6066,6 +6307,10 @@ canStatus CANLIBAPI kvIoConfirmConfig (const CanHandle hnd);
 /**
  * \ingroup kv_io
  *
+ * \source_cs       <b>static Canlib.kvStatus kvIoPinGetInfo(CanHandle handle, Int32 pin, kvIOGetInfo item, ref Object data);</b>
+ *
+ * \source_delphi   <b>function kvIoPinGetInfo(hnd: canHandle; pin: cardinal; item: Integer; var buffer; bufsize: cardinal): canStatus;</b>
+ * \source_end 
  * This function is used to retrieve I/O pin properties.
  *
  * \param[in]  hnd        An open handle to a CAN channel.
@@ -6083,6 +6328,10 @@ canStatus CANLIBAPI kvIoPinGetInfo (const CanHandle hnd, unsigned int pin, int i
 /**
  * \ingroup kv_io
  *
+ * \source_cs       <b>static Canlib.kvStatus kvIoPinSetInfo(CanHandle handle, Int32 pin, kvIOSetInfo item, Object data);</b>
+ *
+ * \source_delphi   <b>function kvIoPinSetInfo(hnd: canHandle; pin: cardinal; item: Integer; var buffer; bufsize: cardinal): canStatus;</b>
+ * \source_end  
  * This function is used to set I/O pin properties, for items that can be changed.
  *
  * \param[in]  hnd        An open handle to a CAN channel.
@@ -6100,6 +6349,10 @@ canStatus CANLIBAPI kvIoPinSetInfo (const CanHandle hnd, unsigned int pin, int i
 /**
  * \ingroup kv_io
  *
+ * \source_cs       <b>static Canlib.kvStatus kvIoPinSetDigital(CanHandle handle, Int32 pin, Int32 value);</b>
+ *
+ * \source_delphi   <b>function kvIoPinSetDigital(hnd: canHandle; pin: cardinal; value: cardinal): canStatus;</b>
+ * \source_end   
  * This function is used to set a digital output I/O pin. If \a value is zero,
  * the pin is set LOW. For any non-zero \a value, the pin is set HIGH.
  *
@@ -6115,6 +6368,10 @@ canStatus CANLIBAPI kvIoPinSetDigital (const CanHandle hnd, unsigned int pin, un
 /**
  * \ingroup kv_io
  *
+ * \source_cs       <b>static Canlib.kvStatus kvIoPinGetDigital(CanHandle handle, Int32 pin, out Int32 value);</b>
+ *
+ * \source_delphi   <b>function kvIoPinGetDigital(hnd: canHandle; pin: cardinal; var value: cardinal): canStatus;</b>
+ * \source_end   
  * This function is used to retrieve the value of the specified digital input I/O pin.
  * If the pin is LOW, the integer pointed to by \a value is assigned zero.
  * If the pin is HIGH, the integer pointed to by \a value is assigned a '1'.
@@ -6132,6 +6389,10 @@ canStatus CANLIBAPI kvIoPinGetDigital (const CanHandle hnd, unsigned int pin, un
 /**
  * \ingroup kv_io
  *
+ * \source_cs       <b>static Canlib.kvStatus kvIoPinGetOutputDigital(CanHandle handle, Int32 pin, out Int32 value);</b>
+ *
+ * \source_delphi   <b>function kvIoPinGetOutputDigital(hnd: canHandle; pin: cardinal; var value: cardinal): canStatus;</b>
+ * \source_end    
  * This function is used to get the latest set value of a digital output I/O pin.
  * If the latest value written to the pin is LOW, the integer pointed to by \a value is assigned zero.
  * If it is HIGH, the integer pointed to by \a value is assigned a '1'. 
@@ -6151,6 +6412,10 @@ canStatus CANLIBAPI kvIoPinGetOutputDigital (const CanHandle hnd, unsigned int p
 /**
  * \ingroup kv_io
  *
+ * \source_cs       <b>static Canlib.kvStatus kvIoPinSetRelay(CanHandle handle, Int32 pin, Int32 value);</b>
+ *
+ * \source_delphi   <b>function kvIoPinSetRelay(hnd: canHandle; pin: cardinal; value: cardinal): canStatus;</b>
+ * \source_end     
  * This function is used to control a relay of the specified I/O pin.
  * If \a value is zero, the relay is set to OFF. For any non-zero \a value,
  * the relay is set to ON.
@@ -6166,6 +6431,10 @@ canStatus CANLIBAPI kvIoPinSetRelay (const CanHandle hnd, unsigned int pin, unsi
 /**
  * \ingroup kv_io
  *
+ * \source_cs       <b>static Canlib.kvStatus kvIoPinGetOutputRelay(CanHandle handle, Int32 pin, out Int32 value);</b>
+ *
+ * \source_delphi   <b>function kvIoPinGetOutputRelay(hnd: canHandle; pin: cardinal; var value: cardinal): canStatus;</b>
+ * \source_end     
  * This function is used to get the latest set value of a relay I/O pin.
  * If \a value is zero, the relay has been set to OFF. For any non-zero \a value,
  * the relay has been set to ON. 
@@ -6183,6 +6452,10 @@ canStatus CANLIBAPI kvIoPinGetOutputRelay (const CanHandle hnd, unsigned int pin
 /**
  * \ingroup kv_io
  *
+ * \source_cs       <b>static Canlib.kvStatus kvIoPinSetAnalog(CanHandle handle, Int32 pin, float value);</b>
+ *
+ * \source_delphi   <b>function kvIoPinSetAnalog(hnd: canHandle; pin: cardinal; value: single): canStatus;</b>
+ * \source_end     
  * This function is used to set the voltage level of the specified analog I/O pin.
  *
  * \param[in]  hnd   An open handle to a CAN channel.
@@ -6198,6 +6471,10 @@ canStatus CANLIBAPI kvIoPinSetAnalog (const CanHandle hnd, unsigned int pin, flo
 /**
  * \ingroup kv_io
  *
+ * \source_cs       <b>static Canlib.kvStatus kvIoPinGetAnalog(CanHandle handle, Int32 pin, out float value);</b>
+ *
+ * \source_delphi   <b>function kvIoPinGetAnalog(hnd: canHandle; pin: cardinal; var value: single): canStatus;</b>
+ * \source_end      
  * This function is used to retrieve the voltage level of the specified analog I/O pin.
  *
  * \param[in]  hnd   An open handle to a CAN channel.
@@ -6213,6 +6490,10 @@ canStatus CANLIBAPI kvIoPinGetAnalog (const CanHandle hnd, unsigned int pin, flo
 /**
  * \ingroup kv_io
  *
+ * \source_cs       <b>static Canlib.kvStatus kvIoPinGetOutputAnalog(CanHandle handle, Int32 pin, out float value);</b>
+ *
+ * \source_delphi   <b>function kvIoPinGetOutputAnalog(hnd: canHandle; pin: cardinal; var value: single): canStatus;</b>
+ * \source_end       
  * This function is used to get the latest set voltage level of an analog I/O pin.
  * This function only returns values as they are presented in memory and the actual value on the output pin may therefore differ. 
  *
@@ -6226,6 +6507,156 @@ canStatus CANLIBAPI kvIoPinGetAnalog (const CanHandle hnd, unsigned int pin, flo
  * \note Not implemented in Linux.
  */
 canStatus CANLIBAPI kvIoPinGetOutputAnalog (const CanHandle hnd, unsigned int pin, float* value);
+
+/**
+ * This define is used in \ref kvIoGetModulePins() and \ref kvIoSetModulePins.
+ *
+ * This struct represents a digital add-on module.
+ */
+typedef struct {
+  int type; /**< The type of the module. See: \ref kvIO_MODULE_TYPE_xxx. */
+  unsigned char DO1 : 1; /**< Digital Out */
+  unsigned char DO2 : 1; /**< Digital Out */
+  unsigned char DO3 : 1; /**< Digital Out */
+  unsigned char DO4 : 1; /**< Digital Out */
+  unsigned char DO5 : 1; /**< Digital Out */
+  unsigned char DO6 : 1; /**< Digital Out */
+  unsigned char DO7 : 1; /**< Digital Out */
+  unsigned char DO8 : 1; /**< Digital Out */
+  unsigned char DO9 : 1; /**< Digital Out */
+  unsigned char DO10: 1; /**< Digital Out */
+  unsigned char DO11: 1; /**< Digital Out */
+  unsigned char DO12: 1; /**< Digital Out */
+  unsigned char DO13: 1; /**< Digital Out */
+  unsigned char DO14: 1; /**< Digital Out */
+  unsigned char DO15: 1; /**< Digital Out */
+  unsigned char DO16: 1; /**< Digital Out */
+  unsigned char DI1 : 1; /**< Digital In */
+  unsigned char DI2 : 1; /**< Digital In */
+  unsigned char DI3 : 1; /**< Digital In */
+  unsigned char DI4 : 1; /**< Digital In */
+  unsigned char DI5 : 1; /**< Digital In */
+  unsigned char DI6 : 1; /**< Digital In */
+  unsigned char DI7 : 1; /**< Digital In */
+  unsigned char DI8 : 1; /**< Digital In */
+  unsigned char DI9 : 1; /**< Digital In */
+  unsigned char DI10: 1; /**< Digital In */
+  unsigned char DI11: 1; /**< Digital In */
+  unsigned char DI12: 1; /**< Digital In */
+  unsigned char DI13: 1; /**< Digital In */
+  unsigned char DI14: 1; /**< Digital In */
+  unsigned char DI15: 1; /**< Digital In */
+  unsigned char DI16: 1; /**< Digital In */
+} kvIoModuleDigital;
+
+
+/**
+* /struct  
+* This define is used in \ref kvIoGetModulePins() and \ref kvIoSetModulePins().
+* This strcut represents a digital internal module
+*/
+typedef struct {
+  int type; /**< The type of the module. See: \ref kvIO_MODULE_TYPE_xxx.. */
+  unsigned char DO: 1; /**< Digital Out */
+  unsigned char DI: 1; /**< Digital In */
+} kvIoModuleInternal;
+
+
+/**
+ * /struct
+ * This define is used in \ref kvIoGetModulePins() and \ref kvIoSetModulePins().
+ * This struct represents a relay add-on module.
+ */
+
+typedef struct {
+  int type; /**< The type of the module. See: \ref kvIO_MODULE_TYPE_xxx.. */
+  unsigned char RO1 : 1; /**< Relay Out */
+  unsigned char RO2 : 1; /**< Relay Out */
+  unsigned char RO3 : 1; /**< Relay Out */
+  unsigned char RO4 : 1; /**< Relay Out */
+  unsigned char RO5 : 1; /**< Relay Out */
+  unsigned char RO6 : 1; /**< Relay Out */
+  unsigned char RO7 : 1; /**< Relay Out */
+  unsigned char RO8 : 1; /**< Relay Out */
+  unsigned char DI1 : 1; /**< Digital In */
+  unsigned char DI2 : 1; /**< Digital In */
+  unsigned char DI3 : 1; /**< Digital In */
+  unsigned char DI4 : 1; /**< Digital In */
+  unsigned char DI5 : 1; /**< Digital In */
+  unsigned char DI6 : 1; /**< Digital In */
+  unsigned char DI7 : 1; /**< Digital In */
+  unsigned char DI8 : 1; /**< Digital In */
+} kvIoModuleRelay;
+
+/**
+ * 
+ * This define is used in \ref kvIoGetModulePins() and \ref kvIoSetModulePins().
+ * This struct represents an analog add-on module.
+ */
+
+typedef struct {
+  int type; /**< The type of the module. See: \ref kvIO_MODULE_TYPE_xxx.. */
+  float AO1; /**< Analog Out */
+  float AO2; /**< Analog Out */
+  float AO3; /**< Analog Out */
+  float AO4; /**< Analog Out */
+  float AI1; /**< Analog In */
+  float AI2; /**< Analog In */
+  float AI3; /**< Analog In */
+  float AI4; /**< Analog In */
+} kvIoModuleAnalog;
+
+
+/**
+ * \ingroup kv_io
+ *
+ * \source_cs       <b>static Canlib.canStatus kvIoGetModulePins(int hnd, int module, out byte[] buffer, int bufsize);</b>
+ *
+ * \source_delphi   <b>function kvIoGetModulePins(hnd: canHandle; module: cardinal; var buffer; bufsize: cardinal): canStatus;</b>
+ * \source_end   
+ *
+ * This function is used to read all the pins on one module in a single call.
+ *
+ * \param[in]  hnd      An open handle to a CAN channel.
+ * \param[in]  module   The module number, see \ref kvIO_INFO_GET_MODULE_NUMBER.
+ * \param[out] buffer   A pointer to a struct that receives the pin values of the module. The struct can be any one of the following depending on the module. The returned type is described in the first byte of the returned struct. See:
+ * - \ref kvIoModuleDigital
+ * - \ref kvIoModuleAnalog
+ * - \ref kvIoModuleRelay
+ * \param[in]  bufsize  The size of the struct pointed to by buffer
+ *
+ * \sa \ref kvIoSetModulePins()
+ * \note Preliminary API that may change.
+ * \note Not implemented in Linux.
+ */
+canStatus CANLIBAPI kvIoGetModulePins (const CanHandle hnd, unsigned int module, void *buffer, const unsigned int bufsize);
+
+
+/**
+ * \ingroup kv_io
+ *
+ * \source_cs       <b>static Canlib.canStatus kvIoSetModulePins(int hnd, int module, byte[] buffer, int bufsize);</b>
+ *
+ * \source_delphi   <b>function kvIoSetModulePins(hnd: canHandle; module: cardinal; var buffer; bufsize: cardinal): canStatus;</b>
+ * \source_end   
+ *
+ * This function is used to set all the pins on one single module in a single call.
+ *
+ * \param[in]  hnd      An open handle to a CAN channel.
+ * \param[in]  module   The module number, see \ref kvIO_INFO_GET_MODULE_NUMBER.
+ * \param[out] buffer   A pointer to a struct that contains the module type and pin values to set. The struct can be any one of the following depending on the module. 
+ * - \ref kvIoModuleDigital
+ * - \ref kvIoModuleAnalog
+ * - \ref kvIoModuleRelay
+ * \param[in]  bufsize  The size of the struct pointed to by buffer
+ *
+ * \sa \ref kvIoGetModulePins()
+ * \note Note The input Pins are ignored. 
+ * \note Preliminary API that may change.
+ * \note Not implemented in Linux.
+ */
+canStatus CANLIBAPI kvIoSetModulePins (const CanHandle hnd, unsigned int module, const void *buffer, const unsigned int bufsize);
+
 
 #ifdef __cplusplus
 }

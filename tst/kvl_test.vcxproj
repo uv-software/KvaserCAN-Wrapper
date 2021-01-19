@@ -25,6 +25,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\api\build_no.h" />
+    <ClInclude Include="..\api\CANAPI_Types.h" />
     <ClInclude Include="..\api\canlib.h" />
     <ClInclude Include="..\api\canstat.h" />
     <ClInclude Include="..\api\can_api.h" />

@@ -4,7 +4,7 @@
  *
  *  purpose   :  CAN API V3 Tester (Kvaser canlib32)
  *
- *  copyright :  (C) 2017-2020, UV Software, Berlin
+ *  copyright :  (C) 2017-2021, UV Software, Berlin
  *
  *  compiler  :  Microsoft Visual C/C++ Compiler (Version 19.16)
  *
@@ -27,15 +27,16 @@
  *  <description>
  */
 
-//static const char* __copyright__ = "Copyright (C) 2017-2020 by UV Software, Berlin";
+//static const char* __copyright__ = "Copyright (C) 2017-2021 by UV Software, Berlin";
 //static const char* __version__   = "0.x";
 //static const char* __revision__  = "$Rev$";
 
 /*  -----------  includes  -----------------------------------------------
  */
 
+#include "can_defs.h"
 #include "can_api.h"
-#include "misc\printmsg.h"
+#include "printmsg.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -188,7 +189,7 @@ int main(int argc, char *argv[])
     uint16_t ui16;
     uint32_t ui32;
     uint64_t rx, tx, err;
-    char string[CANPROP_BUFFER_SIZE];
+    char string[CANPROP_MAX_BUFFER_SIZE];
     
     //struct option long_options[] = {
     //  {"help", no_argument, 0, 'h'},
@@ -314,23 +315,23 @@ int main(int argc, char *argv[])
             fprintf(stdout, "Property: CANPROP_GET_LIBRARY_ID=(%"PRIi32")\n", i32);
         else
             fprintf(stderr, "+++ error(%i): can_property(CANPROP_GET_LIBRARY_ID) failed\n", rc);
-        if((rc = can_property(CANAPI_HANDLE, CANPROP_GET_LIBRARY_VENDOR, (void*)string, CANPROP_BUFFER_SIZE)) == CANERR_NOERROR)
+        if((rc = can_property(CANAPI_HANDLE, CANPROP_GET_LIBRARY_VENDOR, (void*)string, CANPROP_MAX_BUFFER_SIZE)) == CANERR_NOERROR)
             fprintf(stdout, "Property: CANPROP_GET_LIBRARY_VENDOR=%s\n", string);
         else
             fprintf(stderr, "+++ error(%i): can_property(CANPROP_GET_LIBRARY_VENDOR) failed\n", rc);
-        if((rc = can_property(CANAPI_HANDLE, CANPROP_GET_LIBRARY_DLLNAME, (void*)string, CANPROP_BUFFER_SIZE)) == CANERR_NOERROR)
+        if((rc = can_property(CANAPI_HANDLE, CANPROP_GET_LIBRARY_DLLNAME, (void*)string, CANPROP_MAX_BUFFER_SIZE)) == CANERR_NOERROR)
             fprintf(stdout, "Property: CANPROP_GET_LIBRARY_DLLNAME=%s\n", string);
         else
             fprintf(stderr, "+++ error(%i): can_property(CANPROP_GET_LIBRARY_DLLNAME) failed\n", rc);
-        if((rc = can_property(CANAPI_HANDLE, CANPROP_GET_BOARD_VENDOR, (void*)string, CANPROP_BUFFER_SIZE)) == CANERR_NOERROR)
-            fprintf(stdout, "Property: CANPROP_GET_BOARD_VENDOR=%s\n", string);
+        if((rc = can_property(CANAPI_HANDLE, CANPROP_GET_DEVICE_VENDOR, (void*)string, CANPROP_MAX_BUFFER_SIZE)) == CANERR_NOERROR)
+            fprintf(stdout, "Property: CANPROP_GET_DEVICE_VENDOR=%s\n", string);
         else
-            fprintf(stderr, "+++ error(%i): can_property(CANPROP_GET_BOARD_VENDOR) failed\n", rc);
-        if((rc = can_property(CANAPI_HANDLE, CANPROP_GET_BOARD_DLLNAME, (void*)string, CANPROP_BUFFER_SIZE)) == CANERR_NOERROR)
-            fprintf(stdout, "Property: CANPROP_GET_BOARD_DLLNAME=%s\n", string);
+            fprintf(stderr, "+++ error(%i): can_property(CANPROP_GET_DEVICE_VENDOR) failed\n", rc);
+        if((rc = can_property(CANAPI_HANDLE, CANPROP_GET_DEVICE_DLLNAME, (void*)string, CANPROP_MAX_BUFFER_SIZE)) == CANERR_NOERROR)
+            fprintf(stdout, "Property: CANPROP_GET_DEVICE_DLLNAME=%s\n", string);
         else
-            fprintf(stderr, "+++ error(%i): can_property(CANPROP_GET_BOARD_DLLNAME) failed\n", rc);
-        //if((rc = can_property(CANAPI_HANDLE, CANPROP_GET_VENDOR_PROP + 0, (void*)string, CANPROP_BUFFER_SIZE)) == CANERR_NOERROR)
+            fprintf(stderr, "+++ error(%i): can_property(CANPROP_GET_DEVICE_DLLNAME) failed\n", rc);
+        //if((rc = can_property(CANAPI_HANDLE, CANPROP_GET_VENDOR_PROP + 0, (void*)string, CANPROP_MAX_BUFFER_SIZE)) == CANERR_NOERROR)
         //    fprintf(stdout, "Property: canIOCTL_GET_xxx=%s\n", string);
         //else
         //    fprintf(stderr, "+++ error(%i): can_property(canIOCTL_GET_xxx) failed\n", rc);
@@ -368,18 +369,18 @@ int main(int argc, char *argv[])
         goto end;
     }
 	if(option_info) {
-        if((rc = can_property(handle, CANPROP_GET_VENDOR_PROP + 37, (void*)string, CANPROP_BUFFER_SIZE)) == CANERR_NOERROR)
+        if((rc = can_property(handle, CANPROP_GET_VENDOR_PROP + 37, (void*)string, CANPROP_MAX_BUFFER_SIZE)) == CANERR_NOERROR)
             fprintf(stdout, "Property: canIOCTL_GET_DEVNAME_ASCII=%s\n", string);
         else
             fprintf(stderr, "+++ error(%i): can_property(canIOCTL_GET_DEVNAME_ASCII) failed\n", rc);
-        if((rc = can_property(handle, CANPROP_GET_BOARD_TYPE, (void*)&i32, sizeof(i32))) == CANERR_NOERROR)
-            fprintf(stdout, "Property: CANPROP_GET_BOARD_TYPE=0x%"PRIx32"\n", i32);
+        if((rc = can_property(handle, CANPROP_GET_DEVICE_TYPE, (void*)&i32, sizeof(i32))) == CANERR_NOERROR)
+            fprintf(stdout, "Property: CANPROP_GET_DEVICE_TYPE=0x%"PRIx32"\n", i32);
         else
-            fprintf(stderr, "+++ error(%i): can_property(CANPROP_GET_BOARD_TYPE) failed\n", rc);
-        if((rc = can_property(handle, CANPROP_GET_BOARD_NAME, (void*)string, CANPROP_BUFFER_SIZE)) == CANERR_NOERROR)
-            fprintf(stdout, "Property: CANPROP_GET_BOARD_NAME=%s\n", string);
+            fprintf(stderr, "+++ error(%i): can_property(CANPROP_GET_DEVICE_TYPE) failed\n", rc);
+        if((rc = can_property(handle, CANPROP_GET_DEVICE_NAME, (void*)string, CANPROP_MAX_BUFFER_SIZE)) == CANERR_NOERROR)
+            fprintf(stdout, "Property: CANPROP_GET_DEVICE_NAME=%s\n", string);
         else
-            fprintf(stderr, "+++ error(%i): can_property(CANPROP_GET_BOARD_NAME) failed\n", rc);
+            fprintf(stderr, "+++ error(%i): can_property(CANPROP_GET_DEVICE_NAME) failed\n", rc);
         if((rc = can_property(handle, CANPROP_GET_OP_CAPABILITY, (void*)&ui8, sizeof(ui8))) == CANERR_NOERROR)
             fprintf(stdout, "Property: CANPROP_GET_OP_CAPABILITY=0x%02x\n", ui8);
         else
@@ -497,7 +498,7 @@ static int transmit(int handle, int frames, unsigned int delay)
         message.data[6] = (uint8_t)(((uint64_t)i & 0x00FF000000000000) >> 48);
         message.data[7] = (uint8_t)(((uint64_t)i & 0xFF00000000000000) >> 56);
 repeat:
-        if((rc = can_write(handle, &message)) != CANERR_NOERROR) {
+        if((rc = can_write(handle, &message, 0U)) != CANERR_NOERROR) {
             if(rc == CANERR_TX_BUSY && running)
                 goto repeat;
             fprintf(stderr, "+++ error(%i): can_write failed\n", rc);
@@ -545,7 +546,7 @@ static int transmit_fd(int handle, int frames, unsigned int delay)
         message.data[6] = (uint8_t)(((uint64_t)i & 0x00FF000000000000) >> 48);
         message.data[7] = (uint8_t)(((uint64_t)i & 0xFF00000000000000) >> 56);
 repeat_fd:
-        if((rc = can_write(handle, &message)) != CANERR_NOERROR) {
+        if((rc = can_write(handle, &message, 0U)) != CANERR_NOERROR) {
             if(rc == CANERR_TX_BUSY && running)
                 goto repeat_fd;
             fprintf(stderr, "+++ error(%i): can_write failed\n", rc);
@@ -590,7 +591,7 @@ static int receive(int handle)
             if(option_echo) {
                 fprintf(stdout, "%c %"PRIu64"\t", symbol[prompt], frames++);
                 msg_print_time(stdout, (struct msg_timestamp*)&message.timestamp, option_time);  // an evil cast!
-                msg_print_id(stdout, message.id, message.ext, message.rtr, message.dlc, MSG_MODE_HEX);
+                msg_print_id(stdout, message.id, message.xtd, message.rtr, message.dlc, MSG_MODE_HEX);
                 for(i = 0; i < message.dlc; i++)
                     msg_print_data(stdout, message.data[i], ((i+1) == message.dlc), MSG_MODE_HEX);
                 fprintf(stdout, "\n");
@@ -667,7 +668,7 @@ static int receive_fd(int handle)
             if(option_echo) {
                 fprintf(stdout, "%c %"PRIu64"\t", symbol[prompt], frames++);
                 msg_print_time(stdout, (struct msg_timestamp*)&message.timestamp, option_time);  // an evil cast!
-                msg_print_id_fd(stdout, message.id, message.ext, message.rtr, message.fdf, message.brs, message.esi, DLC2DLEN(message.dlc), MSG_MODE_HEX);
+                msg_print_id_fd(stdout, message.id, message.xtd, message.rtr, message.fdf, message.brs, message.esi, DLC2DLEN(message.dlc), MSG_MODE_HEX);
                 for(i = 0; i < DLC2DLEN(message.dlc); i++)
                     msg_print_data(stdout, message.data[i], ((i + 1) == DLC2DLEN(message.dlc)), MSG_MODE_HEX);
                 fprintf(stdout, "\n");
@@ -778,10 +779,11 @@ static void verbose(const can_bitrate_t *bitrate, const can_speed_t *speed)
 
     ft.QuadPart = -(10 * (LONGLONG)usec); // Convert to 100 nanosecond interval, negative value indicates relative time
     if (usec >= 100) {
-        timer = CreateWaitableTimer(NULL, TRUE, NULL);
+        if ((timer = CreateWaitableTimer(NULL, TRUE, NULL)) != NULL) {
         SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0);
         WaitForSingleObject(timer, INFINITE);
         CloseHandle(timer);
+        }
     }
  }
 #endif
@@ -789,9 +791,7 @@ static void verbose(const can_bitrate_t *bitrate, const can_speed_t *speed)
 static void sigterm(int signo)
 {
      //fprintf(stderr, "%s: got signal %d\n", __FILE__, signo);
-#if defined(_WIN32) || defined(_WIN64)
      (void)can_kill(CANKILL_ALL);
-#endif
      running = 0;
      (void)signo;
 }

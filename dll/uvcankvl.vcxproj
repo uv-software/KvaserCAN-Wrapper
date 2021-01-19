@@ -121,7 +121,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;UVCANKVL_EXPORTS;%(PreprocessorDefinitions);_CANAPI_EXPORTS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;UVCANKVL_EXPORTS;%(PreprocessorDefinitions);OPTION_CAN_2_0_ONLY=0;OPTION_CANAPI_DLLEXPORT=1;OPTION_CANAPI_DRIVER=1;OPTION_CANAPI_COMPANIONS=0</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
