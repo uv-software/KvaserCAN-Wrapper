@@ -1,55 +1,53 @@
-/*  -- $HeadURL$ --
+/*
+ *  CAN Interface API, Version 3 (for Kvaser CAN Interfaces)
  *
- *  project   :  CAN - Controller Area Network
+ *  Copyright (C) 2017-2021  Uwe Vogt, UV Software, Berlin (info@uv-software.de)
  *
- *  purpose   :  CAN Interface API, Version 3 (Kvaser canLib32)
+ *  This file is part of KvaserCAN-Wrapper.
  *
- *  copyright :  (C) 2017-2021, UV Software, Berlin
+ *  KvaserCAN-Wrapper is free software : you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
  *
- *  compiler  :  Microsoft Visual C/C++ Compiler (Version 19.16)
+ *  KvaserCAN-Wrapper is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
- *  export    :  (see header file)
- *
- *  includes  :  can_api.h (can_defs.h), can_vers.h, canlib.h, canstat.h
- *
- *  author    :  Uwe Vogt, UV Software
- *
- *  e-mail    :  uwe.vogt@uv-software.de
- *
- *
- *  -----------  description  --------------------------------------------
+ *  You should have received a copy of the GNU Lesser General Public License
+ *  along with KvaserCAN-Wrapper.  If not, see "http://www.gnu.org/licenses/".
  */
-/** @file        can_api.c
- *
- *  @brief       CAN API V3 for Kvaser CAN Interfaces - API
- *
- *  @author      $Author$
- *
- *  @version     $Rev$
- *
- *  @addtogroup  can_api
+/** @addtogroup  can_api
  *  @{
  */
-/*  -----------  version  ------------------------------------------------
- */
-
 #include "build_no.h"
-#define VERSION_MAJOR     1
+#ifdef _MSC_VER
+#define VERSION_MAJOR     0
 #define VERSION_MINOR     1
 #define VERSION_PATCH     0
+#else
+#define VERSION_MAJOR     0
+#define VERSION_MINOR     0
+#define VERSION_PATCH     0
+#endif
 #define VERSION_BUILD     BUILD_NO
-#define VERSION_STRING    TOSTRING(VERSION_MAJOR)"." TOSTRING(VERSION_MINOR)"."TOSTRING(VERSION_PATCH)"-"TOSTRING(BUILD_NO)
+#define VERSION_STRING    TOSTRING(VERSION_MAJOR) "." TOSTRING(VERSION_MINOR) "." TOSTRING(VERSION_PATCH) "-" TOSTRING(BUILD_NO)
 #if defined(_WIN64)
-#define PLATFORM    "x64"
+    #define PLATFORM     "x64"
 #elif defined(_WIN32)
-#define PLATFORM    "x86"
+    #define PLATFORM     "x86"
+#elif defined(__linux__)
+    #define PLATFORM     "Linux"
+#elif defined(__APPLE__)
+    #define PLATFORM     "macOS"
 #else
 #error Unsupported architecture
 #endif
 #ifdef _DEBUG
-static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION_STRING" ("PLATFORM") _DEBUG";
+    static const char version[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION_STRING" ("PLATFORM") _DEBUG";
 #else
-static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION_STRING" ("PLATFORM")";
+    static const char version[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION_STRING" ("PLATFORM")";
 #endif
 
 /*  -----------  includes  -----------------------------------------------
@@ -84,7 +82,7 @@ static char _id[] = "CAN API V3 for Kvaser CAN Interfaces, Version "VERSION_STRI
 #define KVASER_FREQ_DEFAULT     (80000000)
 #define KVASER_CHANNEL_DEFAULT  (0)
 
-#ifndef CANAPI_CiA_BIT_TIMING
+#ifndef OPTION_KVASER_CiA_BIT_TIMING
 #define KVASER_BDR_1000(btr)    do{ btr.baud=canBITRATE_1M; } while(0)
 #define KVASER_BDR_500(btr)     do{ btr.baud=canBITRATE_500K; } while(0)
 #define KVASER_BDR_250(btr)     do{ btr.baud=canBITRATE_250K; } while(0)
@@ -423,7 +421,7 @@ int can_start(int handle, const can_bitrate_t *bitrate)
         if((rc = canSetBusParams(can[handle].handle, nominal.baud, nominal.tseg1, nominal.tseg2,
                                                      nominal.sjw, nominal.sam, nominal.sync)) != canOK)
             return kvaser_error(rc);
-#ifndef CANAPI_CiA_BIT_TIMING
+#ifndef OPTION_KVASER_CiA_BIT_TIMING
         can[handle].frequency = KVASER_FREQ_DEFAULT;
 #else
         can[handle].frequency = CANBTR_FREQ_SJA1000;
@@ -786,7 +784,7 @@ char *can_software(int handle)
         return NULL;
     (void)handle;                       // handle not needed here
 
-    version = canGetVersion();
+    version = canGetVersion();          // FIXME: check encoding
     snprintf(software, 256, "Kvaser CANLIB API V%u.%u (canlib32.dll)", (version >> 8), (version & 0xFF));
 
     return (char*)software;             // software version
@@ -797,6 +795,7 @@ char *can_software(int handle)
 
 static int kvaser_error(canStatus status)
 {
+    /* note: all Kvaser CANlib error codes are negative */
     if((canOK > status) && (status > canERR__RESERVED))
         return KVASER_ERR_OFFSET + (int)status;
 
@@ -828,7 +827,7 @@ static int index2params(int index, btr_nominal_t *params)
 {
     switch(index) {
     case CANBTR_INDEX_1M: KVASER_BDR_1000((*params)); break;
-#ifndef CANAPI_CiA_BIT_TIMING
+#ifndef OPTION_KVASER_CiA_BIT_TIMING
     case CANBTR_INDEX_800K: return CANERR_BAUDRATE;
 #else
     case CANBTR_INDEX_800K: KVASER_BDR_800((*params)); break;
@@ -1147,7 +1146,7 @@ static int calc_speed(can_bitrate_t *bitrate, can_speed_t *speed, int modify)
                                       &nominal.sjw, &nominal.sam, &nominal.sync)) != canOK)
                 return rc;
         }
-#ifndef CANAPI_CiA_BIT_TIMING
+#ifndef OPTION_KVASER_CiA_BIT_TIMING
         if((rc = params2bitrate(&nominal, KVASER_FREQ_DEFAULT, &temporary)) != CANERR_NOERROR)
 #else
         if((rc = params2bitrate(&nominal, CANBTR_FREQ_SJA1000, &temporary)) != CANERR_NOERROR)
@@ -1213,9 +1212,9 @@ static int calc_speed(can_bitrate_t *bitrate, can_speed_t *speed, int modify)
 /*  -----------  revision control  ---------------------------------------
  */
 
-char* can_version()
+char* can_version(void)
 {
-    return (char*)_id;
+    return (char*)version;
 }
 /** @}
  */

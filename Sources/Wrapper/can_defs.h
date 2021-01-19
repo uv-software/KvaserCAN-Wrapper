@@ -1,35 +1,24 @@
-/*  -- $HeadURL$ --
+/*
+ *  CAN Interface API, Version 3 (for Kvaser CAN Interfaces)
  *
- *  project   :  CAN - Controller Area Network
+ *  Copyright (C) 2017-2021  Uwe Vogt, UV Software, Berlin (info@uv-software.de)
  *
- *  purpose   :  CAN Interface API, Version 3 (Kvaser canLib32)
+ *  This file is part of KvaserCAN-Wrapper.
  *
- *  copyright :  (C) 2017-2020, UV Software, Berlin
+ *  KvaserCAN-Wrapper is free software : you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
  *
- *  compiler  :  Microsoft Visual C/C++ Compiler (Version 19.16)
+ *  KvaserCAN-Wrapper is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
- *  export    :  (see below)
- *
- *  includes  :  stdint.h, stdbool.h
- *
- *  author    :  Uwe Vogt, UV Software
- *
- *  e-mail    :  uwe.vogt@uv-software.de
- *
- *
- *  -----------  description  --------------------------------------------
+ *  You should have received a copy of the GNU Lesser General Public License
+ *  along with KvaserCAN-Wrapper.  If not, see "http://www.gnu.org/licenses/".
  */
-/** @file        can_defs.h
- *
- *  @brief       CAN API V3 for Kvaser CAN Interfaces - Defines
- *
- *               For Kvaser CANLIB API Interfaces (canlib32.dll V5.28).
- *
- *  @author      $Author$
- *
- *  @version     $Rev$
- *
- *  @defgroup    can_defs Options and Definitions
+/** @addtogroup  can_api
  *  @{
  */
 #ifndef CAN_DEFS_H_INCLUDED
@@ -38,54 +27,29 @@
 /*  -----------  includes  ------------------------------------------------
  */
 
-#include <stdint.h>                     // C99 header for sized integer types
-#include <stdbool.h>                    // C99 header for boolean type
+#include "CANAPI_KvaserCAN.h"
 
 
 /*  -----------  options  ------------------------------------------------
  */
-
-#define CANAPI_CiA_BIT_TIMING           // CiA bit-timing (from CANopen spec.)
+#define KVASER_TRM_TIMEOUT         55   // time-out value for canWriteWait
 #define KVASER_ASYNCHRONOUS_WRITE       // w/o transmit acknowledge
 #define KVASER_SHARED_ACCESS            // permit non-exclusive access
 #define KVASER_VIRTUAL_CHANNELS         // support of virtual channels
 /*#define KVASER_SIMULATED_CHANNELS     // support of simulated channels */
+/* note: all other options move into header CANAPI_KvaserCAN.h */
 
 
 /*  -----------  defines  ------------------------------------------------
  */
+/* note: all defines move into header CANAPI_KvaserCAN.h */
 
-#ifndef _CAN_DEFS                       // Kvaser CAN interfaces:
- #define KVASER_CAN_CHANNEL0        0   //   Kvaser CAN Interface, Channel 0
- #define KVASER_CAN_CHANNEL1        1   //   Kvaser CAN Interface, Channel 1
- #define KVASER_CAN_CHANNEL2        2   //   Kvaser CAN Interface, Channel 2
- #define KVASER_CAN_CHANNEL3        3   //   Kvaser CAN Interface, Channel 3
- #define KVASER_CAN_CHANNEL4        4   //   Kvaser CAN Interface, Channel 4
- #define KVASER_CAN_CHANNEL5        5   //   Kvaser CAN Interface, Channel 5
- #define KVASER_CAN_CHANNEL6        6   //   Kvaser CAN Interface, Channel 6
- #define KVASER_CAN_CHANNEL7        7   //   Kvaser CAN Interface, Channel 7
- #define KVASER_BOARDS             (8)  //   number of Kvaser Interface boards
 
- #define KVASER_MAX_HANDLES        (8)  //   maximum number of interface handles
+/*  -----------  types  --------------------------------------------------
+ */
+/* note: all type definitions move into header CANAPI_KvaserCAN.h */
 
- #define KVASER_ERR_OFFSET         -600 //   offset for Kvaser-specific errors
- #define KVASER_ERR_UNKNOWN        -699 //   unknown error
 
- #define KVASER_TRM_TIMEOUT         55  //   time-out for canWriteWait (in [ms])
-
- #define KVASER_LIB_ID              600 //   library ID (CAN/COP API V1 compatible)
- #define KVASER_LIB_CANLIB                  "canLib32.DLL"
- #define KVASER_LIB_WRAPPER                 "u3cankvl.dll"
- #define KVASER_LIB_VENDOR                  "Kvaser AB, Sweden"
- #define CAN_API_VENDOR                     "UV Software, Berlin"
- #define CAN_API_AUTHOR                     "Uwe Vogt, UV Software"
- #define CAN_API_WEBSITE                    "www.uv-software.com"
- #define CAN_API_CONTACT                    "info@uv-software.com"
- #define CAN_API_LICENSE                    "UVS Freeware License (without any warranty or support)"
- #define CAN_API_COPYRIGHT                  "Copyright (C) 2005-20%02u, UV Software, Berlin"
- #define CAN_API_HAZARD_NOTE                "Do not connect your CAN device to a real CAN network when using this program.\n" \
-                                            "This can damage your application."
-#endif
 #endif /* CAN_DEFS_H_INCLUDED */
 /** @}
  */

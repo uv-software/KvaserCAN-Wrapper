@@ -24,7 +24,7 @@
  *
  *  @author      $Author: haumea $
  *
- *  @version     $Rev: 875 $
+ *  @version     $Rev: 952 $
  *
  *  @defgroup    can_api CAN Interface API, Version 3
  *  @{
