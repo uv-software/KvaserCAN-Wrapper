@@ -25,10 +25,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Sources\build_no.h" />
-    <ClInclude Include="..\Sources\CANAPI\CANAPI_KvaserCAN.h" />
     <ClInclude Include="..\Sources\CANAPI\CANAPI_Types.h" />
     <ClInclude Include="..\Sources\CANAPI\can_api.h" />
     <ClInclude Include="..\Sources\CANlib\canlib.h" />
+    <ClInclude Include="..\Sources\KvaserCAN_Defines.h" />
     <ClInclude Include="..\Sources\Wrapper\can_defs.h" />
     <ClInclude Include="Sources\printmsg.h" />
   </ItemGroup>

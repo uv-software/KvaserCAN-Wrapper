@@ -35,9 +35,6 @@
     <ClInclude Include="..\Sources\CANAPI\can_api.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Sources\CANAPI\CANAPI_KvaserCAN.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\Sources\CANAPI\CANAPI_Types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -45,6 +42,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\Sources\CANlib\canlib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Sources\KvaserCAN_Defines.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
