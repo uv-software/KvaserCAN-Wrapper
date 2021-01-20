@@ -174,12 +174,7 @@ static int calc_speed(can_bitrate_t *bitrate, can_speed_t *speed, int modify);
 /*  -----------  variables  ----------------------------------------------
  */
 
-#ifdef OPTION_CANAPI_DLLEXPORT
-#define ATTRIB  __declspec(dllexport)
-#else
-#define ATTRIB
-#endif
-ATTRIB can_board_t can_boards[KVASER_BOARDS+1]=// list of CAN Interface boards:
+can_board_t can_boards[KVASER_BOARDS+1]=// list of CAN Interface boards:
 {
     {KVASER_CAN_CHANNEL0,                 "Kvaser CAN Channel 0"},
     {KVASER_CAN_CHANNEL1,                 "Kvaser CAN Channel 1"},
