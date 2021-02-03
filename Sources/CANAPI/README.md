@@ -1,8 +1,8 @@
 ### CAN Interface API, Version 3
 
-_Copyright &copy; 2004-2021  Uwe Vogt, UV Software, Berlin (info@uv-software.com)_
+_Copyright &copy; 2004-2021 Uwe Vogt, UV Software, Berlin (info@uv-software.com)_
 
-Version $Rev: 952 $
+Version $Rev: 985 $
 
 # A CAN Interface Wrapper Specification
 
@@ -50,7 +50,7 @@ extern int can_status(int handle, uint8_t *status);
 extern int can_busload(int handle, uint8_t *load, uint8_t *status);
 
 extern int can_bitrate(int handle, can_bitrate_t *bitrate, can_speed_t *speed);
-extern int can_property(int handle, uint16_t param, void *value, uint32_t nbytes);
+extern int can_property(int handle, uint16_t param, void *value, uint32_t nbyte);
 
 extern char *can_hardware(int handle);
 extern char *can_software(int handle);
@@ -58,7 +58,7 @@ extern char *can_software(int handle);
 #if (OPTION_CANAPI_LIBRARY != 0)
 extern char *can_library(int handle);
 #endif
-extern char* can_version();
+extern char* can_version(void);
 ```
 See header file `can_api.h` for a description of the provided functions.
 
@@ -83,14 +83,7 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with CAN API V3.  If not, see <http://www.gnu.org/licenses/>.
 
-
 ### Contact
-
-Uwe Vogt \
-UV Software \
-Chausseestrasse 33a \
-10115 Berlin \
-Germany
 
 E-Mail: mailto://info@uv-software.com \
 Internet: https://www.uv-software.com
