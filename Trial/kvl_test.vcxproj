@@ -19,18 +19,20 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Sources\CANAPI\can_btr.c" />
+    <ClCompile Include="..\Sources\KvaserCAN.cpp" />
     <ClCompile Include="..\Sources\Wrapper\can_api.c" />
-    <ClCompile Include="Sources\main.c" />
-    <ClCompile Include="Sources\printmsg.c" />
+    <ClCompile Include="Sources\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Sources\build_no.h" />
     <ClInclude Include="..\Sources\CANAPI\CANAPI_Types.h" />
     <ClInclude Include="..\Sources\CANAPI\can_api.h" />
+    <ClInclude Include="..\Sources\CANAPI\can_btr.h" />
     <ClInclude Include="..\Sources\CANlib\canlib.h" />
+    <ClInclude Include="..\Sources\KvaserCAN.h" />
     <ClInclude Include="..\Sources\KvaserCAN_Defines.h" />
     <ClInclude Include="..\Sources\Wrapper\can_defs.h" />
-    <ClInclude Include="Sources\printmsg.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{212CE9B5-4040-4682-A5CA-D29A055ECE1B}</ProjectGuid>
@@ -101,7 +103,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;OPTION_CAN_2_0_ONLY=0;OPTION_CANAPI_DLLIMPORT=0;OPTION_CANAPI_DRIVER=1;OPTION_CANAPI_COMPANIONS=0</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;OPTION_CAN_2_0_ONLY=0;OPTION_CANAPI_DLLIMPORT=0;OPTION_CANAPI_DRIVER=1;OPTION_CANAPI_COMPANIONS=1</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>./Sources;../Sources;../Sources/CANAPI;../Sources/CANlib;../Sources/Wrapper;.\misc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -116,7 +118,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;OPTION_CAN_2_0_ONLY=0;OPTION_CANAPI_DLLIMPORT=0;OPTION_CANAPI_DRIVER=1;OPTION_CANAPI_COMPANIONS=0</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;OPTION_CAN_2_0_ONLY=0;OPTION_CANAPI_DLLIMPORT=0;OPTION_CANAPI_DRIVER=1;OPTION_CANAPI_COMPANIONS=1</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>./Sources;../Sources;../Sources/CANAPI;../Sources/CANlib;../Sources/Wrapper;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -133,7 +135,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;OPTION_CAN_2_0_ONLY=0;OPTION_CANAPI_DLLIMPORT=0;OPTION_CANAPI_DRIVER=1;OPTION_CANAPI_COMPANIONS=0</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;OPTION_CAN_2_0_ONLY=0;OPTION_CANAPI_DLLIMPORT=0;OPTION_CANAPI_DRIVER=1;OPTION_CANAPI_COMPANIONS=1</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>./Sources;../Sources;../Sources/CANAPI;../Sources/CANlib;../Sources/Wrapper;.\misc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -152,7 +154,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;OPTION_CAN_2_0_ONLY=0;OPTION_CANAPI_DLLIMPORT=0;OPTION_CANAPI_DRIVER=1;OPTION_CANAPI_COMPANIONS=0</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;OPTION_CAN_2_0_ONLY=0;OPTION_CANAPI_DLLIMPORT=0;OPTION_CANAPI_DRIVER=1;OPTION_CANAPI_COMPANIONS=1</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>./Sources;../Sources;../Sources/CANAPI;../Sources/CANlib;../Sources/Wrapper;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>

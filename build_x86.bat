@@ -18,17 +18,27 @@ if errorlevel 1 goto end
 call msbuild.exe .\Libraries\CANAPI\uvcankvl.vcxproj /t:Clean;Build /p:"Configuration=Debug_lib";"Platform=Win32"
 if errorlevel 1 goto end
 
+call msbuild.exe .\Libraries\KvaserCAN\KvaserCAN.vcxproj /t:Clean;Build /p:"Configuration=Release_dll";"Platform=Win32"
+if errorlevel 1 goto end
+
+call msbuild.exe .\Libraries\KvaserCAN\KvaserCAN.vcxproj /t:Clean;Build /p:"Configuration=Debug_lib";"Platform=Win32"
+if errorlevel 1 goto end
+
 echo Copying artifacts...
 set BIN=".\Binaries"
 if not exist %BIN% mkdir %BIN%
 set BIN="%BIN%\x86"
 if not exist %BIN% mkdir %BIN%
-copy .\Libraries\CANAPI\Release_dll\u3cankvl.dll %BIN%
-copy .\Libraries\CANAPI\Release_dll\u3cankvl.lib %BIN%
+copy /Y .\Libraries\CANAPI\Release_dll\u3cankvl.dll %BIN%
+copy /Y .\Libraries\CANAPI\Release_dll\u3cankvl.lib %BIN%
+copy /Y .\Libraries\KvaserCAN\Release_dll\uvKvaserCAN.dll %BIN%
+copy /Y .\Libraries\KvaserCAN\Release_dll\uvKvaserCAN.lib %BIN%
 set BIN="%BIN%\lib"
 if not exist %BIN% mkdir %BIN%
 copy /Y .\Libraries\CANAPI\Debug_lib\u3cankvl.lib %BIN%
 copy /Y .\Libraries\CANAPI\Debug_lib\uvcankvl.pdb %BIN%\u3cankvl.pdb
+copy /Y .\Libraries\KvaserCAN\Debug_lib\uvKvaserCAN.lib %BIN%
+copy /Y .\Libraries\KvaserCAN\Debug_lib\KvaserCAN.pdb %BIN%\uvKvaserCAN.pdb
 copy /Y .\Sources\CANlib\x86\canlib32.lib %BIN%
 echo Static libraries (x86) > %BIN%\readme.txt
 
