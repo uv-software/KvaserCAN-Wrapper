@@ -89,7 +89,7 @@ Type `can_test /?` to display all program options.
 
 ### Development Environments
 
-- Microsoft Visual Studio Community 2017 (Version 15.9)
+- Microsoft Visual Studio Community 2019 (Version 16.8)
 
 ### Supported CAN Hardware
 

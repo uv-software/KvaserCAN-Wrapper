@@ -3,7 +3,7 @@ echo /*  -- Do not commit this file -- > Sources/build_no.h
 echo  * >> Sources/build_no.h
 echo  *  CAN Interface API, Version 3 (for Kvaser CAN Interfaces) >> Sources/build_no.h
 echo  * >> Sources/build_no.h
-echo  *  Copyright (C) 2017-2021  Uwe Vogt, UV Software, Berlin (info@uv-software.de) >> Sources/build_no.h
+echo  *  Copyright (C) 2017-2021  Uwe Vogt, UV Software, Berlin (info@uv-software.com) >> Sources/build_no.h
 echo  * >> Sources/build_no.h
 echo  *  This file is part of KvaserCAN-Wrapper. >> Sources/build_no.h
 echo  * >> Sources/build_no.h
@@ -27,7 +27,7 @@ if %errorlevel% == 0 (
     git log -1 --pretty=format:"#define BUILD_NO 0x%%h" > build_no.txt
     type build_no.txt >> Sources/build_no.h
     erase /Q build_no.txt >nul 2>nul
-    echo U >> Sources/build_no.h
+    echo  /* git hash */ >> Sources/build_no.h
 ) else (
     echo #define BUILD_NO 0xDEADC0DE >> Sources/build_no.h
 )
