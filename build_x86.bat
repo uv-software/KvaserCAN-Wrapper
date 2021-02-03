@@ -51,6 +51,20 @@ copy /Y .\Sources\CANAPI\CANAPI_Types.h %INC%
 copy /Y .\Sources\CANAPI\CANAPI_Defines.h %INC%
 copy /Y .\Sources\CANAPI\can_api.h %INC%
 
+call msbuild.exe .\Utilities\can_moni\can_moni.vcxproj /t:Clean;Build /p:"Configuration=Release";"Platform=Win32"
+if errorlevel 1 goto end
+
+call msbuild.exe .\Utilities\can_test\can_test.vcxproj /t:Clean;Build /p:"Configuration=Release";"Platform=Win32"
+if errorlevel 1 goto end
+
+echo Copying utilities...
+set BIN=".\Binaries"
+if not exist %BIN% mkdir %BIN%
+set BIN="%BIN%\x86"
+if not exist %BIN% mkdir %BIN%
+copy /Y .\Utilities\can_moni\Release\can_moni.exe %BIN%
+copy /Y .\Utilities\can_test\Release\can_test.exe %BIN%
+
 :end
 popd
 pause

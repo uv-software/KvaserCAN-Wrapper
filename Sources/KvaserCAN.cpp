@@ -21,7 +21,7 @@
 #include "build_no.h"
 #ifdef _MSC_VER
 #define VERSION_MAJOR    0
-#define VERSION_MINOR    1
+#define VERSION_MINOR    2
 #define VERSION_PATCH    0
 #else
 #define VERSION_MAJOR    0
