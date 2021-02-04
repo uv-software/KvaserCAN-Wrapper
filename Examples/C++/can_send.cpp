@@ -44,7 +44,7 @@ int main(int argc, const char * argv[]) {
         message.data[7] = (uint8_t)((uint64_t)i >> 56);
         do {
             if (((result = can_write(handle, &message, 0U)) < 0) && (result != CANERR_TX_BUSY)) {
-                std::cerr << "\n+++ error(" << result << "): message could not be sent" << std::endl;
+                std::cerr << "\n+++ error: message could not be sent" << std::endl;
                 goto reset;;
             }
         } while (result == CANERR_TX_BUSY);
@@ -57,9 +57,9 @@ int main(int argc, const char * argv[]) {
 reset:
     std::cout << i << " frame(s) sent" << std::endl;
     if ((result = can_reset(handle)) < 0)
-        std::cerr << "+++ error(" << result << "): interface could not be stopped" << std::endl;
+        std::cerr << "+++ error: interface could not be stopped" << std::endl;
 end:
     if ((result = can_exit(handle)) < 0)
-        std::cerr << "+++ error(" << result << "): interface could not be shutdown" << std::endl;
+        std::cerr << "+++ error: interface could not be shutdown" << std::endl;
     return result;
 }

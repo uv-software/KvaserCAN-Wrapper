@@ -36,9 +36,9 @@ copy /Y .\Libraries\KvaserCAN\x64\Release_dll\uvKvaserCAN.lib %BIN%
 set BIN="%BIN%\lib"
 if not exist %BIN% mkdir %BIN%
 copy /Y .\Libraries\CANAPI\x64\Debug_lib\u3cankvl.lib %BIN%
-copy /Y .\Libraries\CANAPI\x64\Debug_lib\uvcankvl.pdb %BIN%\u3cankvl.pdb
+copy /Y .\Libraries\CANAPI\x64\Debug_lib\u3cankvl.pdb %BIN%
 copy /Y .\Libraries\KvaserCAN\x64\Debug_lib\uvKvaserCAN.lib %BIN%
-copy /Y .\Libraries\KvaserCAN\x64\Debug_lib\KvaserCAN.pdb %BIN%\uvKvaserCAN.pdb
+copy /Y .\Libraries\KvaserCAN\x64\Debug_lib\uvKvaserCAN.pdb %BIN%
 copy /Y .\Sources\CANlib\x64\canlib32.lib %BIN%
 echo Static libraries (x64) > %BIN%\readme.txt
 
