@@ -38,17 +38,17 @@
 #define KVASER_SHARED_ACCESS            // permit non-exclusive access
 #define KVASER_VIRTUAL_CHANNELS         // support of virtual channels
 /*#define KVASER_SIMULATED_CHANNELS     // support of simulated channels */
-/* note: all other options move into header CANAPI_KvaserCAN.h */
+/* note: all other options moved into header CANAPI_KvaserCAN.h */
 
 
 /*  -----------  defines  ------------------------------------------------
  */
-/* note: all defines move into header CANAPI_KvaserCAN.h */
+/* note: all defines moved into header CANAPI_KvaserCAN.h */
 
 
 /*  -----------  types  --------------------------------------------------
  */
-/* note: all type definitions move into header CANAPI_KvaserCAN.h */
+/* note: all type definitions moved into header CANAPI_KvaserCAN.h */
 
 
 #endif /* CAN_DEFS_H_INCLUDED */

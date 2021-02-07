@@ -734,8 +734,6 @@ int can_bitrate(int handle, can_bitrate_t *bitrate, can_speed_t *speed)
 
 int can_property(int handle, uint16_t param, void *value, uint32_t nbyte)
 {
-    int rc = CANERR_FATAL;              // return value
-
     if(!init || !IS_HANDLE_VALID(handle)) {
         return lib_parameter(param, value, (size_t)nbyte);
     }
@@ -979,13 +977,13 @@ static int lib_parameter(uint16_t param, void *value, size_t nbyte)
             rc = CANERR_NOERROR;
         }
         break;
-    case CANPROP_GET_DEVICE_VENDOR:      // vendor name of the CAN interface (char[256])
+    case CANPROP_GET_DEVICE_VENDOR:     // vendor name of the CAN interface (char[256])
         if((nbyte > strlen(KVASER_LIB_VENDOR)) && (nbyte <= CANPROP_MAX_BUFFER_SIZE)) {
             strcpy((char*)value, KVASER_LIB_VENDOR);
             rc = CANERR_NOERROR;
         }
         break;
-    case CANPROP_GET_DEVICE_DLLNAME:     // file name of the CAN interface (char[256])
+    case CANPROP_GET_DEVICE_DLLNAME:    // file name of the CAN interface (char[256])
         if((nbyte > strlen(KVASER_LIB_CANLIB)) && (nbyte <= CANPROP_MAX_BUFFER_SIZE)) {
             strcpy((char*)value, KVASER_LIB_CANLIB);
             rc = CANERR_NOERROR;

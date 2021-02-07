@@ -65,10 +65,10 @@ int main(int argc, const char * argv[]) {
     CANAPI_Bitrate_t bitrate = {};
     bitrate.index = CANBTR_INDEX_250K;
     can_message_t message = {};
-    message.id = 0x55AU,
-    message.xtd = 0,
-    message.rtr = 0,
-    message.dlc = CAN_MAX_DLC,
+    message.id = 0x55AU;
+    message.xtd = 0;
+    message.rtr = 0;
+    message.dlc = CAN_MAX_DLC;
     message.data[0] = 0x11;
     message.data[1] = 0x22;
     message.data[2] = 0x33;
@@ -80,7 +80,7 @@ int main(int argc, const char * argv[]) {
     message.timestamp.tv_sec = 0;
     message.timestamp.tv_nsec = 0;
     CANAPI_Return_t retVal = 0;
-    int32_t channel = KVASER_CAN_CHANNEL0;
+    int32_t channel = (int32_t)KVASER_CAN_CHANNEL0;
     uint16_t timeout = CANREAD_INFINITE;
     unsigned int delay = 0U;
     CCANAPI::EChannelState state;
@@ -101,14 +101,14 @@ int main(int argc, const char * argv[]) {
     int option_transmit = OPTION_NO;
     for (int i = 1, opt = 0; i < argc; i++) {
         /* Kvaser CAN channel */
-        if (!strcmp(argv[i], "Kvaser CAN Channel 0") || !strcmp(argv[i], "CH0")) channel = KVASER_CAN_CHANNEL0;
-        if (!strcmp(argv[i], "Kvaser CAN Channel 1") || !strcmp(argv[i], "CH1")) channel = KVASER_CAN_CHANNEL1;
-        if (!strcmp(argv[i], "Kvaser CAN Channel 2") || !strcmp(argv[i], "CH2")) channel = KVASER_CAN_CHANNEL2;
-        if (!strcmp(argv[i], "Kvaser CAN Channel 3") || !strcmp(argv[i], "CH3")) channel = KVASER_CAN_CHANNEL3;
-        if (!strcmp(argv[i], "Kvaser CAN Channel 4") || !strcmp(argv[i], "CH4")) channel = KVASER_CAN_CHANNEL4;
-        if (!strcmp(argv[i], "Kvaser CAN Channel 5") || !strcmp(argv[i], "CH5")) channel = KVASER_CAN_CHANNEL5;
-        if (!strcmp(argv[i], "Kvaser CAN Channel 6") || !strcmp(argv[i], "CH6")) channel = KVASER_CAN_CHANNEL6;
-        if (!strcmp(argv[i], "Kvaser CAN Channel 7") || !strcmp(argv[i], "CH7")) channel = KVASER_CAN_CHANNEL7;
+        if (!strcmp(argv[i], "Kvaser CAN Channel 0") || !strcmp(argv[i], "CH0")) channel = (int32_t)KVASER_CAN_CHANNEL0;
+        if (!strcmp(argv[i], "Kvaser CAN Channel 1") || !strcmp(argv[i], "CH1")) channel = (int32_t)KVASER_CAN_CHANNEL1;
+        if (!strcmp(argv[i], "Kvaser CAN Channel 2") || !strcmp(argv[i], "CH2")) channel = (int32_t)KVASER_CAN_CHANNEL2;
+        if (!strcmp(argv[i], "Kvaser CAN Channel 3") || !strcmp(argv[i], "CH3")) channel = (int32_t)KVASER_CAN_CHANNEL3;
+        if (!strcmp(argv[i], "Kvaser CAN Channel 4") || !strcmp(argv[i], "CH4")) channel = (int32_t)KVASER_CAN_CHANNEL4;
+        if (!strcmp(argv[i], "Kvaser CAN Channel 5") || !strcmp(argv[i], "CH5")) channel = (int32_t)KVASER_CAN_CHANNEL5;
+        if (!strcmp(argv[i], "Kvaser CAN Channel 6") || !strcmp(argv[i], "CH6")) channel = (int32_t)KVASER_CAN_CHANNEL6;
+        if (!strcmp(argv[i], "Kvaser CAN Channel 7") || !strcmp(argv[i], "CH7")) channel = (int32_t)KVASER_CAN_CHANNEL7;
         /* baud rate (CAN 2.0) */
         if (!strcmp(argv[i], "BD:0") || !strcmp(argv[i], "BD:1000")) bitrate.index = CANBTR_INDEX_1M;
         if (!strcmp(argv[i], "BD:1") || !strcmp(argv[i], "BD:800")) bitrate.index = CANBTR_INDEX_800K;
@@ -361,7 +361,7 @@ int main(int argc, const char * argv[]) {
 #ifdef SECOND_CHANNEL
         if ((retVal = mySecond.ReadMessage(message, 0U)) == CCANAPI::NoError) {
             if (option_echo) {
-                fprintf(stdout, ">>> %i\t", frames++);
+                fprintf(stdout, ">2> %i\t", frames++);
                 fprintf(stdout, "%7li.%04li\t", (long)message.timestamp.tv_sec, message.timestamp.tv_nsec / 100000);
                 if (!opMode.fdoe)
                     fprintf(stdout, "%03x\t%c%c [%i]", message.id, message.xtd ? 'X' : 'S', message.rtr ? 'R' : ' ', message.dlc);
