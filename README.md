@@ -1,6 +1,6 @@
 ### Wrapper Library for Kvaser CAN Interfaces (Windows&reg;)
 
-_Copyright &copy; 2017-2021   Uwe Vogt, UV Software, Berlin (info@uv-software.de)_
+_Copyright &copy; 2017-2021  Uwe Vogt, UV Software, Berlin (info@uv-software.de)_
 
 # CAN API V3 for Kvaser CAN Interfaces
 
