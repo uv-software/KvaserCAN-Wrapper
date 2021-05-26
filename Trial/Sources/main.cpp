@@ -335,8 +335,8 @@ int main(int argc, const char * argv[]) {
                     fprintf(stdout, "%03x\t%c%c [%i]", message.id, message.xtd ? 'X' : 'S', message.rtr ? 'R' : ' ', message.dlc);
                 else
                     fprintf(stdout, "%03x\t%c%c%c%c%c [%i]", message.id, message.xtd ? 'X' : 'S', message.rtr ? 'R' : ' ',
-                            message.fdf ? 'F' : ' ', message.brs ? 'B' : ' ', message.esi ? 'E' :' ', CCANAPI::DLc2Len(message.dlc));
-                for (uint8_t i = 0; i < CCANAPI::DLc2Len(message.dlc); i++)
+                            message.fdf ? 'F' : ' ', message.brs ? 'B' : ' ', message.esi ? 'E' :' ', CCANAPI::Dlc2Len(message.dlc));
+                for (uint8_t i = 0; i < CCANAPI::Dlc2Len(message.dlc); i++)
                     fprintf(stdout, " %02x", message.data[i]);
                 if (message.sts)
                     fprintf(stdout, " <<< status frame");
@@ -367,8 +367,8 @@ int main(int argc, const char * argv[]) {
                     fprintf(stdout, "%03x\t%c%c [%i]", message.id, message.xtd ? 'X' : 'S', message.rtr ? 'R' : ' ', message.dlc);
                 else
                     fprintf(stdout, "%03x\t%c%c%c%c%c [%i]", message.id, message.xtd ? 'X' : 'S', message.rtr ? 'R' : ' ',
-                        message.fdf ? 'F' : ' ', message.brs ? 'B' : ' ', message.esi ? 'E' : ' ', CCANAPI::DLc2Len(message.dlc));
-                for (uint8_t i = 0; i < CCANAPI::DLc2Len(message.dlc); i++)
+                        message.fdf ? 'F' : ' ', message.brs ? 'B' : ' ', message.esi ? 'E' : ' ', CCANAPI::Dlc2Len(message.dlc));
+                for (uint8_t i = 0; i < CCANAPI::Dlc2Len(message.dlc); i++)
                     fprintf(stdout, " %02x", message.data[i]);
                 if (message.sts)
                     fprintf(stdout, " <<< status frame");
