@@ -45,17 +45,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with KvaserCAN-Wrapper.  If not, see <http://www.gnu.org/licenses/>.
  */
-/** @file        CANAPI_KvaserCAN.h
- *
- *  @brief       CAN API V3 for generic CAN Interfaces - Kvaser CAN Interfaces
- *
- *  @remarks     For Kvaser CANlib API Interfaces (canlib32.dll).
- *
- *  @author      $Author: haumea $
- *
- *  @version     $Rev: 963 $
- *
- *  @addtogroup  can_api
+/** @addtogroup  can_api
  *  @{
  */
 #ifndef CANAPI_KVASERCAN_H_INCLUDED
