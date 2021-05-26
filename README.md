@@ -111,7 +111,7 @@ Type `can_test /?` to display all program options.
 
 - Microsoft Visual Studio Community 2019 (Version 16.10.0)
 
-### Supported CAN Hardware
+### Tested CAN Hardware
 
 - Kvaser Leaf Light V2 - single channel, CAN 2.0 (EAN: 73-30130-00685-0)
 - Kvaser Leaf Pro HS V2 - single channel, CAN FD (EAN: 73-30130-00843-4)
@@ -131,9 +131,9 @@ Please note the copyright and license agreements.
 
 ### Dual-License
 
-KvaserCAN-Wrapper is dual-licensed under the terms of the BSD 2-Clause "Simplified" License
+This work is dual-licensed under the terms of the BSD 2-Clause "Simplified" License
 and under the terms of the GNU General Public License v3.0 (or any later version).
-You can choose between one of them if you use KvaserCAN-Wrapper in whole or in part.
+You can choose between one of them if you use this work in whole or in part.
 
 `SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-or-later`
 
