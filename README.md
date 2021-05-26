@@ -122,10 +122,11 @@ Type `can_test /?` to display all program options.
 
 ## Known Bugs and Caveats
 
-- For a list of known bugs and caveats see tab [Issues](https://github.com/uv-software/KvaserCAN-Wrapper/issues) in the GitHub repo.
+For a list of known bugs and caveats see tab [Issues](https://github.com/uv-software/KvaserCAN-Wrapper/issues) in the GitHub repo.
+
 ## This and That
 
-Kvaser´s CANlib SDK can be downloaded form the [Kvaser](https://www.kvaser.com/) website.
+Kvaser´s CANlib SDK can be downloaded form the [Kvaser](https://www.kvaser.com/) website. \
 Please note the copyright and license agreements.
 
 ### Dual-License
