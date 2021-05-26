@@ -47,6 +47,9 @@
  * \defgroup tScript                 t-script
  * \ingroup grp_canlib
  * \brief Starting, stopping scripts, moving files to/from device
+ * \defgroup grp_kvfile              File Handling
+ * \brief Handling files and the files system on devices.
+ * \ingroup grp_canlib
  * \defgroup kv_io                  I/O Pin Handling
  * \brief Functions related to handling I/O pins
  * \details The kvIoXxx functions are used for configuring and controlling I/O pins on I/O modules connected to a device.
@@ -57,6 +60,11 @@
  * The module configuration can be examined with kvIoGetNumberOfPins() and kvIoPinGetInfo(). If the configuration is as expected, a call to kvIoConfirmConfig() will confirm the configuration. Removing or adding I/O modules will change the configuration and the pins are re-enumerated. It is always required to confirm the new configuration after a configuration change.
  *
  * \ingroup grp_canlib
+ *
+ * \defgroup kvdiag_diagnostics    Diagnostics
+ * \brief Diagnostics API Library.
+ * \ingroup grp_canlib
+ *
  */
 
 /**
@@ -83,11 +91,12 @@
  *  - \subpage page_user_guide_threads
  *  - \subpage page_user_guide_send_recv_asynch_not
  *  - \subpage page_user_guide_kvscript
+ *  - \subpage page_user_guide_kvfile
  *  - \subpage page_user_guide_kviopin
+ *  - \subpage page_user_guide_kvdiag
  *  - \subpage page_user_guide_send_recv_mailboxes
  *  - \subpage page_user_guide_userdata
  *  - \subpage page_user_guide_install
- *  - \subpage page_user_guide_build
  *  - \subpage page_canlib_api_calls_grouped_by_function
  *  - \subpage page_user_guide_canlib_samples
 **/
@@ -365,6 +374,10 @@ typedef int canHandle;
     CAN FD protocol. Indicates a bitrate of 8.0 Mbit/s and sampling point at
     60%. */
 #define canFD_BITRATE_8M_60P       (-1004)
+/** Used in \ref canSetBusParams() and \ref canSetBusParamsFd() when using the
+    CAN FD protocol. Indicates a bitrate of 8.0 Mbit/s and sampling point at
+    80%. */
+#define canFD_BITRATE_8M_80P       (-1005)
 
 /** The \ref BAUD_xxx names are deprecated, use \ref canBITRATE_1M instead. */
 #define BAUD_1M              (-1)
@@ -429,7 +442,7 @@ void CANLIBAPI canInitializeLibrary (void);
  *
  * \source_cs       <b>static Canlib.canStatus canEnumHardwareEx(out Int32 channelCount);</b>
  *
- * \source_delphi   <b>function canEnumHardwareEx(var channelCount: Cardinal): canStatus;</b>
+ * \source_delphi   <b>function canEnumHardwareEx(var channelCount: Integer): canStatus;</b>
  * \source_end
  *
  * \param[out]  channelCount Number of channels present.
@@ -592,8 +605,8 @@ canStatus CANLIBAPI canSetBusParams (const CanHandle hnd,
  * use \ref canSetBusParamsFdTq() instead.
  *
  * To get device specific limits of bus parameters, see \ref canCHANNELDATA_BUS_PARAM_LIMITS.
- * 
- * The <a href="https://www.kvaser.com/support/calculators/can-fd-bit-timing-calculator/"> Kvaser Bit Timing calculator</a>, 
+ *
+ * The <a href="https://www.kvaser.com/support/calculators/can-fd-bit-timing-calculator/"> Kvaser Bit Timing calculator</a>,
  * available on the Kvaser website, can be used to calculate specific bit rates.
  *
  * \param[in] hnd      A handle to an open CAN circuit.
@@ -660,7 +673,7 @@ canStatus CANLIBAPI canSetBusParamsFd (const CanHandle hnd,
  *
  * To get device specific limits of bus parameters, see \ref canCHANNELDATA_BUS_PARAM_LIMITS.
  *
- * The <a href="https://www.kvaser.com/support/calculators/can-fd-bit-timing-calculator/"> Kvaser Bit Timing calculator</a>, 
+ * The <a href="https://www.kvaser.com/support/calculators/can-fd-bit-timing-calculator/"> Kvaser Bit Timing calculator</a>,
  * available on the Kvaser website, can be used to calculate specific bit rates.
  *
  * \param[in] hnd      A handle to an open CAN circuit.
@@ -1415,6 +1428,63 @@ canStatus CANLIBAPI canTranslateBaud (long *const freq,
                                       unsigned int *const sjw,
                                       unsigned int *const nosamp,
                                       unsigned int *const syncMode);
+
+/**
+ * \ingroup CAN
+ *
+ * \source_cs       <b>static Canlib.canStatus Canlib.kvBitrateToBusParamsTq(CanHandle hnd, Int32 freqA, out kvBusParamsTq nominal);</b>
+ *
+ * \source_delphi   <b>function kvBitrateToBusparamsTq(handle: canHandle; const freq: Integer; var nominal: kvBusParamsTq): canStatus;</b>
+ * \source_end
+ *
+ * This function translates the \ref canBITRATE_xxx constants to corresponding
+ * bus parameter values. At return \a nominal contains parameter values for the
+ * specified \a freq. If the channel is opened in CAN FD mode, see \ref kvBitrateToBusParamsFdTq().
+ *
+ * \param[in]     hnd       A handle to an open circuit.
+ * \param[in]     freq      Bitrate constant, \ref canBITRATE_xxx.
+ * \param[in,out] nominal   A pointer to a \ref kvBusParamsTq, upon return receives
+ *                          the bus busparamters specified by \a freq.
+ *
+ * \return \ref canOK (zero) is success
+ * \return \ref canERR_xxx (negative) if failure
+ *
+ * \sa \ref canSetBusParamsTq(), \ref kvBitrateToBusParamsFdTq()
+ */
+canStatus CANLIBAPI kvBitrateToBusParamsTq (const canHandle hnd,
+                                            int freq,
+                                            kvBusParamsTq *nominal);
+
+/**
+ * \ingroup CAN
+ *
+ * \source_cs       <b>static Canlib.canStatus Canlib.kvBitrateToBusParamsFdTq(CanHandle hnd, Int32 freqA, Int32 freqD, out kvBusParamsTq arbitration, out kvBusParamsTq data);</b>
+ *
+ * \source_delphi   <b>function kvBitrateToBusParamsFdTq (handle: canHandle; const freqA, freqD: Integer; var arbitration, data: kvBusParamsTq): canStatus;</b>
+ *
+ * This function translates the \ref canFD_BITRATE_xxx constants to corresponding
+ * bus parameter values. At return \a arbitration contains parameter values for the
+ * specified \a freqA, and \a data contains parameter values for the specified
+ * \a freqD. If the channel is opened in classic CAN mode see \ref kvBitrateToBusParamsTq().
+ *
+ * \param[in]     hnd         A handle to an open circuit.
+ * \param[in]     freqA       Bitrate constant, \ref canFD_BITRATE_xxx.
+ * \param[in]     freqD       Bitrate constant, \ref canFD_BITRATE_xxx.
+ * \param[in,out] arbitration A pointer to a \ref kvBusParamsTq, upon return receives
+ *                            the bus busparamters specified by \a freqA.
+ * \param[in,out] data        A pointer to a \ref kvBusParamsTq, upon return receives
+ *                            the bus busparamters specified by \a freqD.
+ *
+ * \return \ref canOK (zero) is success
+ * \return \ref canERR_xxx (negative) if failure
+ *
+ * \sa \ref canSetBusParamsFdTq(), \ref kvBitrateToBusParamsTq()
+ */
+canStatus CANLIBAPI kvBitrateToBusParamsFdTq (const canHandle hnd,
+                                              int freqA,
+                                              int freqD,
+                                              kvBusParamsTq *arbitration,
+                                              kvBusParamsTq *data);
 
 /**
  * \ingroup can_general
@@ -2265,18 +2335,25 @@ typedef struct kvClockInfo {
 }kvClockInfo;
 
 /**
-* Returned when using \ref canCHANNELDATA_BUS_PARAM_LIMITS
-*
-* This struct shows the low level limits of the parameters.
-*
-* Note that seg1 = prop + phase1 and seg2 = phase2
+ * Returned when using \ref canCHANNELDATA_BUS_PARAM_LIMITS
+ *
+ * This struct shows the low level limits of the parameters.
+ *
+ * The tq field is always zero for both min/max arbitration/data, and is reserved
+ * for possible other uses in future releases.
+ *
+ * If prop is zero for both min and max values, that means that the unit
+ * does not distinguish between phase segment one and the propagation
+ * segment, i.e. the limit applies to (phase1 + prop).
+ *
+ * \note  This is only intended for internal use.
 */
 typedef struct kvBusParamLimits {
-  int version;   /**< The version of this struct, currently 1 */
-  int brp_size;  /**< Number of bits used to specify brp and d_brp */
-  int seg1_size; /**< Number of bits used to specify prop + phase1 and d_phase1. */
-  int seg2_size; /**< Number of bits used to specify phase2 and d_phase2. */
-  int sjw_size;  /**< Number of bits used to specify sjw and d_sjw */
+  int version;   /**< The version of this struct, currently 2 */
+  kvBusParamsTq arbitration_min;
+  kvBusParamsTq arbitration_max;
+  kvBusParamsTq data_min;
+  kvBusParamsTq data_max;
 }kvBusParamLimits;
 
 /**
@@ -4453,7 +4530,8 @@ canStatus CANLIBAPI canSetBitrate (const CanHandle hnd, int bitrate);
 canStatus CANLIBAPI kvAnnounceIdentity (const CanHandle hnd,
                                         void *buf,
                                         size_t bufsiz);
-/**
+
+ /**
  * \ingroup can_general
  *
  * \source_cs       <b>static Canlib.kvStatus kvAnnounceIdentityEx(CanHandle hnd, Int32 type, Byte[] data);</b>
@@ -4462,6 +4540,8 @@ canStatus CANLIBAPI kvAnnounceIdentity (const CanHandle hnd,
  *
  * \source_end
  * The \ref kvAnnounceIdentityEx function is used by certain OEM applications.
+ *
+ * \note Not implemented in linux.
  *
  * \param[in]  hnd     An open handle to a CAN channel.
  * \param[in]  type    Type of announcement.
@@ -4680,7 +4760,8 @@ kvStatus CANLIBAPI kvTimeDomainRemoveHandle (kvTimeDomain domain,
 /**
  * \ref kvCallback_t is used by the function \ref kvSetNotifyCallback()
  *
- * The callback function is called with the following arguments:
+ * The callback function, on Windows required to be a \c __stdcall function, should be called with the following arguments:
+ *
  * \li hnd - the handle of the CAN channel where the event happened.
  * \li context - the context pointer you passed to \ref kvSetNotifyCallback().
  * \li notifyEvent - one of the \ref canNOTIFY_xxx notification codes.
@@ -4688,9 +4769,12 @@ kvStatus CANLIBAPI kvTimeDomainRemoveHandle (kvTimeDomain domain,
  * \note It is really the \ref canNOTIFY_xxx codes, and not the
  *  \ref canEVENT_xxx codes that the \ref canSetNotify() API is using.
  *
+ * \note The default calling convention for C/C++ programs on Windows is \c __cdecl.
+ * <br>On Linux, the default calling convention is used.
+ *
+ * \sa \ref section_user_guide_send_recv_asynch_callback
  */
-typedef void (CANLIBAPI *kvCallback_t) (CanHandle hnd, void* context, unsigned int notifyEvent);
-
+typedef void (__stdcall *kvCallback_t) (CanHandle hnd, void* context, unsigned int notifyEvent);
 /**
  * \ingroup can_general
  *
@@ -5633,7 +5717,7 @@ kvStatus CANLIBAPI kvScriptTxeGetData(const char *filePathOnPC,
 
 
 /**
- * \ingroup tScript
+ * \ingroup grp_kvFile
  *
  * \source_cs       <b>static Canlib.kvStatus kvFileCopyToDevice(CanHandle hnd, String hostFileName, String deviceFileName);</b>
  *
@@ -5653,13 +5737,14 @@ kvStatus CANLIBAPI kvScriptTxeGetData(const char *filePathOnPC,
  * \return \ref canERR_xxx (negative) if failure
  *
  * \sa \ref kvFileCopyFromDevice(), \ref kvFileDelete()
+ * \sa \ref section_user_guide_kvfile_copying_files_to_device
  */
 kvStatus CANLIBAPI kvFileCopyToDevice (const CanHandle hnd,
                                        char *hostFileName,
                                        char *deviceFileName);
 
 /**
- * \ingroup tScript
+ * \ingroup grp_kvFile
  *
  * \source_cs       <b>static Canlib.kvStatus kvFileCopyFromDevice(CanHandle hnd, String deviceFileName, String hostFileName);</b>
  *
@@ -5685,7 +5770,7 @@ kvStatus CANLIBAPI kvFileCopyFromDevice (const CanHandle hnd,
                                          char *hostFileName);
 
 /**
- * \ingroup tScript
+ * \ingroup grp_kvFile
  *
  * \source_cs       <b>static Canlib.kvStatus kvFileDelete(CanHandle hnd, String deviceFileName);</b>
  *
@@ -5708,7 +5793,7 @@ kvStatus CANLIBAPI kvFileCopyFromDevice (const CanHandle hnd,
 kvStatus CANLIBAPI kvFileDelete (const CanHandle hnd, char *deviceFileName);
 
 /**
- * \ingroup tScript
+ * \ingroup grp_kvFile
  *
  * \source_cs       <b>static Canlib.kvStatus kvFileGetName(CanHandle hnd, Int32 fileNo, out String name);</b>
  *
@@ -5735,7 +5820,7 @@ kvStatus CANLIBAPI kvFileGetName (const CanHandle hnd,
                                   int namelen);
 
 /**
- * \ingroup tScript
+ * \ingroup grp_kvFile
  *
  * \source_cs       <b>static Canlib.kvStatus kvFileGetCount(CanHandle hnd, out Int32 count);</b>
  *
@@ -5756,7 +5841,7 @@ kvStatus CANLIBAPI kvFileGetName (const CanHandle hnd,
 kvStatus CANLIBAPI kvFileGetCount (const CanHandle hnd, int *count);
 
 /**
- * \ingroup tScript
+ * \ingroup grp_kvFile
  *
  * \source_cs       <b>static Canlib.kvStatus kvFileGetSystemData(CanHandle hnd, Int32 itemCode, out Int32 result);</b>
  *
@@ -5782,20 +5867,20 @@ kvStatus CANLIBAPI kvFileGetSystemData (const CanHandle hnd,
                                         int *result);
 
 /**
- * \ingroup tScript
+ * \ingroup grp_kvFile
  *
  * \source_cs       <b>static Canlib.canStatus  kvFileDiskFormat(CanHandle hnd);</b>
  *
- * \source_delphi   <b>function kvFileDiskFormat(hnd: canHandle): kvStatus; </b> 
- * \source_end 
- *  
- * The \ref kvFileDiskFormat() function is used for formating the disk,  
+ * \source_delphi   <b>function kvFileDiskFormat(hnd: canHandle): kvStatus; </b>
+ * \source_end
+ *
+ * The \ref kvFileDiskFormat() function is used for formating the disk,
  * back to FAT32.
  *
  *
- * \param[in] hnd       An open handle to a CAN channel.      
+ * \param[in] hnd       An open handle to a CAN channel.
  *
- * \return \ref canOK (zero) if success 
+ * \return \ref canOK (zero) if success
  * \return \ref canERR_xxx (negative) if failure
  *
  */
@@ -6029,28 +6114,28 @@ kvStatus CANLIBAPI kvReadTimer64 (const CanHandle hnd, KVINT64 *time);
   /**
    * This define is used in \ref kvIoPinGetInfo().
    *
-   * An unsigned 32-bit integer, see \ref kvIO_MODULE_TYPE_xxx. 
+   * An unsigned 32-bit integer, see \ref kvIO_MODULE_TYPE_xxx.
    * Read-only.
    */
 #define kvIO_INFO_GET_MODULE_TYPE                1
   /**
    * This define is used in \ref kvIoPinGetInfo().
    *
-   * An unsigned 32-bit integer, see \ref kvIO_PIN_DIRECTION_xxx. 
+   * An unsigned 32-bit integer, see \ref kvIO_PIN_DIRECTION_xxx.
    * Read-only.
    */
 #define kvIO_INFO_GET_DIRECTION                     2
   /**
    * This define is used in \ref kvIoPinGetInfo().
    *
-   * An unsigned 32-bit integer, see \ref kvIO_PIN_TYPE_xxx. 
+   * An unsigned 32-bit integer, see \ref kvIO_PIN_TYPE_xxx.
    * Read-only.
    */
 #define kvIO_INFO_GET_PIN_TYPE                      4
   /**
    * This define is used in \ref kvIoPinGetInfo().
    *
-   * An unsigned 32-bit integer that contains the resolution 
+   * An unsigned 32-bit integer that contains the resolution
    * in number of bits. Read-only.
    */
 #define kvIO_INFO_GET_NUMBER_OF_BITS                5
@@ -6078,7 +6163,7 @@ kvStatus CANLIBAPI kvReadTimer64 (const CanHandle hnd, KVINT64 *time);
    * An unsigned 32-bit integer that contains the filter time in micro
    * seconds when a digital input pin goes from LOW to HIGH.
    *
-   * \note This is only used for digital input pins. 
+   * \note This is only used for digital input pins.
    */
 #define kvIO_INFO_GET_DI_LOW_HIGH_FILTER            8
   /**
@@ -6087,7 +6172,7 @@ kvStatus CANLIBAPI kvReadTimer64 (const CanHandle hnd, KVINT64 *time);
    * An unsigned 32-bit integer that contains the filter time in micro
    * seconds when a digital input pin goes from HIGH to LOW.
    *
-   * \note This is only used for digital input pins. 
+   * \note This is only used for digital input pins.
    */
 #define kvIO_INFO_GET_DI_HIGH_LOW_FILTER            9
   /**
@@ -6096,7 +6181,7 @@ kvStatus CANLIBAPI kvReadTimer64 (const CanHandle hnd, KVINT64 *time);
    * An unsigned 32-bit integer that contains the low-pass filter
    * order for an analog input pin.
    *
-   * \note This is only used for analog input pins. 
+   * \note This is only used for analog input pins.
    */
 #define kvIO_INFO_GET_AI_LP_FILTER_ORDER           10
   /**
@@ -6106,7 +6191,7 @@ kvStatus CANLIBAPI kvReadTimer64 (const CanHandle hnd, KVINT64 *time);
    * analog input pin, i.e. the amount the input have to change
    * before the sampled value is updated.
    *
-   * \note This is only used for analog input pins. 
+   * \note This is only used for analog input pins.
    */
 #define kvIO_INFO_GET_AI_HYSTERESIS                11
   /**
@@ -6151,7 +6236,7 @@ kvStatus CANLIBAPI kvReadTimer64 (const CanHandle hnd, KVINT64 *time);
    * An unsigned 32-bit integer that contains the filter time in micro
    * seconds when a digital input pin goes from LOW to HIGH.
    *
-   * \note This is only used for digital input pins. 
+   * \note This is only used for digital input pins.
    */
 #define kvIO_INFO_SET_DI_LOW_HIGH_FILTER            8
   /**
@@ -6160,7 +6245,7 @@ kvStatus CANLIBAPI kvReadTimer64 (const CanHandle hnd, KVINT64 *time);
    * An unsigned 32-bit integer that contains the filter time in micro
    * seconds when a digital input pin goes from HIGH to LOW.
    *
-   * \note This is only used for digital input pins. 
+   * \note This is only used for digital input pins.
    */
 #define kvIO_INFO_SET_DI_HIGH_LOW_FILTER            9
   /**
@@ -6169,7 +6254,7 @@ kvStatus CANLIBAPI kvReadTimer64 (const CanHandle hnd, KVINT64 *time);
    * An unsigned 32-bit integer that contains the low-pass filter
    * order for an analog input pin.
    *
-   * \note This is only used for analog input pins. 
+   * \note This is only used for analog input pins.
    */
 #define kvIO_INFO_SET_AI_LP_FILTER_ORDER           10
   /**
@@ -6179,7 +6264,7 @@ kvStatus CANLIBAPI kvReadTimer64 (const CanHandle hnd, KVINT64 *time);
    * analog input pin, i.e. the amount the input have to change
    * before the sampled value is updated.
    *
-   * \note This is only used for analog input pins. 
+   * \note This is only used for analog input pins.
    */
 #define kvIO_INFO_SET_AI_HYSTERESIS                11
  /** @} */
@@ -6293,7 +6378,7 @@ canStatus CANLIBAPI kvIoGetNumberOfPins (const CanHandle hnd, unsigned int *pinC
  *
  * \source_delphi   <b>function kvIoConfirmConfig(hnd: canHandle): canStatus;</b>
  * \source_end
- * 
+ *
  * This function is used to confirm configuration. It is required to call this function, before it is possible to use any kvIoPinSetXxx()/kvIoPinGetXxx() function. After a configuration change, module removal or insertion, it is required to confirm the new configuration.
  *
  * \param[in]  hnd   An open handle to a CAN channel.
@@ -6310,7 +6395,7 @@ canStatus CANLIBAPI kvIoConfirmConfig (const CanHandle hnd);
  * \source_cs       <b>static Canlib.kvStatus kvIoPinGetInfo(CanHandle handle, Int32 pin, kvIOGetInfo item, ref Object data);</b>
  *
  * \source_delphi   <b>function kvIoPinGetInfo(hnd: canHandle; pin: cardinal; item: Integer; var buffer; bufsize: cardinal): canStatus;</b>
- * \source_end 
+ * \source_end
  * This function is used to retrieve I/O pin properties.
  *
  * \param[in]  hnd        An open handle to a CAN channel.
@@ -6331,7 +6416,7 @@ canStatus CANLIBAPI kvIoPinGetInfo (const CanHandle hnd, unsigned int pin, int i
  * \source_cs       <b>static Canlib.kvStatus kvIoPinSetInfo(CanHandle handle, Int32 pin, kvIOSetInfo item, Object data);</b>
  *
  * \source_delphi   <b>function kvIoPinSetInfo(hnd: canHandle; pin: cardinal; item: Integer; var buffer; bufsize: cardinal): canStatus;</b>
- * \source_end  
+ * \source_end
  * This function is used to set I/O pin properties, for items that can be changed.
  *
  * \param[in]  hnd        An open handle to a CAN channel.
@@ -6352,7 +6437,7 @@ canStatus CANLIBAPI kvIoPinSetInfo (const CanHandle hnd, unsigned int pin, int i
  * \source_cs       <b>static Canlib.kvStatus kvIoPinSetDigital(CanHandle handle, Int32 pin, Int32 value);</b>
  *
  * \source_delphi   <b>function kvIoPinSetDigital(hnd: canHandle; pin: cardinal; value: cardinal): canStatus;</b>
- * \source_end   
+ * \source_end
  * This function is used to set a digital output I/O pin. If \a value is zero,
  * the pin is set LOW. For any non-zero \a value, the pin is set HIGH.
  *
@@ -6371,7 +6456,7 @@ canStatus CANLIBAPI kvIoPinSetDigital (const CanHandle hnd, unsigned int pin, un
  * \source_cs       <b>static Canlib.kvStatus kvIoPinGetDigital(CanHandle handle, Int32 pin, out Int32 value);</b>
  *
  * \source_delphi   <b>function kvIoPinGetDigital(hnd: canHandle; pin: cardinal; var value: cardinal): canStatus;</b>
- * \source_end   
+ * \source_end
  * This function is used to retrieve the value of the specified digital input I/O pin.
  * If the pin is LOW, the integer pointed to by \a value is assigned zero.
  * If the pin is HIGH, the integer pointed to by \a value is assigned a '1'.
@@ -6392,18 +6477,18 @@ canStatus CANLIBAPI kvIoPinGetDigital (const CanHandle hnd, unsigned int pin, un
  * \source_cs       <b>static Canlib.kvStatus kvIoPinGetOutputDigital(CanHandle handle, Int32 pin, out Int32 value);</b>
  *
  * \source_delphi   <b>function kvIoPinGetOutputDigital(hnd: canHandle; pin: cardinal; var value: cardinal): canStatus;</b>
- * \source_end    
+ * \source_end
  * This function is used to get the latest set value of a digital output I/O pin.
  * If the latest value written to the pin is LOW, the integer pointed to by \a value is assigned zero.
- * If it is HIGH, the integer pointed to by \a value is assigned a '1'. 
- * This function only returns values as they are presented in memory and the actual value on the output pin may therefore differ. 
+ * If it is HIGH, the integer pointed to by \a value is assigned a '1'.
+ * This function only returns values as they are presented in memory and the actual value on the output pin may therefore differ.
  *
  * \param[in]  hnd   An open handle to a CAN channel.
  * \param[in]  pin   The pin number, see \ref kvIoGetNumberOfPins.
  * \param[out] value A pointer to an unsigned int which receives the latest set value of the pin.
  *
  * \sa \ref kvIoPinSetDigital()
- * \note The actual value on the output pin may differ. 
+ * \note The actual value on the output pin may differ.
  * \note Preliminary API that may change.
  * \note Not implemented in Linux.
  */
@@ -6415,7 +6500,7 @@ canStatus CANLIBAPI kvIoPinGetOutputDigital (const CanHandle hnd, unsigned int p
  * \source_cs       <b>static Canlib.kvStatus kvIoPinSetRelay(CanHandle handle, Int32 pin, Int32 value);</b>
  *
  * \source_delphi   <b>function kvIoPinSetRelay(hnd: canHandle; pin: cardinal; value: cardinal): canStatus;</b>
- * \source_end     
+ * \source_end
  * This function is used to control a relay of the specified I/O pin.
  * If \a value is zero, the relay is set to OFF. For any non-zero \a value,
  * the relay is set to ON.
@@ -6434,11 +6519,11 @@ canStatus CANLIBAPI kvIoPinSetRelay (const CanHandle hnd, unsigned int pin, unsi
  * \source_cs       <b>static Canlib.kvStatus kvIoPinGetOutputRelay(CanHandle handle, Int32 pin, out Int32 value);</b>
  *
  * \source_delphi   <b>function kvIoPinGetOutputRelay(hnd: canHandle; pin: cardinal; var value: cardinal): canStatus;</b>
- * \source_end     
+ * \source_end
  * This function is used to get the latest set value of a relay I/O pin.
  * If \a value is zero, the relay has been set to OFF. For any non-zero \a value,
- * the relay has been set to ON. 
- * This function returns values as they are presented in memory and the actual state on the relay pin may differ. 
+ * the relay has been set to ON.
+ * This function returns values as they are presented in memory and the actual state on the relay pin may differ.
  *
  * \param[in]  hnd   An open handle to a CAN channel.
  * \param[in]  pin   The pin number, see \ref kvIoGetNumberOfPins.
@@ -6455,7 +6540,7 @@ canStatus CANLIBAPI kvIoPinGetOutputRelay (const CanHandle hnd, unsigned int pin
  * \source_cs       <b>static Canlib.kvStatus kvIoPinSetAnalog(CanHandle handle, Int32 pin, float value);</b>
  *
  * \source_delphi   <b>function kvIoPinSetAnalog(hnd: canHandle; pin: cardinal; value: single): canStatus;</b>
- * \source_end     
+ * \source_end
  * This function is used to set the voltage level of the specified analog I/O pin.
  *
  * \param[in]  hnd   An open handle to a CAN channel.
@@ -6474,7 +6559,7 @@ canStatus CANLIBAPI kvIoPinSetAnalog (const CanHandle hnd, unsigned int pin, flo
  * \source_cs       <b>static Canlib.kvStatus kvIoPinGetAnalog(CanHandle handle, Int32 pin, out float value);</b>
  *
  * \source_delphi   <b>function kvIoPinGetAnalog(hnd: canHandle; pin: cardinal; var value: single): canStatus;</b>
- * \source_end      
+ * \source_end
  * This function is used to retrieve the voltage level of the specified analog I/O pin.
  *
  * \param[in]  hnd   An open handle to a CAN channel.
@@ -6493,16 +6578,16 @@ canStatus CANLIBAPI kvIoPinGetAnalog (const CanHandle hnd, unsigned int pin, flo
  * \source_cs       <b>static Canlib.kvStatus kvIoPinGetOutputAnalog(CanHandle handle, Int32 pin, out float value);</b>
  *
  * \source_delphi   <b>function kvIoPinGetOutputAnalog(hnd: canHandle; pin: cardinal; var value: single): canStatus;</b>
- * \source_end       
+ * \source_end
  * This function is used to get the latest set voltage level of an analog I/O pin.
- * This function only returns values as they are presented in memory and the actual value on the output pin may therefore differ. 
+ * This function only returns values as they are presented in memory and the actual value on the output pin may therefore differ.
  *
  * \param[in]  hnd   An open handle to a CAN channel.
  * \param[in]  pin   The pin number, see \ref kvIoGetNumberOfPins.
  * \param[out] value A pointer to a float which receives the latest set voltage level of the pin.
  *
  * \sa \ref kvIoPinSetAnalog()
- * \note The actual voltage level on the output pin may differ. 
+ * \note The actual voltage level on the output pin may differ.
  * \note Preliminary API that may change.
  * \note Not implemented in Linux.
  */
@@ -6551,7 +6636,7 @@ typedef struct {
 
 
 /**
-* /struct  
+* /struct
 * This define is used in \ref kvIoGetModulePins() and \ref kvIoSetModulePins().
 * This strcut represents a digital internal module
 */
@@ -6589,7 +6674,7 @@ typedef struct {
 } kvIoModuleRelay;
 
 /**
- * 
+ *
  * This define is used in \ref kvIoGetModulePins() and \ref kvIoSetModulePins().
  * This struct represents an analog add-on module.
  */
@@ -6613,7 +6698,7 @@ typedef struct {
  * \source_cs       <b>static Canlib.canStatus kvIoGetModulePins(int hnd, int module, out byte[] buffer, int bufsize);</b>
  *
  * \source_delphi   <b>function kvIoGetModulePins(hnd: canHandle; module: cardinal; var buffer; bufsize: cardinal): canStatus;</b>
- * \source_end   
+ * \source_end
  *
  * This function is used to read all the pins on one module in a single call.
  *
@@ -6638,20 +6723,20 @@ canStatus CANLIBAPI kvIoGetModulePins (const CanHandle hnd, unsigned int module,
  * \source_cs       <b>static Canlib.canStatus kvIoSetModulePins(int hnd, int module, byte[] buffer, int bufsize);</b>
  *
  * \source_delphi   <b>function kvIoSetModulePins(hnd: canHandle; module: cardinal; var buffer; bufsize: cardinal): canStatus;</b>
- * \source_end   
+ * \source_end
  *
  * This function is used to set all the pins on one single module in a single call.
  *
  * \param[in]  hnd      An open handle to a CAN channel.
  * \param[in]  module   The module number, see \ref kvIO_INFO_GET_MODULE_NUMBER.
- * \param[out] buffer   A pointer to a struct that contains the module type and pin values to set. The struct can be any one of the following depending on the module. 
+ * \param[out] buffer   A pointer to a struct that contains the module type and pin values to set. The struct can be any one of the following depending on the module.
  * - \ref kvIoModuleDigital
  * - \ref kvIoModuleAnalog
  * - \ref kvIoModuleRelay
  * \param[in]  bufsize  The size of the struct pointed to by buffer
  *
  * \sa \ref kvIoGetModulePins()
- * \note Note The input Pins are ignored. 
+ * \note Note The input Pins are ignored.
  * \note Preliminary API that may change.
  * \note Not implemented in Linux.
  */

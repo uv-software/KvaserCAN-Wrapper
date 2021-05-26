@@ -9,7 +9,7 @@ CAN API V3 is a wrapper specification to have a uniform CAN Interface API for va
 ## KvaserCAN-Wrapper
 
 This repo contains the source code for a CAN API V3 compatible wrapper library under Windows for CAN Interfaces from Kvaser AB, Sweden.
-The wrapper library is build upon the Kvaser CANlib SDK.
+The wrapper library is build upon Kvaser´s CANlib SDK.
 
 ### CAN Interface API, Version 3
 
@@ -118,7 +118,7 @@ Type `can_test /?` to display all program options.
 
 ### Required Kvaser CANlib SDK
 
-- Version 5.34 or later _(Latest is Greatest!)_
+- Version 5.35 or later _(Latest is Greatest!)_
 
 ## Known Bugs and Caveats
 
@@ -126,7 +126,7 @@ Type `can_test /?` to display all program options.
 
 ## This and That
 
-The Kvaser CANlib SDK can be downloaded form [Kvaser](https://www.kvaser.com/) website.
+Kvaser´s CANlib SDK can be downloaded form [Kvaser](https://www.kvaser.com/) website.
 Please note the copyright and license agreements.
 
 ### Licenses
@@ -163,7 +163,8 @@ along with KvaserCAN-Wrapper.  If not, see <http://www.gnu.org/licenses/>.
 
 ### Trademarks
 
-Windows is a registered trademark of Microsoft Corporation in the United States and/or other countries.
+Windows is a registered trademark of Microsoft Corporation in the United States and/or other countries. \
+All other company, product and service names mentioned herein are trademarks, registered trademarks or service marks of their respective owners.
 
 ### Hazard Note
 
