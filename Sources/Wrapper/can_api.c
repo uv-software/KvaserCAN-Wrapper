@@ -224,8 +224,9 @@ static int init = 0;                    // initialization flag
 
 int can_test(int32_t board, uint8_t mode, const void *param, int *result)
 {
-    int capa  = 0x0000;                 // channel capability
+    int feature = 0x0000;               // channel capability
     int flags = 0x0000;                 // channel flags
+    can_mode_t capa;                    // channel capability
     canStatus rc;                       // return value
     int i, n;
 
@@ -251,17 +252,17 @@ int can_test(int32_t board, uint8_t mode, const void *param, int *result)
         return CANERR_NOERROR;
     }
     if((rc = canGetChannelData(board, canCHANNELDATA_CHANNEL_CAP,
-                               (void*)&capa, sizeof(capa))) != canOK)
+                               (void*)&feature, sizeof(feature))) != canOK)
         return kvaser_error(rc);
 #ifndef KVASER_VIRTUAL_CHANNELS
-    if((capa & canCHANNEL_CAP_VIRTUAL)) {
+    if((feature & canCHANNEL_CAP_VIRTUAL)) {
         if(result)                     // declare as not available
             *result = CANBRD_NOT_PRESENT;
         return CANERR_NOERROR;
     }
 #endif
 #ifndef KVASER_SIMULATED_CHANNELS
-    if((capa & canCHANNEL_CAP_SIMULATED)) {
+    if((feature & canCHANNEL_CAP_SIMULATED)) {
         if(result)                     // declare as not available
             *result = CANBRD_NOT_PRESENT;
         return CANERR_NOERROR;
@@ -289,27 +290,37 @@ int can_test(int32_t board, uint8_t mode, const void *param, int *result)
                (can[i].channel == board) && !(mode & CANMODE_SHRD))
                 *result = CANBRD_OCCUPIED; // CAN board occupied by ourself
     }
-    if((mode & CANMODE_FDOE) && !(capa & canCHANNEL_CAP_CAN_FD))
+#if (0)
+    if((mode & CANMODE_FDOE) && !(feature & canCHANNEL_CAP_CAN_FD))
         return CANERR_ILLPARA; // CAN FD operation requested, but not supported
     if((mode & CANMODE_BRSE) && !(mode & CANMODE_FDOE))
         return CANERR_ILLPARA; // bit-rate switching requested, but CAN FD not enabled
-    if((mode & CANMODE_NISO) && !(capa & canCHANNEL_CAP_CAN_FD_NONISO))
+    if((mode & CANMODE_NISO) && !(feature & canCHANNEL_CAP_CAN_FD_NONISO))
         return CANERR_ILLPARA; // Non-ISO operation requested, but not supported
     if((mode & CANMODE_NISO) && !(mode & CANMODE_FDOE))
         return CANERR_ILLPARA; // Non-ISO operation requested, but CAN FD not enabled
-    if((mode & CANMODE_MON) && !(capa & canCHANNEL_CAP_SILENT_MODE))
+    if((mode & CANMODE_MON) && !(feature & canCHANNEL_CAP_SILENT_MODE))
         return CANERR_ILLPARA; // listen-only mode requested, but not supported
     /*if((mode & CANMODE_ERR)) {} // error frame reporting can be turned on and off by ioctrl */
     if((mode & CANMODE_NXTD))  // TODO: how?
         return CANERR_ILLPARA; // suppressing 29-bit id's is not supported
     if((mode & CANMODE_NRTR))  // TODO: how? + fdoe
         return CANERR_ILLPARA; // suppressing remote frames is not supported
+#else
+    // get operation capability from CAN board
+    if ((rc = kvaser_capability(board, &capa)) != CANERR_NOERROR)
+        return kvaser_error(rc);
+    // check given operation mode against the operation capability
+    if ((mode & ~capa.byte) != 0)
+        return CANERR_ILLPARA;
+#endif
     (void)param;
     return CANERR_NOERROR;
 }
 
 int can_init(int32_t board, uint8_t mode, const void *param)
 {
+    can_mode_t capa;                    // channel capability
     int flags = 0x0000;                 // flags for canOpenChannel()
     canHandle result;                   // Kvaser handle or error
     canStatus rc;                       // return value
@@ -341,6 +352,11 @@ int can_init(int32_t board, uint8_t mode, const void *param)
     if(!IS_HANDLE_VALID(i))             // no free handle found
         return CANERR_HANDLE;
 
+    /* get operation capabilit from channel check with given operation mode */
+    if ((rc = kvaser_capability(board, &capa)) != CANERR_NOERROR)
+        return kvaser_error(rc);
+    if ((mode & ~capa.byte) != 0)
+        return CANERR_ILLPARA;
 #ifndef KVASER_SHARED_ACCESS
     flags |= canOPEN_EXCLUSIVE;
 #else
@@ -820,21 +836,21 @@ static int kvaser_error(canStatus status)
 
 static int kvaser_capability(int channel, can_mode_t *capability)
 {
-    int capa = 0x0000;                  // channel capability
+    int feature = 0x0000;               // channel capability
     canStatus rc;                       // return value
 
     if ((rc = canGetChannelData(channel, canCHANNELDATA_CHANNEL_CAP,
-                                (void*)&capa, sizeof(capa))) != canOK)
+                                (void*)&feature, sizeof(feature))) != canOK)
         return kvaser_error(rc);
 
-    capability->fdoe = (capa & canCHANNEL_CAP_CAN_FD) ? 1 : 0;
-    capability->brse = (capa & canCHANNEL_CAP_CAN_FD) ? 1 : 0;
-    capability->niso = (capa & canCHANNEL_CAP_CAN_FD_NONISO) ? 1 : 0;
+    capability->fdoe = (feature & canCHANNEL_CAP_CAN_FD) ? 1 : 0;
+    capability->brse = (feature & canCHANNEL_CAP_CAN_FD) ? 1 : 0;
+    capability->niso = (feature & canCHANNEL_CAP_CAN_FD_NONISO) ? 1 : 0;
     capability->shrd = 1; // shared access is supported (all ifaces?)
     capability->nxtd = 0; // suppressing 29-bit id's is not supported
     capability->nrtr = 0; // suppressing remote frames is not supported
     capability->err = 1;  // error frame reporting can be turned on and off by ioctrl
-    capability->mon = (capa & canCHANNEL_CAP_SILENT_MODE) ? 1 : 0;
+    capability->mon = (feature & canCHANNEL_CAP_SILENT_MODE) ? 1 : 0;
 
     return CANERR_NOERROR;
 }
