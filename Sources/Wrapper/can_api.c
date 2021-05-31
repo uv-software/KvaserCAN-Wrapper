@@ -492,9 +492,8 @@ int can_start(int handle, const can_bitrate_t *bitrate)
     return CANERR_NOERROR;
 }
 
-#if defined(_WIN32) || defined(_WIN64)
- int can_kill(int handle)
- {
+int can_kill(int handle)
+{
     HANDLE hEvent = NULL;               // event object
     int i;
 
@@ -523,8 +522,7 @@ int can_start(int handle, const can_bitrate_t *bitrate)
         }
     }
     return CANERR_NOERROR;
- }
-#endif
+}
 
 int can_reset(int handle)
 {
@@ -558,9 +556,17 @@ int can_write(int handle, const can_msg_t *msg, uint16_t timeout)
         return CANERR_HANDLE;
     if(msg == NULL)                     // check for null-pointer
         return CANERR_NULLPTR;
-    if(can[handle].status.can_stopped) // must be running
+    if(can[handle].status.can_stopped)  // must be running
         return CANERR_OFFLINE;
 
+    if(msg->xtd) {
+        if(msg->id > CAN_MAX_XTD_ID)    // valid 29-bit identifier
+            return CANERR_ILLPARA;
+    }
+    else {
+        if(msg->id > CAN_MAX_STD_ID)    // valid 11-bit identifier
+            return CANERR_ILLPARA;
+    }
     if(!can[handle].mode.fdoe) {
         if(msg->dlc > CAN_MAX_LEN)      //   data length 0 .. 8!
             return CANERR_ILLPARA;
@@ -629,7 +635,7 @@ int can_read(int handle, can_msg_t *msg, uint16_t timeout)
         return CANERR_HANDLE;
     if(msg == NULL)                     // check for null-pointer
         return CANERR_NULLPTR;
-    if(can[handle].status.can_stopped) // must be running
+    if(can[handle].status.can_stopped)  // must be running
         return CANERR_OFFLINE;
 
     if((rc = canRead(can[handle].handle, &id, data, &len, &flags, &timestamp)) == canERR_NOMSG) {
