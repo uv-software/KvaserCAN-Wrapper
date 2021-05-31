@@ -307,10 +307,12 @@ int can_test(int32_t board, uint8_t mode, const void *param, int *result)
         return CANERR_ILLPARA; // suppressing remote frames is not supported
 #else
     // get operation capability from CAN board
-    if ((rc = kvaser_capability(board, &capa)) != CANERR_NOERROR)
+    if((rc = kvaser_capability(board, &capa)) != CANERR_NOERROR)
         return kvaser_error(rc);
     // check given operation mode against the operation capability
-    if ((mode & ~capa.byte) != 0)
+    if((mode & ~capa.byte) != 0)
+        return CANERR_ILLPARA;
+    if((mode & CANMODE_BRSE) && !(mode & CANMODE_FDOE))
         return CANERR_ILLPARA;
 #endif
     (void)param;
@@ -352,9 +354,11 @@ int can_init(int32_t board, uint8_t mode, const void *param)
         return CANERR_HANDLE;
 
     /* get operation capabilit from channel check with given operation mode */
-    if ((rc = kvaser_capability(board, &capa)) != CANERR_NOERROR)
+    if((rc = kvaser_capability(board, &capa)) != CANERR_NOERROR)
         return kvaser_error(rc);
-    if ((mode & ~capa.byte) != 0)
+    if((mode & ~capa.byte) != 0)
+        return CANERR_ILLPARA;
+    if((mode & CANMODE_BRSE) && !(mode & CANMODE_FDOE))
         return CANERR_ILLPARA;
 #ifndef KVASER_SHARED_ACCESS
     flags |= canOPEN_EXCLUSIVE;
