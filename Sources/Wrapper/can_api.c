@@ -182,8 +182,7 @@ typedef struct {                        // Kvaser CAN interface:
  */
 
 static int kvaser_error(canStatus);    // Kvaser specific errors
-
-static int kvaser_capability(int channel, can_mode_t *capability);
+static canStatus kvaser_capability(int channel, can_mode_t *capability);
 
 static int index2params(int index, btr_nominal_t *params);
 static int bitrate2params(const can_bitrate_t *bitrate, btr_nominal_t *params);
@@ -840,14 +839,14 @@ static int kvaser_error(canStatus status)
     return KVASER_ERR_UNKNOWN;
 }
 
-static int kvaser_capability(int channel, can_mode_t *capability)
+static canStatus kvaser_capability(int channel, can_mode_t *capability)
 {
     int feature = 0x0000;               // channel capability
     canStatus rc;                       // return value
 
     if ((rc = canGetChannelData(channel, canCHANNELDATA_CHANNEL_CAP,
                                 (void*)&feature, sizeof(feature))) != canOK)
-        return kvaser_error(rc);
+        return rc;
 
     capability->fdoe = (feature & canCHANNEL_CAP_CAN_FD) ? 1 : 0;
     capability->brse = (feature & canCHANNEL_CAP_CAN_FD) ? 1 : 0;
@@ -858,7 +857,7 @@ static int kvaser_capability(int channel, can_mode_t *capability)
     capability->err = 1;  // error frame reporting can be turned on and off by ioctrl
     capability->mon = (feature & canCHANNEL_CAP_SILENT_MODE) ? 1 : 0;
 
-    return CANERR_NOERROR;
+    return canOK;
 }
 
 static int index2params(int index, btr_nominal_t *params)
@@ -1139,11 +1138,12 @@ static int drv_parameter(int handle, uint16_t param, void *value, size_t nbyte)
             rc = CANERR_FATAL;
         break;
     case CANPROP_GET_OP_CAPABILITY:     // supported operation modes of the CAN controller (uint8_t)
-        if((rc = kvaser_capability(can[handle].channel, &mode)) == CANERR_NOERROR) {
-            if(nbyte >= sizeof(uint8_t)) {
+        if(nbyte >= sizeof(uint8_t)) {
+            if((sts = kvaser_capability(can[handle].channel, &mode)) == canOK) {
                 *(uint8_t*)value = (uint8_t)mode.byte;
                 rc = CANERR_NOERROR;
-            }
+            } else
+                rc = kvaser_error(sts);
         }
         break;
     case CANPROP_GET_OP_MODE:           // active operation mode of the CAN controller (uint8_t)
