@@ -32,6 +32,7 @@ int main(int argc, const char * argv[]) {
     }
     std::cout << ">>> Be patient..." << std::flush;
     message.xtd = message.rtr = message.sts = 0;
+    message.fdf = message.brs = message.esi = 0;
     for (i = 0; i < FRAMES; i++) {
         message.id = (uint32_t)i & CAN_MAX_STD_ID;
         message.dlc = 8U;
