@@ -1,9 +1,7 @@
 //
 //  main.cpp
-//  KvaserCAN
-//
-//  Created by Uwe Vogt on 03.02.21.
-//  Copyright © 2021 UV Software, Berlin. All rights reserved.
+//  KvaserCANlib
+//  Bart Simpson didn´t do it
 //
 #include "KvaserCAN_Defines.h"
 #include "KvaserCAN.h"
@@ -45,8 +43,6 @@
  static void usleep(unsigned int usec);
 #endif
 static void sigterm(int signo);
-//static void usage(FILE *stream, char *program);
-//static void version(FILE *stream, char *program);
 
 static void verbose(const can_mode_t mode, const can_bitrate_t bitrate, const can_speed_t speed);
 
@@ -95,20 +91,24 @@ int main(int argc, const char * argv[]) {
     int option_test = OPTION_NO;
     int option_exit = OPTION_NO;
     int option_echo = OPTION_YES;
-//    int option_stop = OPTION_NO;
-//    int option_check = OPTION_NO;
+    int option_stop = OPTION_NO;
+    int option_check = OPTION_NO;
+    int option_retry = OPTION_NO;
     int option_repeat = OPTION_NO;
     int option_transmit = OPTION_NO;
+    uint64_t received = 0ULL;
+    uint64_t expected = 0ULL;
+
     for (int i = 1, opt = 0; i < argc; i++) {
         /* Kvaser CAN channel */
-        if (!strcmp(argv[i], "Kvaser CAN Channel 0") || !strcmp(argv[i], "CH0")) channel = (int32_t)KVASER_CAN_CHANNEL0;
-        if (!strcmp(argv[i], "Kvaser CAN Channel 1") || !strcmp(argv[i], "CH1")) channel = (int32_t)KVASER_CAN_CHANNEL1;
-        if (!strcmp(argv[i], "Kvaser CAN Channel 2") || !strcmp(argv[i], "CH2")) channel = (int32_t)KVASER_CAN_CHANNEL2;
-        if (!strcmp(argv[i], "Kvaser CAN Channel 3") || !strcmp(argv[i], "CH3")) channel = (int32_t)KVASER_CAN_CHANNEL3;
-        if (!strcmp(argv[i], "Kvaser CAN Channel 4") || !strcmp(argv[i], "CH4")) channel = (int32_t)KVASER_CAN_CHANNEL4;
-        if (!strcmp(argv[i], "Kvaser CAN Channel 5") || !strcmp(argv[i], "CH5")) channel = (int32_t)KVASER_CAN_CHANNEL5;
-        if (!strcmp(argv[i], "Kvaser CAN Channel 6") || !strcmp(argv[i], "CH6")) channel = (int32_t)KVASER_CAN_CHANNEL6;
-        if (!strcmp(argv[i], "Kvaser CAN Channel 7") || !strcmp(argv[i], "CH7")) channel = (int32_t)KVASER_CAN_CHANNEL7;
+        if (!strcmp(argv[i], "Kvaser CAN Channel 0") || !strcmp(argv[i], "CH:0")) channel = (int32_t)KVASER_CAN_CHANNEL0;
+        if (!strcmp(argv[i], "Kvaser CAN Channel 1") || !strcmp(argv[i], "CH:1")) channel = (int32_t)KVASER_CAN_CHANNEL1;
+        if (!strcmp(argv[i], "Kvaser CAN Channel 2") || !strcmp(argv[i], "CH:2")) channel = (int32_t)KVASER_CAN_CHANNEL2;
+        if (!strcmp(argv[i], "Kvaser CAN Channel 3") || !strcmp(argv[i], "CH:3")) channel = (int32_t)KVASER_CAN_CHANNEL3;
+        if (!strcmp(argv[i], "Kvaser CAN Channel 4") || !strcmp(argv[i], "CH:4")) channel = (int32_t)KVASER_CAN_CHANNEL4;
+        if (!strcmp(argv[i], "Kvaser CAN Channel 5") || !strcmp(argv[i], "CH:5")) channel = (int32_t)KVASER_CAN_CHANNEL5;
+        if (!strcmp(argv[i], "Kvaser CAN Channel 6") || !strcmp(argv[i], "CH:6")) channel = (int32_t)KVASER_CAN_CHANNEL6;
+        if (!strcmp(argv[i], "Kvaser CAN Channel 7") || !strcmp(argv[i], "CH:7")) channel = (int32_t)KVASER_CAN_CHANNEL7;
         /* baud rate (CAN 2.0) */
         if (!strcmp(argv[i], "BD:0") || !strcmp(argv[i], "BD:1000")) bitrate.index = CANBTR_INDEX_1M;
         if (!strcmp(argv[i], "BD:1") || !strcmp(argv[i], "BD:800")) bitrate.index = CANBTR_INDEX_800K;
@@ -140,8 +140,9 @@ int main(int argc, const char * argv[]) {
         if (!strncmp(argv[i], "C:", 2) && sscanf(argv[i], "C:%i", &opt) == 1) delay = (unsigned int)opt * 1000U;
         if (!strncmp(argv[i], "U:", 2) && sscanf(argv[i], "U:%i", &opt) == 1) delay = (unsigned int)opt;
         /* receive messages */
-//        if (!strcmp(argv[i], "STOP")) option_stop = OPTION_YES;
-//        if (!strcmp(argv[i], "CHECK")) option_check = OPTION_YES;
+        if (!strcmp(argv[i], "STOP")) option_stop = OPTION_YES;
+        if (!strcmp(argv[i], "CHECK")) option_check = OPTION_YES;
+        if (!strcmp(argv[i], "RETRY")) option_retry = OPTION_YES;
         if (!strcmp(argv[i], "REPEAT")) option_repeat = OPTION_YES;
         if (!strcmp(argv[i], "SILENT")) option_echo = OPTION_NO;
         /* time-stamps */
@@ -164,7 +165,7 @@ int main(int argc, const char * argv[]) {
         if (!strcmp(argv[i], "XTD:OFF")) opMode.nxtd = 1;
         if (!strcmp(argv[i], "RTR:OFF")) opMode.nrtr = 1;
     }
-    fprintf(stdout, "%s\n", CKvaserCAN::GetVersion());
+    fprintf(stdout, ">>> %s\n", CKvaserCAN::GetVersion());
     if((signal(SIGINT, sigterm) == SIG_ERR) ||
 #if !defined(_WIN32) && !defined(_WIN64)
        (signal(SIGHUP, sigterm) == SIG_ERR) ||
@@ -256,16 +257,16 @@ int main(int argc, const char * argv[]) {
             fprintf(stdout, ">>> myDriver.GetProperty(KVASERCAN_PROPERTY_DEVICE_NAME): value = '%s'\n", szVal);
         else
             fprintf(stderr, "+++ error: myDriver.GetProperty(KVASERCAN_PROPERTY_DEVICE_NAME) returned %i\n", retVal);
+        retVal = myDriver.GetProperty(KVASERCAN_PROPERTY_DEVICE_DRIVER, (void *)szVal, CANPROP_MAX_BUFFER_SIZE);
+        if (retVal == CCANAPI::NoError)
+            fprintf(stdout, ">>> myDriver.GetProperty(KVASERCAN_PROPERTY_DEVICE_DRIVER): value = '%s'\n", szVal);
+        else
+            fprintf(stderr, "+++ error: myDriver.GetProperty(KVASERCAN_PROPERTY_DEVICE_DRIVER) returned %i\n", retVal);
         retVal = myDriver.GetProperty(KVASERCAN_PROPERTY_DEVICE_VENDOR, (void *)szVal, CANPROP_MAX_BUFFER_SIZE);
         if (retVal == CCANAPI::NoError)
             fprintf(stdout, ">>> myDriver.GetProperty(KVASERCAN_PROPERTY_DEVICE_VENDOR): value = '%s'\n", szVal);
         else
             fprintf(stderr, "+++ error: myDriver.GetProperty(KVASERCAN_PROPERTY_DEVICE_VENDOR) returned %i\n", retVal);
-        retVal = myDriver.GetProperty(KVASERCAN_PROPERTY_DEVICE_DLLNAME, (void *)szVal, CANPROP_MAX_BUFFER_SIZE);
-        if (retVal == CCANAPI::NoError)
-            fprintf(stdout, ">>> myDriver.GetProperty(KVASERCAN_PROPERTY_DEVICE_DLLNAME): value = '%s'\n", szVal);
-        else
-            fprintf(stderr, "+++ error: myDriver.GetProperty(KVASERCAN_PROPERTY_DEVICE_DLLNAME) returned %i\n", retVal);
         // vendor-specific properties
 //        retVal = myDriver.GetProperty(KVASERCAN_PROPERTY_CLOCK_DOMAIN, (void *)&i32Val, sizeof(int32_t));
 //        if (retVal == CCANAPI::NoError)
@@ -318,8 +319,11 @@ int main(int argc, const char * argv[]) {
             message.brs = opMode.brse;
             message.dlc = CANFD_MAX_DLC;
         }
+retry:
         retVal = myDriver.WriteMessage(message);
-        if (retVal != CCANAPI::NoError) {
+        if ((retVal == CCANAPI::TransmitterBusy) && option_retry)
+            goto retry;
+        else if (retVal != CCANAPI::NoError) {
             fprintf(stderr, "+++ error: myDriver.WriteMessage returned %i\n", retVal);
             goto teardown;
         }
@@ -354,6 +358,25 @@ int main(int argc, const char * argv[]) {
                     fflush(stdout);
                 }
             }
+            if (option_check && !message.sts) {
+                received = 0;
+                if(message.dlc > 0) received |= (uint64_t)message.data[0] << 0;
+                if(message.dlc > 1) received |= (uint64_t)message.data[1] << 8;
+                if(message.dlc > 2) received |= (uint64_t)message.data[2] << 16;
+                if(message.dlc > 3) received |= (uint64_t)message.data[3] << 24;
+                if(message.dlc > 4) received |= (uint64_t)message.data[4] << 32;
+                if(message.dlc > 5) received |= (uint64_t)message.data[5] << 40;
+                if(message.dlc > 6) received |= (uint64_t)message.data[6] << 48;
+                if(message.dlc > 7) received |= (uint64_t)message.data[7] << 56;
+                if(received != expected) {
+                    fprintf(stderr, "+++ error: received data is not equal to expected data (%" PRIu64 " : %" PRIu64 ")\n", received, expected);
+                    if(expected > received)
+                        fprintf(stderr, "           issue #198: old messages read again (offset -%" PRIu64 ")\a\n", expected - received);
+                    if(option_stop)
+                        goto teardown;
+                }
+                expected = received + 1;
+            }
         }
         else if (retVal != CCANAPI::ReceiverEmpty) {
             goto teardown;
@@ -375,7 +398,7 @@ int main(int argc, const char * argv[]) {
                 else if (option_repeat) {
                     retVal = myDriver.WriteMessage(message);
                     if (retVal != CCANAPI::NoError) {
-                        fprintf(stderr, "+++ error: myDriver.WriteMessage returned %i\n", retVal);
+                        fprintf(stderr, "+++ error: mySecond.WriteMessage returned %i\n", retVal);
                         goto teardown;
                     }
                 }

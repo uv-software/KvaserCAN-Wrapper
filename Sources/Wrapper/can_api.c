@@ -182,8 +182,7 @@ typedef struct {                        // Kvaser CAN interface:
  */
 
 static int kvaser_error(canStatus);    // Kvaser specific errors
-
-static int kvaser_capability(int channel, can_mode_t *capability);
+static canStatus kvaser_capability(int channel, can_mode_t *capability);
 
 static int index2params(int index, btr_nominal_t *params);
 static int bitrate2params(const can_bitrate_t *bitrate, btr_nominal_t *params);
@@ -224,8 +223,9 @@ static int init = 0;                    // initialization flag
 
 int can_test(int32_t board, uint8_t mode, const void *param, int *result)
 {
-    int capa  = 0x0000;                 // channel capability
+    int feature = 0x0000;               // channel capability
     int flags = 0x0000;                 // channel flags
+    can_mode_t capa;                    // channel capability
     canStatus rc;                       // return value
     int i, n;
 
@@ -251,17 +251,17 @@ int can_test(int32_t board, uint8_t mode, const void *param, int *result)
         return CANERR_NOERROR;
     }
     if((rc = canGetChannelData(board, canCHANNELDATA_CHANNEL_CAP,
-                               (void*)&capa, sizeof(capa))) != canOK)
+                               (void*)&feature, sizeof(feature))) != canOK)
         return kvaser_error(rc);
 #ifndef KVASER_VIRTUAL_CHANNELS
-    if((capa & canCHANNEL_CAP_VIRTUAL)) {
+    if((feature & canCHANNEL_CAP_VIRTUAL)) {
         if(result)                     // declare as not available
             *result = CANBRD_NOT_PRESENT;
         return CANERR_NOERROR;
     }
 #endif
 #ifndef KVASER_SIMULATED_CHANNELS
-    if((capa & canCHANNEL_CAP_SIMULATED)) {
+    if((feature & canCHANNEL_CAP_SIMULATED)) {
         if(result)                     // declare as not available
             *result = CANBRD_NOT_PRESENT;
         return CANERR_NOERROR;
@@ -289,27 +289,39 @@ int can_test(int32_t board, uint8_t mode, const void *param, int *result)
                (can[i].channel == board) && !(mode & CANMODE_SHRD))
                 *result = CANBRD_OCCUPIED; // CAN board occupied by ourself
     }
-    if((mode & CANMODE_FDOE) && !(capa & canCHANNEL_CAP_CAN_FD))
+#if (0)
+    if((mode & CANMODE_FDOE) && !(feature & canCHANNEL_CAP_CAN_FD))
         return CANERR_ILLPARA; // CAN FD operation requested, but not supported
     if((mode & CANMODE_BRSE) && !(mode & CANMODE_FDOE))
         return CANERR_ILLPARA; // bit-rate switching requested, but CAN FD not enabled
-    if((mode & CANMODE_NISO) && !(capa & canCHANNEL_CAP_CAN_FD_NONISO))
+    if((mode & CANMODE_NISO) && !(feature & canCHANNEL_CAP_CAN_FD_NONISO))
         return CANERR_ILLPARA; // Non-ISO operation requested, but not supported
     if((mode & CANMODE_NISO) && !(mode & CANMODE_FDOE))
         return CANERR_ILLPARA; // Non-ISO operation requested, but CAN FD not enabled
-    if((mode & CANMODE_MON) && !(capa & canCHANNEL_CAP_SILENT_MODE))
+    if((mode & CANMODE_MON) && !(feature & canCHANNEL_CAP_SILENT_MODE))
         return CANERR_ILLPARA; // listen-only mode requested, but not supported
     /*if((mode & CANMODE_ERR)) {} // error frame reporting can be turned on and off by ioctrl */
     if((mode & CANMODE_NXTD))  // TODO: how?
         return CANERR_ILLPARA; // suppressing 29-bit id's is not supported
     if((mode & CANMODE_NRTR))  // TODO: how? + fdoe
         return CANERR_ILLPARA; // suppressing remote frames is not supported
+#else
+    // get operation capability from CAN board
+    if((rc = kvaser_capability(board, &capa)) != CANERR_NOERROR)
+        return kvaser_error(rc);
+    // check given operation mode against the operation capability
+    if((mode & ~capa.byte) != 0)
+        return CANERR_ILLPARA;
+    if((mode & CANMODE_BRSE) && !(mode & CANMODE_FDOE))
+        return CANERR_ILLPARA;
+#endif
     (void)param;
     return CANERR_NOERROR;
 }
 
 int can_init(int32_t board, uint8_t mode, const void *param)
 {
+    can_mode_t capa;                    // channel capability
     int flags = 0x0000;                 // flags for canOpenChannel()
     canHandle result;                   // Kvaser handle or error
     canStatus rc;                       // return value
@@ -341,6 +353,13 @@ int can_init(int32_t board, uint8_t mode, const void *param)
     if(!IS_HANDLE_VALID(i))             // no free handle found
         return CANERR_HANDLE;
 
+    /* get operation capabilit from channel check with given operation mode */
+    if((rc = kvaser_capability(board, &capa)) != CANERR_NOERROR)
+        return kvaser_error(rc);
+    if((mode & ~capa.byte) != 0)
+        return CANERR_ILLPARA;
+    if((mode & CANMODE_BRSE) && !(mode & CANMODE_FDOE))
+        return CANERR_ILLPARA;
 #ifndef KVASER_SHARED_ACCESS
     flags |= canOPEN_EXCLUSIVE;
 #else
@@ -352,11 +371,6 @@ int can_init(int32_t board, uint8_t mode, const void *param)
 #ifdef KVASER_VIRTUAL_CHANNELS
     // TODO: flags |= canOPEN_ACCEPT_VIRTUAL;
 #endif
-    /*if((mode & CANMODE_ERR)) {} // error frame reporting is handled later */
-    if((mode & CANMODE_NXTD))  // TODO: how?
-        return CANERR_ILLPARA; // suppressing 29-bit id's is not supported
-    if((mode & CANMODE_NRTR))  // TODO: how? + fdoe
-        return CANERR_ILLPARA; // suppressing remote frames is not supported
     if((result = canOpenChannel(board, flags)) < canOK)
         return kvaser_error(result);
 
@@ -476,9 +490,8 @@ int can_start(int handle, const can_bitrate_t *bitrate)
     return CANERR_NOERROR;
 }
 
-#if defined(_WIN32) || defined(_WIN64)
- int can_kill(int handle)
- {
+int can_kill(int handle)
+{
     HANDLE hEvent = NULL;               // event object
     int i;
 
@@ -507,8 +520,7 @@ int can_start(int handle, const can_bitrate_t *bitrate)
         }
     }
     return CANERR_NOERROR;
- }
-#endif
+}
 
 int can_reset(int handle)
 {
@@ -542,8 +554,23 @@ int can_write(int handle, const can_msg_t *msg, uint16_t timeout)
         return CANERR_HANDLE;
     if(msg == NULL)                     // check for null-pointer
         return CANERR_NULLPTR;
-    if(can[handle].status.can_stopped) // must be running
+    if(can[handle].status.can_stopped)  // must be running
         return CANERR_OFFLINE;
+
+    if(msg->id > (uint32_t)(msg->xtd ? CAN_MAX_XTD_ID : CAN_MAX_STD_ID))
+        return CANERR_ILLPARA;          // invalid identifier
+    if(msg->xtd && can[handle].mode.nxtd)
+        return CANERR_ILLPARA;          // suppress extended frames
+    if(msg->rtr && can[handle].mode.nrtr)
+        return CANERR_ILLPARA;          // suppress remote frames
+    if(msg->fdf && !can[handle].mode.fdoe)
+        return CANERR_ILLPARA;          // long frames only with CAN FD
+    if(msg->brs && !can[handle].mode.brse)
+        return CANERR_ILLPARA;          // fast frames only with CAN FD
+    if(msg->brs && !msg->fdf)
+        return CANERR_ILLPARA;          // bit-rate switching only with CAN FD
+    if(msg->sts)
+        return CANERR_ILLPARA;          // error frames cannot be sent
 
     if(!can[handle].mode.fdoe) {
         if(msg->dlc > CAN_MAX_LEN)      //   data length 0 .. 8!
@@ -613,9 +640,9 @@ int can_read(int handle, can_msg_t *msg, uint16_t timeout)
         return CANERR_HANDLE;
     if(msg == NULL)                     // check for null-pointer
         return CANERR_NULLPTR;
-    if(can[handle].status.can_stopped) // must be running
+    if(can[handle].status.can_stopped)  // must be running
         return CANERR_OFFLINE;
-
+repeat:
     if((rc = canRead(can[handle].handle, &id, data, &len, &flags, &timestamp)) == canERR_NOMSG) {
         if(timeout > 0) {
             switch(canWaitForEvent(can[handle].handle, (timeout != CANREAD_INFINITE) ? timeout : INFINITE)) {
@@ -645,6 +672,10 @@ int can_read(int handle, can_msg_t *msg, uint16_t timeout)
             can[handle].counters.err++;
             return CANERR_ERR_FRAME;    //   error frame received
     }
+    if((flags & canMSG_EXT) && can[handle].mode.nxtd)
+        goto repeat;                    // refuse extended frames
+    if((flags & canMSG_RTR) && can[handle].mode.nrtr)
+        goto repeat;                    // refuse remote frames
     msg->id = (int32_t)id;
     msg->xtd = (flags & canMSG_EXT)? 1 : 0;
     msg->rtr = (flags & canMSG_RTR)? 1 : 0;
@@ -801,7 +832,7 @@ char *can_software(int handle)
     (void)handle;                       // handle not needed here
 
     version = canGetVersion();          // FIXME: check encoding
-    snprintf(software, 256, "Kvaser CANLIB API V%u.%u (canlib32.dll)", (version >> 8), (version & 0xFF));
+    snprintf(software, 256, "Kvaser CANlib SDK V%u.%u (canlib32.dll)", (version >> 8), (version & 0xFF));
 
     return (char*)software;             // software version
 }
@@ -818,25 +849,25 @@ static int kvaser_error(canStatus status)
     return KVASER_ERR_UNKNOWN;
 }
 
-static int kvaser_capability(int channel, can_mode_t *capability)
+static canStatus kvaser_capability(int channel, can_mode_t *capability)
 {
-    int capa = 0x0000;                  // channel capability
+    int feature = 0x0000;               // channel capability
     canStatus rc;                       // return value
 
     if ((rc = canGetChannelData(channel, canCHANNELDATA_CHANNEL_CAP,
-                                (void*)&capa, sizeof(capa))) != canOK)
-        return kvaser_error(rc);
+                                (void*)&feature, sizeof(feature))) != canOK)
+        return rc;
 
-    capability->fdoe = (capa & canCHANNEL_CAP_CAN_FD) ? 1 : 0;
-    capability->brse = (capa & canCHANNEL_CAP_CAN_FD) ? 1 : 0;
-    capability->niso = (capa & canCHANNEL_CAP_CAN_FD_NONISO) ? 1 : 0;
+    capability->fdoe = (feature & canCHANNEL_CAP_CAN_FD) ? 1 : 0;
+    capability->brse = (feature & canCHANNEL_CAP_CAN_FD) ? 1 : 0;
+    capability->niso = (feature & canCHANNEL_CAP_CAN_FD_NONISO) ? 1 : 0;
     capability->shrd = 1; // shared access is supported (all ifaces?)
-    capability->nxtd = 0; // suppressing 29-bit id's is not supported
-    capability->nrtr = 0; // suppressing remote frames is not supported
+    capability->nxtd = 1; // suppressing 29-bit id's is supported since v0.2
+    capability->nrtr = 1; // suppressing remote frames is supported since v0.2
     capability->err = 1;  // error frame reporting can be turned on and off by ioctrl
-    capability->mon = (capa & canCHANNEL_CAP_SILENT_MODE) ? 1 : 0;
+    capability->mon = (feature & canCHANNEL_CAP_SILENT_MODE) ? 1 : 0;
 
-    return CANERR_NOERROR;
+    return canOK;
 }
 
 static int index2params(int index, btr_nominal_t *params)
@@ -1088,7 +1119,6 @@ static int drv_parameter(int handle, uint16_t param, void *value, size_t nbyte)
     uint8_t status;
     uint8_t load;
     canStatus sts;
-    int i;
 
     assert(IS_HANDLE_VALID(handle));    // just to make sure
 
@@ -1104,24 +1134,19 @@ static int drv_parameter(int handle, uint16_t param, void *value, size_t nbyte)
         }
         break;
     case CANPROP_GET_DEVICE_NAME:       // device name of the CAN interface (char[256])
-        for(i = 0; i < KVASER_BOARDS; i++) {
-            if(can_boards[i].type == (int32_t)can[handle].channel) {
-                if((nbyte > strlen(can_boards[i].name)) && (nbyte <= CANPROP_MAX_BUFFER_SIZE)) {
-                    strcpy((char*)value, can_boards[i].name);
-                    rc = CANERR_NOERROR;
-                    break;
-                }
-            }
-        }
-        if((i == KVASER_BOARDS) || (rc != CANERR_NOERROR))
-            rc = CANERR_FATAL;
+        if((sts = canGetChannelData(can[handle].channel, canCHANNELDATA_CHANNEL_NAME, 
+                                   (void*)value, (DWORD)nbyte)) == canOK)
+            rc = CANERR_NOERROR;
+        else
+            rc = kvaser_error(sts);
         break;
     case CANPROP_GET_OP_CAPABILITY:     // supported operation modes of the CAN controller (uint8_t)
-        if((rc = kvaser_capability(can[handle].channel, &mode)) == CANERR_NOERROR) {
-            if(nbyte >= sizeof(uint8_t)) {
+        if(nbyte >= sizeof(uint8_t)) {
+            if((sts = kvaser_capability(can[handle].channel, &mode)) == canOK) {
                 *(uint8_t*)value = (uint8_t)mode.byte;
                 rc = CANERR_NOERROR;
-            }
+            } else
+                rc = kvaser_error(sts);
         }
         break;
     case CANPROP_GET_OP_MODE:           // active operation mode of the CAN controller (uint8_t)
@@ -1131,32 +1156,32 @@ static int drv_parameter(int handle, uint16_t param, void *value, size_t nbyte)
         }
         break;
     case CANPROP_GET_BITRATE:           // active bit-rate of the CAN controller (can_bitrate_t)
-        if(((rc = can_bitrate(handle, &bitrate, NULL)) == CANERR_NOERROR) || (rc == CANERR_OFFLINE)) {
-            if(nbyte >= sizeof(can_bitrate_t)) {
+        if(nbyte >= sizeof(can_bitrate_t)) {
+            if(((rc = can_bitrate(handle, &bitrate, NULL)) == CANERR_NOERROR) || (rc == CANERR_OFFLINE)) {
                 memcpy(value, &bitrate, sizeof(can_bitrate_t));
                 rc = CANERR_NOERROR;
             }
         }
         break;
     case CANPROP_GET_SPEED:             // active bus speed of the CAN controller (can_speed_t)
-        if(((rc = can_bitrate(handle, NULL, &speed)) == CANERR_NOERROR) || (rc == CANERR_OFFLINE)) {
-            if(nbyte >= sizeof(can_speed_t)) {
+        if(nbyte >= sizeof(can_speed_t)) {
+            if(((rc = can_bitrate(handle, NULL, &speed)) == CANERR_NOERROR) || (rc == CANERR_OFFLINE)) {
                 memcpy(value, &speed, sizeof(can_speed_t));
                 rc = CANERR_NOERROR;
             }
         }
         break;
     case CANPROP_GET_STATUS:            // current status register of the CAN controller (uint8_t)
-        if((rc = can_status(handle, &status)) == CANERR_NOERROR) {
-            if(nbyte >= sizeof(uint8_t)) {
+        if(nbyte >= sizeof(uint8_t)) {
+            if((rc = can_status(handle, &status)) == CANERR_NOERROR) {
                 *(uint8_t*)value = (uint8_t)status;
                 rc = CANERR_NOERROR;
             }
         }
         break;
     case CANPROP_GET_BUSLOAD:           // current bus load of the CAN controller (uint8_t)
-        if((rc = can_busload(handle, &load, NULL)) == CANERR_NOERROR) {
-            if(nbyte >= sizeof(uint8_t)) {
+        if(nbyte >= sizeof(uint8_t)) {
+            if((rc = can_busload(handle, &load, NULL)) == CANERR_NOERROR) {
                 *(uint8_t*)value = (uint8_t)load;
                 rc = CANERR_NOERROR;
             }
