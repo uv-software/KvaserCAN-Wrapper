@@ -371,11 +371,6 @@ int can_init(int32_t board, uint8_t mode, const void *param)
 #ifdef KVASER_VIRTUAL_CHANNELS
     // TODO: flags |= canOPEN_ACCEPT_VIRTUAL;
 #endif
-    /*if((mode & CANMODE_ERR)) {} // error frame reporting is handled later */
-    if((mode & CANMODE_NXTD))  // TODO: how?
-        return CANERR_ILLPARA; // suppressing 29-bit id's is not supported
-    if((mode & CANMODE_NRTR))  // TODO: how? + fdoe
-        return CANERR_ILLPARA; // suppressing remote frames is not supported
     if((result = canOpenChannel(board, flags)) < canOK)
         return kvaser_error(result);
 
@@ -562,14 +557,21 @@ int can_write(int handle, const can_msg_t *msg, uint16_t timeout)
     if(can[handle].status.can_stopped)  // must be running
         return CANERR_OFFLINE;
 
-    if(msg->xtd) {
-        if(msg->id > CAN_MAX_XTD_ID)    // valid 29-bit identifier
-            return CANERR_ILLPARA;
-    }
-    else {
-        if(msg->id > CAN_MAX_STD_ID)    // valid 11-bit identifier
-            return CANERR_ILLPARA;
-    }
+    if(msg->id > (uint32_t)(msg->xtd ? CAN_MAX_XTD_ID : CAN_MAX_STD_ID))
+        return CANERR_ILLPARA;          // invalid identifier
+    if(msg->xtd && can[handle].mode.nxtd)
+        return CANERR_ILLPARA;          // suppress extended frames
+    if(msg->rtr && can[handle].mode.nrtr)
+        return CANERR_ILLPARA;          // suppress remote frames
+    if(msg->fdf && !can[handle].mode.fdoe)
+        return CANERR_ILLPARA;          // long frames only with CAN FD
+    if(msg->brs && !can[handle].mode.brse)
+        return CANERR_ILLPARA;          // fast frames only with CAN FD
+    if(msg->brs && !msg->fdf)
+        return CANERR_ILLPARA;          // bit-rate switching only with CAN FD
+    if(msg->sts)
+        return CANERR_ILLPARA;          // error frames cannot be sent
+
     if(!can[handle].mode.fdoe) {
         if(msg->dlc > CAN_MAX_LEN)      //   data length 0 .. 8!
             return CANERR_ILLPARA;
@@ -640,7 +642,7 @@ int can_read(int handle, can_msg_t *msg, uint16_t timeout)
         return CANERR_NULLPTR;
     if(can[handle].status.can_stopped)  // must be running
         return CANERR_OFFLINE;
-
+repeat:
     if((rc = canRead(can[handle].handle, &id, data, &len, &flags, &timestamp)) == canERR_NOMSG) {
         if(timeout > 0) {
             switch(canWaitForEvent(can[handle].handle, (timeout != CANREAD_INFINITE) ? timeout : INFINITE)) {
@@ -670,6 +672,10 @@ int can_read(int handle, can_msg_t *msg, uint16_t timeout)
             can[handle].counters.err++;
             return CANERR_ERR_FRAME;    //   error frame received
     }
+    if((flags & canMSG_EXT) && can[handle].mode.nxtd)
+        goto repeat;                    // refuse extended frames
+    if((flags & canMSG_RTR) && can[handle].mode.nrtr)
+        goto repeat;                    // refuse remote frames
     msg->id = (int32_t)id;
     msg->xtd = (flags & canMSG_EXT)? 1 : 0;
     msg->rtr = (flags & canMSG_RTR)? 1 : 0;
@@ -856,8 +862,8 @@ static canStatus kvaser_capability(int channel, can_mode_t *capability)
     capability->brse = (feature & canCHANNEL_CAP_CAN_FD) ? 1 : 0;
     capability->niso = (feature & canCHANNEL_CAP_CAN_FD_NONISO) ? 1 : 0;
     capability->shrd = 1; // shared access is supported (all ifaces?)
-    capability->nxtd = 0; // suppressing 29-bit id's is not supported
-    capability->nrtr = 0; // suppressing remote frames is not supported
+    capability->nxtd = 1; // suppressing 29-bit id's is supported since v0.2
+    capability->nrtr = 1; // suppressing remote frames is supported since v0.2
     capability->err = 1;  // error frame reporting can be turned on and off by ioctrl
     capability->mon = (feature & canCHANNEL_CAP_SILENT_MODE) ? 1 : 0;
 

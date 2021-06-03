@@ -1,6 +1,6 @@
 //
 //  main.cpp
-//  KvaserCAN
+//  KvaserCANlib
 //  Bart Simpson didn´t do it
 //
 #include "KvaserCAN_Defines.h"
@@ -93,7 +93,7 @@ int main(int argc, const char * argv[]) {
     int option_echo = OPTION_YES;
     int option_stop = OPTION_NO;
     int option_check = OPTION_NO;
-    int option_retry = OPTION_YES;
+    int option_retry = OPTION_NO;
     int option_repeat = OPTION_NO;
     int option_transmit = OPTION_NO;
     uint64_t received = 0ULL;
@@ -462,50 +462,41 @@ end:
 
 static void verbose(const can_mode_t mode, const can_bitrate_t bitrate, const can_speed_t speed)
 {
-#if (OPTION_CAN_2_0_ONLY == 0)
     fprintf(stdout, "Op.-Mode: 0x%02X (fdoe=%u,brse=%u,niso=%u,shrd=%u,nxtd=%u,nrtr=%u,err=%u,mon=%u)\n",
             mode.byte, mode.fdoe, mode.brse, mode.niso, mode.shrd, mode.nxtd, mode.nrtr, mode.err, mode.mon);
-#else
-    fprintf(stdout, "Op.-Mode: 0x%02X (shrd=%u,nxtd=%u,nrtr=%u,err=%u,mon=%u)\n",
-            mode.byte, mode.shrd, mode.nxtd, mode.nrtr, mode.err, mode.mon);
-#endif
-   if (bitrate.btr.frequency > 0) {
+    if(bitrate.btr.frequency > 0) {
         fprintf(stdout, "Baudrate: %.0fkbps@%.1f%%",
-           speed.nominal.speed / 1000., speed.nominal.samplepoint * 100.);
-#if (OPTION_CAN_2_0_ONLY == 0)
+            speed.nominal.speed / 1000., speed.nominal.samplepoint * 100.);
         if(/*speed.data.brse*/mode.fdoe && mode.brse)
-           fprintf(stdout, ":%.0fkbps@%.1f%%",
-               speed.data.speed / 1000., speed.data.samplepoint * 100.);
-#endif
-       fprintf(stdout, " (f_clock=%i,nom_brp=%u,nom_tseg1=%u,nom_tseg2=%u,nom_sjw=%u,nom_sam=%u",
-           bitrate.btr.frequency,
-           bitrate.btr.nominal.brp,
-           bitrate.btr.nominal.tseg1,
-           bitrate.btr.nominal.tseg2,
-           bitrate.btr.nominal.sjw,
-           bitrate.btr.nominal.sam);
-#if (OPTION_CAN_2_0_ONLY == 0)
+            fprintf(stdout, ":%.0fkbps@%.1f%%",
+                speed.data.speed / 1000., speed.data.samplepoint * 100.);
+        fprintf(stdout, " (f_clock=%i,nom_brp=%u,nom_tseg1=%u,nom_tseg2=%u,nom_sjw=%u,nom_sam=%u",
+            bitrate.btr.frequency,
+            bitrate.btr.nominal.brp,
+            bitrate.btr.nominal.tseg1,
+            bitrate.btr.nominal.tseg2,
+            bitrate.btr.nominal.sjw,
+            bitrate.btr.nominal.sam);
         if(mode.fdoe && mode.brse)
-           fprintf(stdout, ",data_brp=%u,data_tseg1=%u,data_tseg2=%u,data_sjw=%u",
-               bitrate.btr.data.brp,
-               bitrate.btr.data.tseg1,
-               bitrate.btr.data.tseg2,
-               bitrate.btr.data.sjw);
-#endif
-       fprintf(stdout, ")\n");
+            fprintf(stdout, ",data_brp=%u,data_tseg1=%u,data_tseg2=%u,data_sjw=%u",
+                bitrate.btr.data.brp,
+                bitrate.btr.data.tseg1,
+                bitrate.btr.data.tseg2,
+                bitrate.btr.data.sjw);
+        fprintf(stdout, ")\n");
     }
     else {
         fprintf(stdout, "Baudrate: %skbps (CiA index %i)\n",
-           bitrate.index == CANBDR_1000 ? "1000" :
-           bitrate.index == -CANBDR_800 ? "800" :
-           bitrate.index == -CANBDR_500 ? "500" :
-           bitrate.index == -CANBDR_250 ? "250" :
-           bitrate.index == -CANBDR_125 ? "125" :
-           bitrate.index == -CANBDR_100 ? "100" :
-           bitrate.index == -CANBDR_50 ? "50" :
-           bitrate.index == -CANBDR_20 ? "20" :
-           bitrate.index == -CANBDR_10 ? "10" : "?", -bitrate.index);
-   }
+            bitrate.index == CANBDR_1000 ? "1000" :
+            bitrate.index == -CANBDR_800 ? "800" :
+            bitrate.index == -CANBDR_500 ? "500" :
+            bitrate.index == -CANBDR_250 ? "250" :
+            bitrate.index == -CANBDR_125 ? "125" :
+            bitrate.index == -CANBDR_100 ? "100" :
+            bitrate.index == -CANBDR_50 ? "50" :
+            bitrate.index == -CANBDR_20 ? "20" :
+            bitrate.index == -CANBDR_10 ? "10" : "?", -bitrate.index);
+    }
 }
 
 #if defined(_WIN32) || defined(_WIN64)
