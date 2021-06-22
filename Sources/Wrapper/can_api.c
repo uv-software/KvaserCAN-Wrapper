@@ -52,11 +52,11 @@
 #ifdef _MSC_VER
 #define VERSION_MAJOR    0
 #define VERSION_MINOR    2
-#define VERSION_PATCH    0
+#define VERSION_PATCH    1
 #else
 #define VERSION_MAJOR    0
-#define VERSION_MINOR    0
-#define VERSION_PATCH    0
+#define VERSION_MINOR    1
+#define VERSION_PATCH    1
 #endif
 #define VERSION_BUILD    BUILD_NO
 #define VERSION_STRING   TOSTRING(VERSION_MAJOR) "." TOSTRING(VERSION_MINOR) "." TOSTRING(VERSION_PATCH) " (" TOSTRING(BUILD_NO) ")"
@@ -1134,7 +1134,7 @@ static int drv_parameter(int handle, uint16_t param, void *value, size_t nbyte)
         }
         break;
     case CANPROP_GET_DEVICE_NAME:       // device name of the CAN interface (char[256])
-        if((sts = canGetChannelData(can[handle].channel, canCHANNELDATA_CHANNEL_NAME, 
+        if((sts = canGetChannelData(can[handle].channel, canCHANNELDATA_CHANNEL_NAME,
                                    (void*)value, (DWORD)nbyte)) == canOK)
             rc = CANERR_NOERROR;
         else
