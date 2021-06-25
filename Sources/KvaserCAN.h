@@ -69,6 +69,7 @@
 /// \{
 class CANCPP CKvaserCAN : public CCANAPI {
 private:
+    CANAPI_Handle_t m_Handle;  ///< CAN interface handle
     CANAPI_OpMode_t m_OpMode;  ///< CAN operation mode
     CANAPI_Bitrate_t m_Bitrate;  ///< CAN bitrate settings
     struct {
@@ -76,9 +77,6 @@ private:
         uint64_t u64RxMessages;  ///< number of received CAN messages
         uint64_t u64ErrorFrames;  ///< number of received status messages
     } m_Counter;
-    // opaque data type
-    struct SCAN;  ///< C++ forward declaration
-    SCAN *m_pCAN;  ///< Kvaser CANlib interface
 public:
     // constructor / destructor
     CKvaserCAN();
