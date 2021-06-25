@@ -65,10 +65,11 @@
 
 /// \name   KvaserCAN API
 /// \brief  CAN API V3 driver for Kvaser CAN interfaces
-/// \note   See CCANAPI for a description of the overridden methods
+/// \note   See CCanApi for a description of the overridden methods
 /// \{
-class CANCPP CKvaserCAN : public CCANAPI {
+class CANCPP CKvaserCAN : public CCanApi {
 private:
+    CANAPI_Handle_t m_Handle;  ///< CAN interface handle
     CANAPI_OpMode_t m_OpMode;  ///< CAN operation mode
     CANAPI_Bitrate_t m_Bitrate;  ///< CAN bitrate settings
     struct {
@@ -76,9 +77,6 @@ private:
         uint64_t u64RxMessages;  ///< number of received CAN messages
         uint64_t u64ErrorFrames;  ///< number of received status messages
     } m_Counter;
-    // opaque data type
-    struct SCAN;  ///< C++ forward declaration
-    SCAN *m_pCAN;  ///< Kvaser CANlib interface
 public:
     // constructor / destructor
     CKvaserCAN();
@@ -89,10 +87,10 @@ public:
         GeneralError = VendorSpecific, ///< mapped Kvaser CANlib error codes
     };
     // CCANAPI overrides
-    static CANAPI_Return_t ProbeChannel(int32_t channel, CANAPI_OpMode_t opMode, const void *param, EChannelState &state);
-    static CANAPI_Return_t ProbeChannel(int32_t channel, CANAPI_OpMode_t opMode, EChannelState &state);
+    static CANAPI_Return_t ProbeChannel(int32_t channel, const CANAPI_OpMode_t &opMode, const void *param, EChannelState &state);
+    static CANAPI_Return_t ProbeChannel(int32_t channel, const CANAPI_OpMode_t &opMode, EChannelState &state);
 
-    CANAPI_Return_t InitializeChannel(int32_t channel, can_mode_t opMode, const void *param = NULL);
+    CANAPI_Return_t InitializeChannel(int32_t channel, const CANAPI_OpMode_t &opMode, const void *param = NULL);
     CANAPI_Return_t TeardownChannel();
     CANAPI_Return_t SignalChannel();
 
@@ -123,8 +121,8 @@ private:
     CANAPI_Return_t MapBitrate2Sja1000(CANAPI_Bitrate_t bitrate, uint16_t &btr0btr1);
     CANAPI_Return_t MapSja10002Bitrate(uint16_t btr0btr1, CANAPI_Bitrate_t &bitrate);
 public:
-    static uint8_t DLc2Len(uint8_t dlc);
-    static uint8_t Len2Dlc(uint8_t len);
+    static uint8_t Dlc2Len(uint8_t dlc) { return CCanApi::Dlc2Len(dlc); }
+    static uint8_t Len2Dlc(uint8_t len) { return CCanApi::Len2Dlc(len); }
 };
 /// \}
 
