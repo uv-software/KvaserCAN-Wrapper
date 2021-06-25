@@ -65,9 +65,9 @@
 
 /// \name   KvaserCAN API
 /// \brief  CAN API V3 driver for Kvaser CAN interfaces
-/// \note   See CCANAPI for a description of the overridden methods
+/// \note   See CCanApi for a description of the overridden methods
 /// \{
-class CANCPP CKvaserCAN : public CCANAPI {
+class CANCPP CKvaserCAN : public CCanApi {
 private:
     CANAPI_Handle_t m_Handle;  ///< CAN interface handle
     CANAPI_OpMode_t m_OpMode;  ///< CAN operation mode
@@ -121,8 +121,8 @@ private:
     CANAPI_Return_t MapBitrate2Sja1000(CANAPI_Bitrate_t bitrate, uint16_t &btr0btr1);
     CANAPI_Return_t MapSja10002Bitrate(uint16_t btr0btr1, CANAPI_Bitrate_t &bitrate);
 public:
-    static uint8_t DLc2Len(uint8_t dlc);
-    static uint8_t Len2Dlc(uint8_t len);
+    static uint8_t Dlc2Len(uint8_t dlc) { return CCanApi::Dlc2Len(dlc); }
+    static uint8_t Len2Dlc(uint8_t len) { return CCanApi::Len2Dlc(len); }
 };
 /// \}
 

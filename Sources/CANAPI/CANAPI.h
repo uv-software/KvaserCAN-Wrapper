@@ -75,7 +75,7 @@
 ///
 /// \author      $Author: haumea $
 //
-/// \version     $Rev: 1007 $
+/// \version     $Rev: 1008 $
 //
 /// \defgroup    can_api CAN Interface API, Version 3
 /// \{
@@ -142,7 +142,7 @@ typedef int CANAPI_Return_t;
 /// \name   CAN API V3
 /// \brief  An abstract class for CAN API V3 campatible CAN driver implementations.
 /// \{
-class CANCPP CCANAPI {
+class CANCPP CCanApi {
 public:
     /// \brief  CAN channel states
     enum EChannelState {
@@ -411,4 +411,4 @@ public:
 /// \}
 #endif // CANAPI_H_INCLUDED
 /// \}
-// $Id: CANAPI.h 1007 2021-06-25 18:16:55Z haumea $  Copyright (c) UV Software //
+// $Id: CANAPI.h 1008 2021-06-25 20:28:54Z haumea $  Copyright (c) UV Software //
