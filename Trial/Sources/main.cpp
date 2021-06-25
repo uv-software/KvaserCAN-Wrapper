@@ -44,7 +44,7 @@
 #endif
 static void sigterm(int signo);
 
-static void verbose(const can_mode_t mode, const can_bitrate_t bitrate, const can_speed_t speed);
+static void verbose(const CANAPI_OpMode_t &mode, const CANAPI_Bitrate_t &bitrate, const CANAPI_BusSpeed_t &speed);
 
 static volatile int running = 1;
 
@@ -460,7 +460,7 @@ end:
     return retVal;
 }
 
-static void verbose(const can_mode_t mode, const can_bitrate_t bitrate, const can_speed_t speed)
+static void verbose(const CANAPI_OpMode_t& mode, const CANAPI_Bitrate_t& bitrate, const CANAPI_BusSpeed_t& speed)
 {
     fprintf(stdout, "Op.-Mode: 0x%02X (fdoe=%u,brse=%u,niso=%u,shrd=%u,nxtd=%u,nrtr=%u,err=%u,mon=%u)\n",
             mode.byte, mode.fdoe, mode.brse, mode.niso, mode.shrd, mode.nxtd, mode.nrtr, mode.err, mode.mon);

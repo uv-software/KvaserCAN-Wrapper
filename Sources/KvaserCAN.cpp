@@ -147,7 +147,7 @@ CKvaserCAN::~CKvaserCAN() {
 }
 
 EXPORT
-CANAPI_Return_t CKvaserCAN::ProbeChannel(int32_t channel, CANAPI_OpMode_t opMode, const void *param, EChannelState &state) {
+CANAPI_Return_t CKvaserCAN::ProbeChannel(int32_t channel, const CANAPI_OpMode_t &opMode, const void *param, EChannelState &state) {
     // test the CAN interface (hardware and driver)
     int result = CANBRD_NOT_TESTABLE;
     CANAPI_Return_t rc = can_test(channel, opMode.byte, param, &result);
@@ -156,13 +156,13 @@ CANAPI_Return_t CKvaserCAN::ProbeChannel(int32_t channel, CANAPI_OpMode_t opMode
 }
 
 EXPORT
-CANAPI_Return_t CKvaserCAN::ProbeChannel(int32_t channel, CANAPI_OpMode_t opMode, EChannelState &state) {
+CANAPI_Return_t CKvaserCAN::ProbeChannel(int32_t channel, const CANAPI_OpMode_t &opMode, EChannelState &state) {
     // delegate this function call
     return ProbeChannel(channel, opMode, NULL, state);
 }
 
 EXPORT
-CANAPI_Return_t CKvaserCAN::InitializeChannel(int32_t channel, can_mode_t opMode, const void *param) {
+CANAPI_Return_t CKvaserCAN::InitializeChannel(int32_t channel, const CANAPI_OpMode_t &opMode, const void *param) {
     // initialize the CAN interface
     CANAPI_Return_t rc = CANERR_FATAL;
     CANAPI_Handle_t hnd = can_init(channel, opMode.byte, param);

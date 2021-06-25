@@ -832,7 +832,7 @@ char *can_software(int handle)
     (void)handle;                       // handle not needed here
 
     version = canGetVersion();          // FIXME: check encoding
-    snprintf(software, 256, "Kvaser CANlib SDK V%u.%u (canlib32.dll)", (version >> 8), (version & 0xFF));
+    snprintf(software, 256, "Kvaser CANlib SDK V%d.%d (canlib32.dll)", (version >> 8), (version & 0xFF));
 
     return (char*)software;             // software version
 }
