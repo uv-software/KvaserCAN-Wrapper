@@ -86,7 +86,7 @@ public:
         // note: range 0...-99 is reserved by CAN API V3
         GeneralError = VendorSpecific, ///< mapped Kvaser CANlib error codes
     };
-    // CCANAPI overrides
+    // CCanApi overrides
     static CANAPI_Return_t ProbeChannel(int32_t channel, const CANAPI_OpMode_t &opMode, const void *param, EChannelState &state);
     static CANAPI_Return_t ProbeChannel(int32_t channel, const CANAPI_OpMode_t &opMode, EChannelState &state);
 

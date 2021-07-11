@@ -1188,11 +1188,13 @@ static int drv_parameter(int handle, uint16_t param, void *value, size_t nbyte)
         }
         break;
     case CANPROP_GET_DEVICE_NAME:       // device name of the CAN interface (char[256])
-        if ((sts = canGetChannelData(can[handle].channel, canCHANNELDATA_CHANNEL_NAME,
+        if (nbyte <= CANPROP_MAX_BUFFER_SIZE) {
+            if ((sts = canGetChannelData(can[handle].channel, canCHANNELDATA_CHANNEL_NAME,
                                    (void*)value, (DWORD)nbyte)) == canOK)
-            rc = CANERR_NOERROR;
-        else
-            rc = kvaser_error(sts);
+                rc = CANERR_NOERROR;
+            else
+                rc = kvaser_error(sts);
+		}
         break;
     case CANPROP_GET_DEVICE_VENDOR:     // vendor name of the CAN interface (char[256])
         if ((nbyte > strlen(KVASER_LIB_VENDOR)) && (nbyte <= CANPROP_MAX_BUFFER_SIZE)) {
