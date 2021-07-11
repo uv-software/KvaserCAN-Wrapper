@@ -2,7 +2,7 @@
 
 _Copyright &copy; 2004-2021  Uwe Vogt, UV Software, Berlin (info@uv-software.com)_
 
-Version $Rev: 1008 $
+Version $Rev: 1010 $
 
 # A CAN Interface Wrapper Specification
 

@@ -184,11 +184,11 @@ typedef struct {                        // Kvaser CAN interface:
 static int kvaser_error(canStatus);    // Kvaser specific errors
 static canStatus kvaser_capability(int channel, can_mode_t *capability);
 
-static int index2params(int index, btr_nominal_t *params);
-static int bitrate2params(const can_bitrate_t *bitrate, btr_nominal_t *params);
-static int params2bitrate(const btr_nominal_t *params, long frequency, can_bitrate_t *bitrate);
-static int bitrate2paramsFd(const can_bitrate_t *bitrate, btr_data_t *params);
-static int paramsFd2bitrate(const btr_data_t *params, long frequency, can_bitrate_t *bitrate);
+static int map_index2params(int index, btr_nominal_t *busParams);
+static int map_bitrate2params(const can_bitrate_t *bitrate, btr_nominal_t *busParams);
+static int map_params2bitrate(const btr_nominal_t *busParams, long frequency, can_bitrate_t *bitrate);
+static int map_bitrate2paramsFd(const can_bitrate_t *bitrate, btr_data_t *busParams);
+static int map_paramsFd2bitrate(const btr_data_t *busParams, long frequency, can_bitrate_t *bitrate);
 
 static int lib_parameter(uint16_t param, void *value, size_t nbyte);
 static int drv_parameter(int handle, uint16_t param, void *value, size_t nbyte);
@@ -423,70 +423,8 @@ int can_exit(int handle)
             }
         }
     }
-    return CANERR_NOERROR;
-}
-
-int can_start(int handle, const can_bitrate_t *bitrate)
-{
-    unsigned char error_frames;         // error frame reporting
-    btr_nominal_t nominal;              // nominal bit-rate
-    btr_data_t data;                    // data bit-rate
-    canStatus rc;                       // return value
-
-    if (!init)                          // must be initialized
-        return CANERR_NOTINIT;
-    if (!IS_HANDLE_VALID(handle))       // must be a valid handle
-        return CANERR_HANDLE;
-    if (can[handle].handle == canINVALID_HANDLE) // must be an opened handle
-        return CANERR_HANDLE;
-    if (bitrate == NULL)                // check for null-pointer
-        return CANERR_NULLPTR;
-    if (!can[handle].status.can_stopped) // must be stopped
-        return CANERR_ONLINE;
-
-    memset(&nominal, 0, sizeof(btr_nominal_t));
-    memset(&data, 0, sizeof(btr_data_t));
-
-    if (bitrate->index <= 0) {          // bit-rate from index
-        if ((rc = index2params(bitrate->index, &nominal)) != CANERR_NOERROR)
-            return rc;
-        if ((rc = canSetBusParams(can[handle].handle, nominal.baud, nominal.tseg1, nominal.tseg2,
-                                                     nominal.sjw, nominal.sam, nominal.sync)) != canOK)
-            return kvaser_error(rc);
-#ifndef OPTION_KVASER_CiA_BIT_TIMING
-        can[handle].frequency = KVASER_FREQ_DEFAULT;
-#else
-        can[handle].frequency = CANBTR_FREQ_SJA1000;
-#endif
-    }
-    else {                              // bit-rate from parameter
-        if ((rc = bitrate2params(bitrate, &nominal)) != CANERR_NOERROR)
-            return rc;
-        if ((rc = canSetBusParams(can[handle].handle, nominal.baud, nominal.tseg1, nominal.tseg2,
-                                                     nominal.sjw, nominal.sam, nominal.sync)) != canOK)
-            return kvaser_error(rc);
-        /* bit-rate for CAN FD data (BRSE) */
-        if (can[handle].mode.fdoe && can[handle].mode.brse) {
-            if ((rc = bitrate2paramsFd(bitrate, &data)) != CANERR_NOERROR)
-                return rc;
-            if ((rc = canSetBusParamsFd(can[handle].handle, data.baud, data.tseg1, data.tseg2, data.sjw)) != canOK)
-                return kvaser_error(rc);
-        }
-        can[handle].frequency = bitrate->btr.frequency;
-    }
-    error_frames = can[handle].mode.err ? 1 : 0; // error frames
-    if ((rc = canIoCtl(can[handle].handle, canIOCTL_SET_ERROR_FRAMES_REPORTING,
-                     (void*)&error_frames, sizeof(error_frames))) != canOK)
-        return kvaser_error(rc);
-    if ((rc = canBusOn(can[handle].handle)) != canOK) // go bus on!
-        return kvaser_error(rc);
-
-    can[handle].status.byte = 0x00;     // clear old status bits and counters
-    can[handle].counters.tx = 0ull;
-    can[handle].counters.rx = 0ull;
-    can[handle].counters.err = 0ull;
-    can[handle].status.can_stopped = 0;  // CAN controller started!
-
+    // teardown the driver when all interfaces released
+    // TODO: required?
     return CANERR_NOERROR;
 }
 
@@ -519,6 +457,70 @@ int can_kill(int handle)
             }
         }
     }
+    return CANERR_NOERROR;
+}
+
+int can_start(int handle, const can_bitrate_t *bitrate)
+{
+    unsigned char error_frames;         // error frame reporting
+    btr_nominal_t nominal;              // nominal bit-rate
+    btr_data_t data;                    // data bit-rate
+    canStatus rc;                       // return value
+
+    if (!init)                          // must be initialized
+        return CANERR_NOTINIT;
+    if (!IS_HANDLE_VALID(handle))       // must be a valid handle
+        return CANERR_HANDLE;
+    if (can[handle].handle == canINVALID_HANDLE) // must be an opened handle
+        return CANERR_HANDLE;
+    if (bitrate == NULL)                // check for null-pointer
+        return CANERR_NULLPTR;
+    if (!can[handle].status.can_stopped) // must be stopped
+        return CANERR_ONLINE;
+
+    memset(&nominal, 0, sizeof(btr_nominal_t));
+    memset(&data, 0, sizeof(btr_data_t));
+
+    if (bitrate->index <= 0) {          // bit-rate from index
+        if ((rc = map_index2params(bitrate->index, &nominal)) != CANERR_NOERROR)
+            return rc;
+        if ((rc = canSetBusParams(can[handle].handle, nominal.baud, nominal.tseg1, nominal.tseg2,
+                                                     nominal.sjw, nominal.sam, nominal.sync)) != canOK)
+            return kvaser_error(rc);
+#ifndef OPTION_KVASER_CiA_BIT_TIMING
+        can[handle].frequency = KVASER_FREQ_DEFAULT;
+#else
+        can[handle].frequency = CANBTR_FREQ_SJA1000;
+#endif
+    }
+    else {                              // bit-rate from parameter
+        if ((rc = map_bitrate2params(bitrate, &nominal)) != CANERR_NOERROR)
+            return rc;
+        if ((rc = canSetBusParams(can[handle].handle, nominal.baud, nominal.tseg1, nominal.tseg2,
+                                                     nominal.sjw, nominal.sam, nominal.sync)) != canOK)
+            return kvaser_error(rc);
+        /* bit-rate for CAN FD data (BRSE) */
+        if (can[handle].mode.fdoe && can[handle].mode.brse) {
+            if ((rc = map_bitrate2paramsFd(bitrate, &data)) != CANERR_NOERROR)
+                return rc;
+            if ((rc = canSetBusParamsFd(can[handle].handle, data.baud, data.tseg1, data.tseg2, data.sjw)) != canOK)
+                return kvaser_error(rc);
+        }
+        can[handle].frequency = bitrate->btr.frequency;
+    }
+    error_frames = can[handle].mode.err ? 1 : 0; // error frames
+    if ((rc = canIoCtl(can[handle].handle, canIOCTL_SET_ERROR_FRAMES_REPORTING,
+                     (void*)&error_frames, sizeof(error_frames))) != canOK)
+        return kvaser_error(rc);
+    if ((rc = canBusOn(can[handle].handle)) != canOK) // go bus on!
+        return kvaser_error(rc);
+
+    can[handle].status.byte = 0x00;     // clear old status bits and counters
+    can[handle].counters.tx = 0ull;
+    can[handle].counters.rx = 0ull;
+    can[handle].counters.err = 0ull;
+    can[handle].status.can_stopped = 0;  // CAN controller started!
+
     return CANERR_NOERROR;
 }
 
@@ -765,13 +767,13 @@ int can_bitrate(int handle, can_bitrate_t *bitrate, can_speed_t *speed)
     if ((rc = canGetBusParams(can[handle].handle, &nominal.baud, &nominal.tseg1, &nominal.tseg2,
                                                  &nominal.sjw, &nominal.sam, &nominal.sync)) != canOK)
         return kvaser_error(rc);
-    if ((rc = params2bitrate(&nominal, can[handle].frequency, &temporary)) != CANERR_NOERROR)
+    if ((rc = map_params2bitrate(&nominal, can[handle].frequency, &temporary)) != CANERR_NOERROR)
         return rc;
     /* bit-rate for CAN FD data (BRSE) */
     if (can[handle].mode.fdoe && can[handle].mode.brse) {
         if ((rc = canGetBusParamsFd(can[handle].handle, &data.baud, &data.tseg1, &data.tseg2, &data.sjw)) != canOK)
             return kvaser_error(rc);
-        if ((rc = paramsFd2bitrate(&data, can[handle].frequency, &temporary)) != CANERR_NOERROR)
+        if ((rc = map_paramsFd2bitrate(&data, can[handle].frequency, &temporary)) != CANERR_NOERROR)
             return rc;
     }
     if (bitrate) {
@@ -870,29 +872,32 @@ static canStatus kvaser_capability(int channel, can_mode_t *capability)
     return canOK;
 }
 
-static int index2params(int index, btr_nominal_t *params)
+static int map_index2params(int index, btr_nominal_t *busParams)
 {
     switch (index) {
-    case CANBTR_INDEX_1M: KVASER_BDR_1000((*params)); break;
+    case CANBTR_INDEX_1M: KVASER_BDR_1000((*busParams)); break;
 #ifndef OPTION_KVASER_CiA_BIT_TIMING
     case CANBTR_INDEX_800K: return CANERR_BAUDRATE;
 #else
-    case CANBTR_INDEX_800K: KVASER_BDR_800((*params)); break;
+    case CANBTR_INDEX_800K: KVASER_BDR_800((*busParams)); break;
 #endif
-    case CANBTR_INDEX_500K: KVASER_BDR_500((*params)); break;
-    case CANBTR_INDEX_250K: KVASER_BDR_250((*params)); break;
-    case CANBTR_INDEX_125K: KVASER_BDR_125((*params)); break;
-    case CANBTR_INDEX_100K: KVASER_BDR_100((*params)); break;
-    case CANBTR_INDEX_50K: KVASER_BDR_50((*params)); break;
-    case CANBTR_INDEX_20K: KVASER_BDR_20((*params)); break;
-    case CANBTR_INDEX_10K: KVASER_BDR_10((*params)); break;
+    case CANBTR_INDEX_500K: KVASER_BDR_500((*busParams)); break;
+    case CANBTR_INDEX_250K: KVASER_BDR_250((*busParams)); break;
+    case CANBTR_INDEX_125K: KVASER_BDR_125((*busParams)); break;
+    case CANBTR_INDEX_100K: KVASER_BDR_100((*busParams)); break;
+    case CANBTR_INDEX_50K: KVASER_BDR_50((*busParams)); break;
+    case CANBTR_INDEX_20K: KVASER_BDR_20((*busParams)); break;
+    case CANBTR_INDEX_10K: KVASER_BDR_10((*busParams)); break;
     default: return CANERR_BAUDRATE;
     }
     return CANERR_NOERROR;
 }
 
-static int bitrate2params(const can_bitrate_t *bitrate, btr_nominal_t *params)
+static int map_bitrate2params(const can_bitrate_t *bitrate, btr_nominal_t *busParams)
 {
+    // sanity check
+    if (!bitrate || !busParams)
+        return CANERR_NULLPTR;
     if ((bitrate->btr.nominal.brp < CANBTR_NOMINAL_BRP_MIN) || (CANBTR_NOMINAL_BRP_MAX < bitrate->btr.nominal.brp))
         return CANERR_BAUDRATE;
     if ((bitrate->btr.nominal.tseg1 < CANBTR_NOMINAL_TSEG1_MIN) || (CANBTR_NOMINAL_TSEG1_MAX < bitrate->btr.nominal.tseg1))
@@ -905,38 +910,45 @@ static int bitrate2params(const can_bitrate_t *bitrate, btr_nominal_t *params)
         return CANERR_BAUDRATE;
 
     /* nominal bit-rate = frequency / (brp * (1 + tseg1 + tseg2)) */
-    params->baud = bitrate->btr.frequency
-                 / ((long)bitrate->btr.nominal.brp * (1l + (long)bitrate->btr.nominal.tseg1 + (long)bitrate->btr.nominal.tseg2));
-    params->tseg1 = bitrate->btr.nominal.tseg1;
-    params->tseg2 = bitrate->btr.nominal.tseg2;
-    params->sjw = bitrate->btr.nominal.sjw;
-    params->sam = bitrate->btr.nominal.sam;
+    busParams->baud = bitrate->btr.frequency
+                    / ((long)bitrate->btr.nominal.brp * (1l + (long)bitrate->btr.nominal.tseg1 + (long)bitrate->btr.nominal.tseg2));
+    busParams->tseg1 = bitrate->btr.nominal.tseg1;
+    busParams->tseg2 = bitrate->btr.nominal.tseg2;
+    busParams->sjw = bitrate->btr.nominal.sjw;
+    busParams->sam = bitrate->btr.nominal.sam;
 
     return CANERR_NOERROR;
 }
 
-static int params2bitrate(const btr_nominal_t *params, long frequency, can_bitrate_t *bitrate)
+static int map_params2bitrate(const btr_nominal_t *busParams, long frequency, can_bitrate_t *bitrate)
 {
+    // sanity check
+    if (!busParams || !bitrate)
+        return CANERR_NULLPTR;
+
     /* Kvaser canLin32 doesn't offer the used controller frequency and bit-rate prescaler.
      * We suppose it's running with 80MHz and calculate the bit-rate prescaler as follows:
      *
      * (1) brp = 80HHz / baud * ((1- tseg1 + tseq2))
      */
-    if (params->baud == 0)              // divide-by-zero!
+    if (busParams->baud == 0)           // divide-by-zero!
         return CANERR_BAUDRATE;
     bitrate->btr.frequency = frequency;
     bitrate->btr.nominal.brp = (unsigned short)(frequency
-                             / (params->baud * (long)(1u + params->tseg1 + params->tseg2)));
-    bitrate->btr.nominal.tseg1 = params->tseg1;
-    bitrate->btr.nominal.tseg2 = params->tseg2;
-    bitrate->btr.nominal.sjw = params->sjw;
-    bitrate->btr.nominal.sam = params->sam;
+                             / (busParams->baud * (long)(1u + busParams->tseg1 + busParams->tseg2)));
+    bitrate->btr.nominal.tseg1 = busParams->tseg1;
+    bitrate->btr.nominal.tseg2 = busParams->tseg2;
+    bitrate->btr.nominal.sjw = busParams->sjw;
+    bitrate->btr.nominal.sam = busParams->sam;
 
     return CANERR_NOERROR;
 }
 
-static int bitrate2paramsFd(const can_bitrate_t *bitrate, btr_data_t *params)
+static int map_bitrate2paramsFd(const can_bitrate_t *bitrate, btr_data_t *busParams)
 {
+    // sanity check
+    if (!bitrate || !busParams)
+        return CANERR_NULLPTR;
     if ((bitrate->btr.data.brp < CANBTR_DATA_BRP_MIN) || (CANBTR_DATA_BRP_MAX < bitrate->btr.data.brp))
         return CANERR_BAUDRATE;
     if ((bitrate->btr.data.tseg1 < CANBTR_DATA_TSEG1_MIN) || (CANBTR_DATA_TSEG1_MAX < bitrate->btr.data.tseg1))
@@ -949,29 +961,33 @@ static int bitrate2paramsFd(const can_bitrate_t *bitrate, btr_data_t *params)
         return CANERR_BAUDRATE;
 
     /* data bit-rate = frequency / (brp * (1 + tseg1 + tseg2)) */
-    params->baud = bitrate->btr.frequency
-                 / ((long)bitrate->btr.data.brp * (1l + (long)bitrate->btr.data.tseg1 + (long)bitrate->btr.data.tseg2));
-    params->tseg1 = bitrate->btr.data.tseg1;
-    params->tseg2 = bitrate->btr.data.tseg2;
-    params->sjw = bitrate->btr.data.sjw;
+    busParams->baud = bitrate->btr.frequency
+                    / ((long)bitrate->btr.data.brp * (1l + (long)bitrate->btr.data.tseg1 + (long)bitrate->btr.data.tseg2));
+    busParams->tseg1 = bitrate->btr.data.tseg1;
+    busParams->tseg2 = bitrate->btr.data.tseg2;
+    busParams->sjw = bitrate->btr.data.sjw;
 
     return CANERR_NOERROR;
 }
 
-static int paramsFd2bitrate(const btr_data_t *params, long frequency, can_bitrate_t *bitrate)
+static int map_paramsFd2bitrate(const btr_data_t *busParams, long frequency, can_bitrate_t *bitrate)
 {
+    // sanity check
+    if (!busParams || !bitrate)
+        return CANERR_NULLPTR;
+
     /* Kvaser canLin32 doesn't offer the used controller frequency and bit-rate prescaler.
      * We suppose it's running with 80MHz and calculate the bit-rate prescaler as follows:
      *
      * (1) brp = 80HHz / baud * ((1- tseg1 + tseq2))
      */
-    if (params->baud == 0)              // divide-by-zero!
+    if (busParams->baud == 0)           // divide-by-zero!
         return CANERR_BAUDRATE;
     bitrate->btr.data.brp = (unsigned short)(frequency
-                          / (params->baud * (long)(1u + params->tseg1 + params->tseg2)));
-    bitrate->btr.data.tseg1 = params->tseg1;
-    bitrate->btr.data.tseg2 = params->tseg2;
-    bitrate->btr.data.sjw = params->sjw;
+                          / (busParams->baud * (long)(1u + busParams->tseg1 + busParams->tseg2)));
+    bitrate->btr.data.tseg1 = busParams->tseg1;
+    bitrate->btr.data.tseg2 = busParams->tseg2;
+    bitrate->btr.data.sjw = busParams->sjw;
 
     return CANERR_NOERROR;
 }
@@ -981,7 +997,7 @@ static int paramsFd2bitrate(const btr_data_t *params, long frequency, can_bitrat
 static int lib_parameter(uint16_t param, void *value, size_t nbyte)
 {
     int rc = CANERR_ILLPARA;            // suppose an invalid parameter
-    int i = 0;                          // one always needs an i
+//    int i = 0;                          // one always needs an i
 
     static int idx_board = EOF;         // actual index in the interface list
 
@@ -1035,18 +1051,20 @@ static int lib_parameter(uint16_t param, void *value, size_t nbyte)
             rc = CANERR_NOERROR;
         }
         break;
+	/* *** **
     case CANPROP_GET_DEVICE_VENDOR:     // vendor name of the CAN interface (char[256])
         if ((nbyte > strlen(KVASER_LIB_VENDOR)) && (nbyte <= CANPROP_MAX_BUFFER_SIZE)) {
             strcpy((char*)value, KVASER_LIB_VENDOR);
             rc = CANERR_NOERROR;
         }
         break;
-    case CANPROP_GET_DEVICE_DLLNAME:    // file name of the CAN interface (char[256])
+    case CANPROP_GET_DEVICE_DLLNAME:    // file name of the CAN interface DLL (char[256])
         if ((nbyte > strlen(KVASER_LIB_CANLIB)) && (nbyte <= CANPROP_MAX_BUFFER_SIZE)) {
             strcpy((char*)value, KVASER_LIB_CANLIB);
             rc = CANERR_NOERROR;
         }
         break;
+	** *** */
     case CANPROP_SET_FIRST_CHANNEL:     // set index to the first entry in the interface list (NULL)
         idx_board = 0;
         rc = (can_boards[idx_board].type != EOF) ? CANERR_NOERROR : CANERR_RESOURCE;
@@ -1060,7 +1078,7 @@ static int lib_parameter(uint16_t param, void *value, size_t nbyte)
         else
             rc = CANERR_RESOURCE;
         break;
-    case CANPROP_GET_CHANNEL_TYPE:      // get device type at actual index in the interface list (int32_t)
+    case CANPROP_GET_CHANNEL_NO:        // get channel no. at actual index in the interface list (int32_t)
         if (nbyte >= sizeof(int32_t)) {
             if ((0 <= idx_board) && (idx_board < KVASER_BOARDS) &&
                 (can_boards[idx_board].type != EOF)) {
@@ -1071,8 +1089,8 @@ static int lib_parameter(uint16_t param, void *value, size_t nbyte)
                 rc = CANERR_RESOURCE;
         }
         break;
-    case CANPROP_GET_CHANNEL_NAME:      // get device name at actual index in the interface list (char[256])
-        if (nbyte <= CANPROP_MAX_BUFFER_SIZE) {
+    case CANPROP_GET_CHANNEL_NAME:      // get channel name at actual index in the interface list (char[256])
+        if ((0U < nbyte) && (nbyte <= CANPROP_MAX_BUFFER_SIZE)) {
             if ((0 <= idx_board) && (idx_board < KVASER_BOARDS) &&
                 (can_boards[idx_board].type != EOF)) {
                 strncpy((char*)value, can_boards[idx_board].name, nbyte);
@@ -1084,24 +1102,58 @@ static int lib_parameter(uint16_t param, void *value, size_t nbyte)
         }
         break;
     case CANPROP_GET_CHANNEL_DLLNAME:   // get file name of the DLL at actual index in the interface list (char[256])
-        if (nbyte <= CANPROP_MAX_BUFFER_SIZE) {
-            strncpy((char*)value, KVASER_LIB_CANLIB, nbyte);
-            ((char*)value)[(nbyte - 1)] = '\0';
-            rc = CANERR_NOERROR;
+        if ((0U < nbyte) && (nbyte <= CANPROP_MAX_BUFFER_SIZE)) {
+            if ((0 <= idx_board) && (idx_board < KVASER_BOARDS) &&
+                (can_boards[idx_board].type != EOF)) {
+                strncpy((char*)value, KVASER_LIB_CANLIB, nbyte);
+                ((char*)value)[(nbyte - 1)] = '\0';
+                rc = CANERR_NOERROR;
+            }
+            else
+                rc = CANERR_RESOURCE;
         }
         break;
     case CANPROP_GET_CHANNEL_VENDOR_ID: // get library id at actual index in the interface list (int32_t)
         if (nbyte >= sizeof(int32_t)) {
-            *(int32_t*)value = (int32_t)KVASER_LIB_ID;
-            rc = CANERR_NOERROR;
+            if ((0 <= idx_board) && (idx_board < KVASER_BOARDS) &&
+                (can_boards[idx_board].type != EOF)) {
+                *(int32_t*)value = (int32_t)KVASER_LIB_ID;
+                rc = CANERR_NOERROR;
+            }
+            else
+                rc = CANERR_RESOURCE;
         }
         break;
     case CANPROP_GET_CHANNEL_VENDOR_NAME: // get vendor name at actual index in the interface list (char[256])
-        if (nbyte <= CANPROP_MAX_BUFFER_SIZE) {
-            strncpy((char*)value, KVASER_LIB_VENDOR, nbyte);
-            ((char*)value)[(nbyte - 1)] = '\0';
-            rc = CANERR_NOERROR;
+        if ((0U < nbyte) && (nbyte <= CANPROP_MAX_BUFFER_SIZE)) {
+            if ((0 <= idx_board) && (idx_board < KVASER_BOARDS) &&
+                (can_boards[idx_board].type != EOF)) {
+                strncpy((char*)value, KVASER_LIB_VENDOR, nbyte);
+                ((char*)value)[(nbyte - 1)] = '\0';
+                rc = CANERR_NOERROR;
+            }
+            else
+                rc = CANERR_RESOURCE;
         }
+        break;
+    case CANPROP_GET_DEVICE_TYPE:       // device type of the CAN interface (int32_t)
+    case CANPROP_GET_DEVICE_NAME:       // device name of the CAN interface (char[256])
+    case CANPROP_GET_DEVICE_VENDOR:     // vendor name of the CAN interface (char[256])
+    case CANPROP_GET_DEVICE_DLLNAME:    // file name of the CAN interface DLL (char[256])
+    case CANPROP_GET_OP_CAPABILITY:     // supported operation modes of the CAN controller (uint8_t)
+    case CANPROP_GET_OP_MODE:           // active operation mode of the CAN controller (uint8_t)
+    case CANPROP_GET_BITRATE:           // active bit-rate of the CAN controller (can_bitrate_t)
+    case CANPROP_GET_SPEED:             // active bus speed of the CAN controller (can_speed_t)
+    case CANPROP_GET_STATUS:            // current status register of the CAN controller (uint8_t)
+    case CANPROP_GET_BUSLOAD:           // current bus load of the CAN controller (uint8_t)
+    case CANPROP_GET_TX_COUNTER:        // total number of sent messages (uint64_t)
+    case CANPROP_GET_RX_COUNTER:        // total number of reveiced messages (uint64_t)
+    case CANPROP_GET_ERR_COUNTER:       // total number of reveiced error frames (uint64_t)
+        // note: a device parameter requires a valid handle.
+        if (!init)
+            rc = CANERR_NOTINIT;
+        else
+            rc = CANERR_HANDLE;
         break;
     default:
         rc = CANERR_NOTSUPP;
@@ -1122,9 +1174,11 @@ static int drv_parameter(int handle, uint16_t param, void *value, size_t nbyte)
 
     assert(IS_HANDLE_VALID(handle));    // just to make sure
 
-    if (value == NULL)                  // check for null-pointer
+    if (value == NULL) {                // check for null-pointer
+        if ((param != CANPROP_SET_FIRST_CHANNEL) &&
+           (param != CANPROP_SET_NEXT_CHANNEL))
         return CANERR_NULLPTR;
-
+    }
     /* CAN interface properties */
     switch (param) {
     case CANPROP_GET_DEVICE_TYPE:       // device type of the CAN interface (int32_t)
@@ -1139,6 +1193,18 @@ static int drv_parameter(int handle, uint16_t param, void *value, size_t nbyte)
             rc = CANERR_NOERROR;
         else
             rc = kvaser_error(sts);
+        break;
+    case CANPROP_GET_DEVICE_VENDOR:     // vendor name of the CAN interface (char[256])
+        if ((nbyte > strlen(KVASER_LIB_VENDOR)) && (nbyte <= CANPROP_MAX_BUFFER_SIZE)) {
+            strcpy((char*)value, KVASER_LIB_VENDOR);
+            rc = CANERR_NOERROR;
+        }
+        break;
+    case CANPROP_GET_DEVICE_DLLNAME:    // file name of the CAN interface DLL (char[256])
+        if ((nbyte > strlen(KVASER_LIB_CANLIB)) && (nbyte <= CANPROP_MAX_BUFFER_SIZE)) {
+            strcpy((char*)value, KVASER_LIB_CANLIB);
+            rc = CANERR_NOERROR;
+        }
         break;
     case CANPROP_GET_OP_CAPABILITY:     // supported operation modes of the CAN controller (uint8_t)
         if (nbyte >= sizeof(uint8_t)) {
@@ -1237,11 +1303,15 @@ static int calc_speed(can_bitrate_t *bitrate, can_speed_t *speed, int modify)
     btr_nominal_t nominal;              // nominal bit-rate
     int rc;
 
+    // sanity check
+    if (!bitrate || !speed)
+        return CANERR_NULLPTR;
+
     memset(&temporary, 0, sizeof(can_bitrate_t));
     memset(&nominal, 0, sizeof(btr_nominal_t));
 
-    if (bitrate->index <= 0) {
-        if ((rc = index2params(bitrate->index, &nominal)) != CANERR_NOERROR)
+    if (bitrate->index <= 0) {          // bit-timing table index
+        if ((rc = map_index2params(bitrate->index, &nominal)) != CANERR_NOERROR)
             return rc;
         if (nominal.baud < 0) {         // translate Kvaser defaults
             if ((rc = canTranslateBaud(&nominal.baud, &nominal.tseg1, &nominal.tseg2,
@@ -1249,9 +1319,9 @@ static int calc_speed(can_bitrate_t *bitrate, can_speed_t *speed, int modify)
                 return rc;
         }
 #ifndef OPTION_KVASER_CiA_BIT_TIMING
-        if ((rc = params2bitrate(&nominal, KVASER_FREQ_DEFAULT, &temporary)) != CANERR_NOERROR)
+        if ((rc = map_params2bitrate(&nominal, KVASER_FREQ_DEFAULT, &temporary)) != CANERR_NOERROR)
 #else
-        if ((rc = params2bitrate(&nominal, CANBTR_FREQ_SJA1000, &temporary)) != CANERR_NOERROR)
+        if ((rc = map_params2bitrate(&nominal, CANBTR_FREQ_SJA1000, &temporary)) != CANERR_NOERROR)
 #endif
             return rc;
 

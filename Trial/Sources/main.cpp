@@ -216,7 +216,7 @@ int main(int argc, const char * argv[]) {
     if (option_test) {
         retVal = myDriver.SetProperty(CANPROP_SET_FIRST_CHANNEL, (void *)NULL, 0U);
         while (retVal == CCanApi::NoError) {
-            retVal = myDriver.GetProperty(CANPROP_GET_CHANNEL_TYPE, (void *)&i32Val, sizeof(int32_t));
+            retVal = myDriver.GetProperty(CANPROP_GET_CHANNEL_NO, (void *)&i32Val, sizeof(int32_t));
             if (retVal == CCanApi::NoError) {
                 retVal = CKvaserCAN::ProbeChannel(i32Val, opMode, state);
                 fprintf(stdout, ">>> CCanApi.ProbeChannel(%i): state = %s", i32Val,
