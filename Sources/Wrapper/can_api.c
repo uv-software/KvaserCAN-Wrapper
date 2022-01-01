@@ -2,7 +2,7 @@
 /*
  *  CAN Interface API, Version 3 (for Kvaser CAN Interfaces)
  *
- *  Copyright (c) 2017-2021 Uwe Vogt, UV Software, Berlin (info@uv-software.de)
+ *  Copyright (c) 2017-2022 Uwe Vogt, UV Software, Berlin (info@uv-software.de)
  *  All rights reserved.
  *
  *  This file is part of KvaserCAN-Wrapper.
@@ -52,11 +52,11 @@
 #ifdef _MSC_VER
 #define VERSION_MAJOR    0
 #define VERSION_MINOR    2
-#define VERSION_PATCH    1
+#define VERSION_PATCH    99
 #else
 #define VERSION_MAJOR    0
-#define VERSION_MINOR    1
-#define VERSION_PATCH    1
+#define VERSION_MINOR    0
+#define VERSION_PATCH    0
 #endif
 #define VERSION_BUILD    BUILD_NO
 #define VERSION_STRING   TOSTRING(VERSION_MAJOR) "." TOSTRING(VERSION_MINOR) "." TOSTRING(VERSION_PATCH) " (" TOSTRING(BUILD_NO) ")"
@@ -1146,9 +1146,15 @@ static int lib_parameter(uint16_t param, void *value, size_t nbyte)
     case CANPROP_GET_SPEED:             // active bus speed of the CAN controller (can_speed_t)
     case CANPROP_GET_STATUS:            // current status register of the CAN controller (uint8_t)
     case CANPROP_GET_BUSLOAD:           // current bus load of the CAN controller (uint8_t)
+    case CANPROP_GET_NUM_CHANNELS:      // numbers of CAN channels on the CAN interface (uint8_t)
+    case CANPROP_GET_CAN_CHANNEL:       // active CAN channel on the CAN interface (uint8_t)
+    case CANPROP_GET_CAN_CLOCKS:        // supported CAN clocks (in [Hz]) (int32_t[64])
     case CANPROP_GET_TX_COUNTER:        // total number of sent messages (uint64_t)
     case CANPROP_GET_RX_COUNTER:        // total number of reveiced messages (uint64_t)
     case CANPROP_GET_ERR_COUNTER:       // total number of reveiced error frames (uint64_t)
+    case CANPROP_GET_RCV_QUEUE_SIZE:    // maximum number of message the receive queue can hold (uint32_t)
+    case CANPROP_GET_RCV_QUEUE_HIGH:    // maximum number of message the receive queue has hold (uint32_t)
+    case CANPROP_GET_RCV_QUEUE_OVFL:    // overflow counter of the receive queue (uint64_t)
         // note: a device parameter requires a valid handle.
         if (!init)
             rc = CANERR_NOTINIT;

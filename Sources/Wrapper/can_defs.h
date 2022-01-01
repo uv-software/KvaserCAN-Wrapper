@@ -2,7 +2,7 @@
 /*
  *  CAN Interface API, Version 3 (for Kvaser CAN Interfaces)
  *
- *  Copyright (c) 2017-2021 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
+ *  Copyright (c) 2017-2022 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
  *  All rights reserved.
  *
  *  This file is part of KvaserCAN-Wrapper.
@@ -65,17 +65,17 @@
 #define KVASER_SHARED_ACCESS            // permit non-exclusive access
 #define KVASER_VIRTUAL_CHANNELS         // support of virtual channels
 /*#define KVASER_SIMULATED_CHANNELS     // support of simulated channels */
-/* note: all other options moved into header CANAPI_KvaserCAN.h */
+/* note: all other options moved into header KvaserCAN_Defines.h */
 
 
 /*  -----------  defines  ------------------------------------------------
  */
-/* note: all defines moved into header CANAPI_KvaserCAN.h */
+/* note: all defines moved into header KvaserCAN_Defines.h */
 
 
 /*  -----------  types  --------------------------------------------------
  */
-/* note: all type definitions moved into header CANAPI_KvaserCAN.h */
+/* note: all type definitions moved into header KvaserCAN_Defines.h */
 
 
 #endif /* CAN_DEFS_H_INCLUDED */
