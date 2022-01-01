@@ -2,7 +2,7 @@
 /*
  *  CAN Interface API, Version 3 (for Kvaser CAN Interfaces)
  *
- *  Copyright (c) 2017-2021 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
+ *  Copyright (c) 2017-2022 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
  *  All rights reserved.
  *
  *  This file is part of KvaserCAN-Wrapper.
@@ -96,7 +96,10 @@ extern "C" {
 /** @name  CAN API Property Value
  *  @brief CANlib parameter to be read or written
  *  @{ */
-// TODO: insert coin here
+//#define KVASER_IO_SERIAL_NUMBER  0x??U
+//#define KVASER_IO_CLOCK_DOMAIN   0x??U
+// TODO: define more or all parameters
+// ...
 /** @} */
 
 /** @name  CAN API Library ID
@@ -118,14 +121,9 @@ extern "C" {
  *  @brief More or less useful stuff
  *  @{ */                               // TODO: to be moved or removed
 #define KVASER_LIB_VENDOR               "Kvaser AB, Sweden"
-#define CAN_API_VENDOR                  "UV Software, Berlin"
-#define CAN_API_AUTHOR                  "Uwe Vogt, UV Software"
-#define CAN_API_WEBSITE                 "www.uv-software.com"
-#define CAN_API_CONTACT                 "info@uv-software.com"
-#define CAN_API_LICENSE                 "BSD-2-Clause OR GPL-3.0-or-later"
-#define CAN_API_COPYRIGHT               "Copyright (c) 2005-20%02u, UV Software, Berlin"
-#define CAN_API_HAZARD_NOTE             "Do not connect your CAN device to a real CAN network when using this program.\n" \
-                                        "This can damage your application."
+#define KVASER_LIB_WEBSITE              "https://www.kvaser.com/"
+#define KVASER_LIB_HAZARD_NOTE          "If you connect your CAN device to a real CAN network when using this library,\n" \
+                                        "you might damage your application."
 /** @} */
 
 #ifdef __cplusplus

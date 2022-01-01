@@ -2,7 +2,7 @@
 //
 //  CAN Interface API, Version 3 (for Kvaser CAN Interfaces)
 //
-//  Copyright (c) 2017-2021 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
+//  Copyright (c) 2017-2022 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
 //  All rights reserved.
 //
 //  This file is part of KvaserCAN-Wrapper.
@@ -49,11 +49,11 @@
 #ifdef _MSC_VER
 #define VERSION_MAJOR    0
 #define VERSION_MINOR    2
-#define VERSION_PATCH    1
+#define VERSION_PATCH    99
 #else
 #define VERSION_MAJOR    0
-#define VERSION_MINOR    1
-#define VERSION_PATCH    1
+#define VERSION_MINOR    0
+#define VERSION_PATCH    0
 #endif
 #define VERSION_BUILD    BUILD_NO
 #define VERSION_STRING   TOSTRING(VERSION_MAJOR) "." TOSTRING(VERSION_MINOR) "." TOSTRING(VERSION_PATCH) " (" TOSTRING(BUILD_NO) ")"

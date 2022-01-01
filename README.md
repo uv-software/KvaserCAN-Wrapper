@@ -1,6 +1,6 @@
 ### Wrapper Library for Kvaser CAN Interfaces (Windows&reg;)
 
-_Copyright &copy; 2017-2021 Uwe Vogt, UV Software, Berlin (info@uv-software.de)_
+_Copyright &copy; 2017-2022 Uwe Vogt, UV Software, Berlin (info@uv-software.de)_
 
 # CAN API V3 for Kvaser CAN Interfaces
 
@@ -18,15 +18,15 @@ In case of doubt the source code:
 ```C++
 /// \name   KvaserCAN API
 /// \brief  CAN API V3 driver for Kvaser CAN interfaces
-/// \note   See CCANAPI for a description of the overridden methods
+/// \note   See CCanApi for a description of the overridden methods
 /// \{
-class CKvaserCAN : public CCANAPI {
+class CKvaserCAN : public CCanApi {
 public:
     // constructor / destructor
     CKvaserCAN();
     ~CKvaserCAN();
 
-    // CCANAPI overrides
+    // CCanApi overrides
     static CANAPI_Return_t ProbeChannel(int32_t channel, const CANAPI_OpMode_t &opMode, const void *param, EChannelState &state);
     static CANAPI_Return_t ProbeChannel(int32_t channel, const CANAPI_OpMode_t &opMode, EChannelState &state);
 
@@ -109,7 +109,7 @@ Type `can_test /?` to display all program options.
 
 ### Development Environment
 
-- Microsoft Visual Studio Community 2019 (Version 16.10.0)
+- Microsoft Visual Studio Community 2019 (Version 16.11.8)
 
 ### Tested CAN Hardware
 
@@ -118,7 +118,7 @@ Type `can_test /?` to display all program options.
 
 ### Required Kvaser CANlib SDK
 
-- Version 5.35 or later _(Latest is Greatest!)_
+- Version 5.37 or later _(Latest is Greatest!)_
 
 ## Known Bugs and Caveats
 
@@ -128,6 +128,8 @@ For a list of known bugs and caveats see tab [Issues](https://github.com/uv-soft
 
 Kvaser´s CANlib SDK can be downloaded form the [Kvaser](https://www.kvaser.com/) website. \
 Please note the copyright and license agreements.
+
+A version for macOS&reg; can be downloaded from / cloned at [GitHub](https://github.com/mac-can/MacCAN-KvaserCAN).
 
 ### Dual-License
 
@@ -140,6 +142,7 @@ You can choose between one of them if you use this work in whole or in part.
 ### Trademarks
 
 Windows is a registered trademark of Microsoft Corporation in the United States and/or other countries. \
+Mac and macOS are trademarks of Apple Inc., registered in the U.S. and other countries. \
 All other company, product and service names mentioned herein are trademarks, registered trademarks or service marks of their respective owners.
 
 ### Hazard Note
@@ -150,5 +153,3 @@ _If you connect your CAN device to a real CAN network when using this library, y
 
 E-Mail: mailto://info@uv-software.com \
 Internet: https://www.uv-software.com
-
-##### *Enjoy!*

@@ -2,7 +2,7 @@
 //
 //  CAN Tester for Kvaser CAN Interfaces
 //
-//  Copyright (c) 2008-2010,2014-2021 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
+//  Copyright (c) 2008-2010,2014-2022 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@
 #error Unsupported architecture
 #endif
 static const char APPLICATION[] = "CAN Tester for Kvaser CAN Interfaces, Version " VERSION_STRING;
-static const char COPYRIGHT[]   = "Copyright (c) 2008-2010,2014-2021 by Uwe Vogt, UV Software, Berlin";
+static const char COPYRIGHT[]   = "Copyright (c) 2008-2010,2014-2022 by Uwe Vogt, UV Software, Berlin";
 static const char WARRANTY[]    = "This program comes with ABSOLUTELY NO WARRANTY!\n\n" \
                                   "This is free software, and you are welcome to redistribute it\n" \
                                   "under certain conditions; type `/ABOUT' for details.";
@@ -51,7 +51,6 @@ static const char LICENSE[]     = "This program is free software: you can redist
                                   "along with this program.  If not, see <http://www.gnu.org/licenses/>.";
 #define basename(x)  "can_test" // FIXME: Where is my `basename' function?
 
-#include "KvaserCAN_Defines.h"
 #include "KvaserCAN.h"
 #include "Timer.h"
 
