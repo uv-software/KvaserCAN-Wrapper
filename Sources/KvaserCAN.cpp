@@ -288,7 +288,7 @@ char *CKvaserCAN::GetHardwareVersion() {
 EXPORT
 char *CKvaserCAN::GetFirmwareVersion() {
     // retrieve the firmware version of the CAN controller
-    return can_software(m_Handle);
+    return can_firmware(m_Handle);
 }
 
 EXPORT
