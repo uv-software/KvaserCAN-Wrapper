@@ -52,10 +52,10 @@
 #ifdef _MSC_VER
 #define VERSION_MAJOR    0
 #define VERSION_MINOR    2
-#define VERSION_PATCH    99
+#define VERSION_PATCH    1
 #else
 #define VERSION_MAJOR    0
-#define VERSION_MINOR    0
+#define VERSION_MINOR    2
 #define VERSION_PATCH    0
 #endif
 #define VERSION_BUILD    BUILD_NO
@@ -98,6 +98,9 @@ static const char version[] = "CAN API V3 for Kvaser CAN Interfaces, Version " V
 /*  -----------  options  ------------------------------------------------
  */
 
+#if (OPTION_CAN_2_0_ONLY != 0)
+#error Compilation with legacy CAN 2.0 frame format!
+#endif
 
 /*  -----------  defines  ------------------------------------------------
  */
@@ -685,11 +688,7 @@ repeat:
     msg->brs = (flags & canFDMSG_BRS)? 1 : 0;
     msg->esi = (flags & canFDMSG_ESI)? 1 : 0;
     msg->dlc = (uint8_t)LEN2DLC(len); // unclear: is it a length or a DLC?
-#ifndef CAN_20_ONLY
     memcpy(msg->data, data, CANFD_MAX_LEN);
-#else
-    memcpy(msg->data, data, CAN_MAX_LEN);
-#endif
     msg->timestamp.tv_sec = (time_t)(timestamp / 1000ul);
     msg->timestamp.tv_nsec = (long)(timestamp % 1000ul) * 1000000l;
     can[handle].status.receiver_empty = 0; // message read
@@ -810,6 +809,8 @@ int can_property(int handle, uint16_t param, void *value, uint32_t nbyte)
 char *can_hardware(int handle)
 {
     static char hardware[256] = "";     // hardware version
+    char str[256];                      // channel name
+    uint64_t rev;                       // revision
 
     if (!init)                          // must be initialized
         return NULL;
@@ -818,25 +819,40 @@ char *can_hardware(int handle)
     if (can[handle].handle == canINVALID_HANDLE) // must be an opened handle
         return NULL;
 
-    if (canGetChannelData(can[handle].channel, canCHANNELDATA_CHANNEL_NAME, hardware, 255) != canOK)
+    if (canGetChannelData(can[handle].channel, canCHANNELDATA_CHANNEL_NAME, (void*)str, 256) != canOK)
         return NULL;
+    if (canGetChannelData(can[handle].channel, canCHANNELDATA_CARD_HARDWARE_REV, (void*)&rev, sizeof(uint64_t)) != canOK)
+        return NULL;
+    snprintf(hardware, 256, "%s, hardware revision %u.%u", str, 
+                            (uint16_t)((rev & 0x00000000FFFF0000UL) >> 16),
+                            (uint16_t)((rev & 0x000000000000FFFFUL) >> 0));
 
     return (char*)hardware;             // hardware version
 }
 
-char *can_software(int handle)
+char *can_firmware(int handle)
 {
-    static char software[256] = "";     // software version
-    unsigned short version;             // version number
+    static char firmware[256] = "";     // firmware version
+    char str[256];                      // channel name
+    uint64_t rev;                       // revision
 
     if (!init)                          // must be initialized
         return NULL;
-    (void)handle;                       // handle not needed here
+    if (!IS_HANDLE_VALID(handle))       // must be a valid handle
+        return NULL;
+    if (can[handle].handle == canINVALID_HANDLE) // must be an opened handle
+        return NULL;
 
-    version = canGetVersion();          // FIXME: check encoding
-    snprintf(software, 256, "Kvaser CANlib SDK V%d.%d (canlib32.dll)", (version >> 8), (version & 0xFF));
+    if (canGetChannelData(can[handle].channel, canCHANNELDATA_CHANNEL_NAME, (void*)str, 256) != canOK)
+        return NULL;
+    if (canGetChannelData(can[handle].channel, canCHANNELDATA_CARD_FIRMWARE_REV, (void*)&rev, sizeof(uint64_t)) != canOK)
+        return NULL;
+    snprintf(firmware, 256, "%s, firmware version %u.%u.%u", str,
+                            (uint16_t)((rev & 0xFFFF000000000000UL) >> 48),
+                            (uint16_t)((rev & 0x0000FFFF00000000UL) >> 32),
+                            (uint16_t)((rev & 0x00000000FFFF0000UL) >> 16));
 
-    return (char*)software;             // software version
+    return (char*)firmware;             // firmware version
 }
 
 /*  -----------  local functions  ----------------------------------------
@@ -997,8 +1013,6 @@ static int map_paramsFd2bitrate(const btr_data_t *busParams, long frequency, can
 static int lib_parameter(uint16_t param, void *value, size_t nbyte)
 {
     int rc = CANERR_ILLPARA;            // suppose an invalid parameter
-//    int i = 0;                          // one always needs an i
-
     static int idx_board = EOF;         // actual index in the interface list
 
     if (value == NULL) {                // check for null-pointer

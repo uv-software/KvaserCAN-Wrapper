@@ -49,10 +49,10 @@
 #ifdef _MSC_VER
 #define VERSION_MAJOR    0
 #define VERSION_MINOR    2
-#define VERSION_PATCH    99
+#define VERSION_PATCH    1
 #else
 #define VERSION_MAJOR    0
-#define VERSION_MINOR    0
+#define VERSION_MINOR    2
 #define VERSION_PATCH    0
 #endif
 #define VERSION_BUILD    BUILD_NO
@@ -133,6 +133,7 @@ CKvaserCAN::CKvaserCAN() {
 
 EXPORT
 CKvaserCAN::~CKvaserCAN() {
+    // set CAN contoller into INIT mode and close USB device
     (void)TeardownChannel();
 }
 
@@ -288,7 +289,7 @@ char *CKvaserCAN::GetHardwareVersion() {
 EXPORT
 char *CKvaserCAN::GetFirmwareVersion() {
     // retrieve the firmware version of the CAN controller
-    return can_software(m_Handle);
+    return can_firmware(m_Handle);
 }
 
 EXPORT
