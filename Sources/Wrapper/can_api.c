@@ -55,7 +55,7 @@
 #define VERSION_PATCH    99
 #else
 #define VERSION_MAJOR    0
-#define VERSION_MINOR    0
+#define VERSION_MINOR    2
 #define VERSION_PATCH    0
 #endif
 #define VERSION_BUILD    BUILD_NO
@@ -98,6 +98,9 @@ static const char version[] = "CAN API V3 for Kvaser CAN Interfaces, Version " V
 /*  -----------  options  ------------------------------------------------
  */
 
+#if (OPTION_CAN_2_0_ONLY != 0)
+#error Compilation with legacy CAN 2.0 frame format!
+#endif
 
 /*  -----------  defines  ------------------------------------------------
  */
@@ -685,11 +688,7 @@ repeat:
     msg->brs = (flags & canFDMSG_BRS)? 1 : 0;
     msg->esi = (flags & canFDMSG_ESI)? 1 : 0;
     msg->dlc = (uint8_t)LEN2DLC(len); // unclear: is it a length or a DLC?
-#ifndef CAN_20_ONLY
     memcpy(msg->data, data, CANFD_MAX_LEN);
-#else
-    memcpy(msg->data, data, CAN_MAX_LEN);
-#endif
     msg->timestamp.tv_sec = (time_t)(timestamp / 1000ul);
     msg->timestamp.tv_nsec = (long)(timestamp % 1000ul) * 1000000l;
     can[handle].status.receiver_empty = 0; // message read
@@ -1014,8 +1013,6 @@ static int map_paramsFd2bitrate(const btr_data_t *busParams, long frequency, can
 static int lib_parameter(uint16_t param, void *value, size_t nbyte)
 {
     int rc = CANERR_ILLPARA;            // suppose an invalid parameter
-//    int i = 0;                          // one always needs an i
-
     static int idx_board = EOF;         // actual index in the interface list
 
     if (value == NULL) {                // check for null-pointer
