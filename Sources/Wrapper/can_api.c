@@ -1070,7 +1070,6 @@ static int lib_parameter(uint16_t param, void *value, size_t nbyte)
             rc = CANERR_NOERROR;
         }
         break;
-	/* *** **
     case CANPROP_GET_DEVICE_VENDOR:     // vendor name of the CAN interface (char[256])
         if ((nbyte > strlen(KVASER_LIB_VENDOR)) && (nbyte <= CANPROP_MAX_BUFFER_SIZE)) {
             strcpy((char*)value, KVASER_LIB_VENDOR);
@@ -1083,7 +1082,6 @@ static int lib_parameter(uint16_t param, void *value, size_t nbyte)
             rc = CANERR_NOERROR;
         }
         break;
-	** *** */
     case CANPROP_SET_FIRST_CHANNEL:     // set index to the first entry in the interface list (NULL)
         idx_board = 0;
         rc = (can_boards[idx_board].type != EOF) ? CANERR_NOERROR : CANERR_RESOURCE;
@@ -1157,8 +1155,6 @@ static int lib_parameter(uint16_t param, void *value, size_t nbyte)
         break;
     case CANPROP_GET_DEVICE_TYPE:       // device type of the CAN interface (int32_t)
     case CANPROP_GET_DEVICE_NAME:       // device name of the CAN interface (char[256])
-    case CANPROP_GET_DEVICE_VENDOR:     // vendor name of the CAN interface (char[256])
-    case CANPROP_GET_DEVICE_DLLNAME:    // file name of the CAN interface DLL (char[256])
     case CANPROP_GET_OP_CAPABILITY:     // supported operation modes of the CAN controller (uint8_t)
     case CANPROP_GET_OP_MODE:           // active operation mode of the CAN controller (uint8_t)
     case CANPROP_GET_BITRATE:           // active bit-rate of the CAN controller (can_bitrate_t)
@@ -1208,14 +1204,17 @@ static int drv_parameter(int handle, uint16_t param, void *value, size_t nbyte)
     switch (param) {
     case CANPROP_GET_DEVICE_TYPE:       // device type of the CAN interface (int32_t)
         if (nbyte >= sizeof(int32_t)) {
-            *(int32_t*)value = (int32_t)can[handle].channel;
-            rc = CANERR_NOERROR;
+            if ((sts = canGetChannelData(can[handle].channel, canCHANNELDATA_CARD_TYPE,
+                                        (void*)value, (size_t)nbyte)) == canOK)
+                rc = CANERR_NOERROR;
+            else
+                rc = kvaser_error(sts);
         }
         break;
     case CANPROP_GET_DEVICE_NAME:       // device name of the CAN interface (char[256])
         if (nbyte <= CANPROP_MAX_BUFFER_SIZE) {
             if ((sts = canGetChannelData(can[handle].channel, canCHANNELDATA_CHANNEL_NAME,
-                                   (void*)value, (DWORD)nbyte)) == canOK)
+                                        (void*)value, (size_t)nbyte)) == canOK)
                 rc = CANERR_NOERROR;
             else
                 rc = kvaser_error(sts);
