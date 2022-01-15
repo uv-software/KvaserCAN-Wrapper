@@ -20,7 +20,7 @@
 #include "build_no.h"
 #define VERSION_MAJOR    0
 #define VERSION_MINOR    2
-#define VERSION_PATCH    1
+#define VERSION_PATCH    99
 #define VERSION_BUILD    BUILD_NO
 #define VERSION_STRING   TOSTRING(VERSION_MAJOR) "." TOSTRING(VERSION_MINOR) "." TOSTRING(VERSION_PATCH) " (" TOSTRING(BUILD_NO) ")"
 #if defined(_WIN64)
@@ -161,8 +161,9 @@ public:
     uint64_t TransmitterTest(time_t duration, CANAPI_OpMode_t opMode, uint32_t id = 0x100U, uint8_t dlc = 0U, uint32_t delay = 0U, uint64_t offset = 0U);
     uint64_t TransmitterTest(uint64_t count, CANAPI_OpMode_t opMode, bool random = false, uint32_t id = 0x100U, uint8_t dlc = 0U, uint32_t delay = 0U, uint64_t offset = 0U);
 public:
-    static int ListCanDevices(const char *vendor = NULL);
-    static int TestCanDevices(CANAPI_OpMode_t opMode, const char *vendor = NULL);
+    static int ListCanDevices(void);
+    static int TestCanDevices(CANAPI_OpMode_t opMode);
+#if (0)
     // list of CAN interface vendors
     static const struct TCanVendor {
         int32_t id;
@@ -189,6 +190,7 @@ const CCanDriver::TCanDevice CCanDriver::m_CanDevices[] = {
     {KVASERCAN_LIBRARY_ID, KVASER_CAN_CHANNEL6, (char*)"Kvaser CAN Channel 6" },
     {KVASERCAN_LIBRARY_ID, KVASER_CAN_CHANNEL7, (char*)"Kvaser CAN Channel 7" },
     {EOF, EOF, NULL}
+#endif
 };
 
 static void sigterm(int signo);
@@ -206,7 +208,7 @@ int main(int argc, const char * argv[]) {
     int optind;
     char *optarg;
 
-    int channel = 0, hw = 0;
+    CCanDriver::SChannelInfo channel; int hw = 0;
     int op = 0, rf = 0, xf = 0, ef = 0, lo = 0, sh = 0;
     int baudrate = CANBDR_250; int bd = 0;
     int mode = RxMODE, m = 0;
@@ -630,15 +632,15 @@ int main(int argc, const char * argv[]) {
         case LISTBOARDS_CHR:
             fprintf(stdout, "%s\n%s\n\n%s\n\n", APPLICATION, COPYRIGHT, WARRANTY);
             /* list all supported interfaces */
-            num_boards = CCanDriver::ListCanDevices(getOptionParameter());
-            fprintf(stdout, "Number of supported CAN interfaces=%i\n", num_boards);
+            num_boards = CCanDriver::ListCanDevices(/*getOptionParameter()*/);
+            fprintf(stdout, "Number of supported CAN interfaces: %i\n", num_boards);
             return (num_boards >= 0) ? 0 : 1;
         case TESTBOARDS_STR:
         case TESTBOARDS_CHR:
             fprintf(stdout, "%s\n%s\n\n%s\n\n", APPLICATION, COPYRIGHT, WARRANTY);
             /* list all available interfaces */
-            num_boards = CCanDriver::TestCanDevices(opMode, getOptionParameter());
-            fprintf(stdout, "Number of present CAN interfaces=%i\n", num_boards);
+            num_boards = CCanDriver::TestCanDevices(opMode/*, getOptionParameter()*/);
+            fprintf(stdout, "Number of present CAN interfaces: %i\n", num_boards);
             return (num_boards >= 0) ? 0 : 1;
         case HELP:
         case QUESTION_MARK:
@@ -654,6 +656,31 @@ int main(int argc, const char * argv[]) {
         }
     }
     /* - check if one and only one <interface> is given */
+#if (1)
+    for (i = 1; i < argc; i++) {
+        if (!isOption(argc, (char**)argv, MAX_OPTIONS, option, i)) {
+            if ((hw++)) {
+                fprintf(stderr, "%s: too many arguments\n", basename(argv[0]));
+                return 1;
+            }
+            bool result = CCanDriver::GetFirstChannel(channel);
+            while (result) {
+                if (strcasecmp(argv[i], channel.m_szDeviceName) == 0) {
+                    break;
+                }
+                result = CCanDriver::GetNextChannel(channel);
+            }
+            if (!result) {
+                fprintf(stderr, "%s: illegal argument\n", basename(argv[0]));
+                return 1;
+            }
+        }
+    }
+    if (!hw) {
+        fprintf(stderr, "%s: not enough arguments\n", basename(argv[0]));
+        return 1;
+    }
+#else
     for (i = 1; i < argc; i++) {
         if (!isOption(argc, (char**)argv, MAX_OPTIONS, option, i)) {
             if ((hw++)) {
@@ -674,6 +701,7 @@ int main(int argc, const char * argv[]) {
         fprintf(stderr, "%s: not enough arguments\n", basename(argv[0]));
         return 1;
     }
+#endif
     /* - check data length length and make CAN FD DLC (0x0..0xF) */
     if (!opMode.fdoe && (dlc > CAN_MAX_LEN)) {
         fprintf(stderr, "%s: illegal combination of options /MODE and /DLC\n", basename(argv[0]));
@@ -755,14 +783,20 @@ int main(int argc, const char * argv[]) {
         }
     }
     /* - initialize interface */
+#if (1)
+    fprintf(stdout, "Hardware=%s...", channel.m_szDeviceName);
+    fflush (stdout);
+    retVal = canDriver.InitializeChannel(channel.m_nChannelNo, opMode);
+#else
     fprintf(stdout, "Hardware=%s...", CCanDriver::m_CanDevices[channel].name);
     fflush (stdout);
     retVal = canDriver.InitializeChannel(CCanDriver::m_CanDevices[channel].adapter, opMode);
+#endif
     if (retVal != CCanApi::NoError) {
         fprintf(stdout, "FAILED!\n");
-        fprintf(stderr, "+++ error: CAN Controller could not be initialized (%i)\n", retVal);
+        fprintf(stderr, "+++ error: CAN Controller could not be initialized (%i)", retVal);
         if (retVal == CCanApi::NotSupported)
-            fprintf(stderr, " - possibly CAN operating mode %02Xh not supported", opMode.byte);
+            fprintf(stderr, "\n           - possibly CAN operating mode %02Xh not supported", opMode.byte);
         fputc('\n', stderr);
         goto finalize;
     }
@@ -831,74 +865,44 @@ finalize:
     return retVal;
 }
 
-int CCanDriver::ListCanDevices(const char *vendor) {
-    int32_t library = EOF; int n = 0;
+int CCanDriver::ListCanDevices(void) {
+    CCanDriver::SChannelInfo info;
+    int n = 0;
 
-    if (vendor != NULL) {
-        /* search library ID in the vendor list */
-        for (int32_t i = 0; CCanDriver::m_CanVendors[i].id != EOF; i++) {
-            if (!strcmp(vendor, CCanDriver::m_CanVendors[i].name)) {
-                library = CCanDriver::m_CanVendors[i].id;
-                break;
-            }
-        }
-        fprintf(stdout, "Suppored hardware from \"%s\":\n", vendor);
-    }
-    else
-        fprintf(stdout, "Suppored hardware:\n");
-    for (int32_t i = 0; CCanDriver::m_CanDevices[i].library != EOF; i++) {
-        /* list all boards or from a specific vendor */
-        if ((vendor == NULL) || (library == CCanDriver::m_CanDevices[i].library) ||
-            !strcmp(vendor, "*")) { // TODO: pattern matching
-            fprintf(stdout, "\"%s\" ", CCanDriver::m_CanDevices[i].name);
-            /* search vendor name in the vendor list */
-            for (int32_t j = 0; CCanDriver::m_CanVendors[j].id != EOF; j++) {
-                if (CCanDriver::m_CanDevices[i].library == CCanDriver::m_CanVendors[j].id) {
-                    fprintf(stdout, "(VendorName=\"%s\", LibraryId=%" PRIi32 ", AdapterId=%" PRIi32 ")",
-                        CCanDriver::m_CanVendors[j].name, CCanDriver::m_CanDevices[i].library, CCanDriver::m_CanDevices[i].adapter);
-                    break;
-                }
-            }
-            fprintf(stdout, "\n");
-            n++;
-        }
+    fprintf(stdout, "Suppored hardware:\n");
+    bool result = CCanDriver::GetFirstChannel(info);
+    while (result) {
+        fprintf(stdout, "\"%s\" (VendorName=\"%s\", LibraryId=%" PRIi32 ", ChannelNo=%" PRIi32 ")\n",
+                         info.m_szDeviceName, info.m_szVendorName, info.m_nLibraryId, info.m_nChannelNo);
+        n++;
+        result = CCanDriver::GetNextChannel(info);
     }
     return n;
 }
 
-int CCanDriver::TestCanDevices(CANAPI_OpMode_t opMode, const char *vendor) {
-    int32_t library = EOF; int n = 0;
+int CCanDriver::TestCanDevices(CANAPI_OpMode_t opMode) {
+    CCanDriver::SChannelInfo info;
+    int n = 0;
 
-    if (vendor != NULL) {
-        /* search library ID in the vendor list */
-        for (int32_t i = 0; CCanDriver::m_CanVendors[i].id != EOF; i++) {
-            if (!strcmp(vendor, CCanDriver::m_CanVendors[i].name)) {
-                library = CCanDriver::m_CanVendors[i].id;
-                break;
+    bool result = CCanDriver::GetFirstChannel(info);
+    while (result) {
+        fprintf(stdout, "Hardware=%s...", info.m_szDeviceName);
+        fflush(stdout);
+        EChannelState state;
+        CANAPI_Return_t retVal = CCanDriver::ProbeChannel(info.m_nChannelNo, opMode, state);
+        if ((retVal == CCanApi::NoError) || (retVal == CCanApi::IllegalParameter)) {
+            CTimer::Delay(333U * CTimer::MSEC);  // to fake probing a hardware
+            switch (state) {
+                case CCanApi::ChannelOccupied: fprintf(stdout, "occupied\n"); n++; break;
+                case CCanApi::ChannelAvailable: fprintf(stdout, "available\n"); n++; break;
+                case CCanApi::ChannelNotAvailable: fprintf(stdout, "not available\n"); break;
+                default: fprintf(stdout, "not testable\n"); break;
             }
-        }
-    }
-    for (int32_t i = 0; CCanDriver::m_CanDevices[i].library != EOF; i++) {
-        /* test all boards or from a specific vendor */
-        if ((vendor == NULL) || (library == CCanDriver::m_CanDevices[i].library) ||
-            !strcmp(vendor, "*")) { // TODO: pattern matching
-            fprintf(stdout, "Hardware=%s...", CCanDriver::m_CanDevices[i].name);
-            fflush(stdout);
-            EChannelState state;
-            CANAPI_Return_t retVal = CCanDriver::ProbeChannel(CCanDriver::m_CanDevices[i].adapter, opMode, state);
-            if ((retVal == CCanApi::NoError) || (retVal == CCanApi::IllegalParameter)) {
-                CTimer::Delay(333U * CTimer::MSEC);  // to fake probing a hardware
-                switch (state) {
-                    case CCanApi::ChannelOccupied: fprintf(stdout, "occupied\n"); n++; break;
-                    case CCanApi::ChannelAvailable: fprintf(stdout, "available\n"); n++; break;
-                    case CCanApi::ChannelNotAvailable: fprintf(stdout, "not available\n"); break;
-                    default: fprintf(stdout, "not testable\n"); break;
-                }
-                if (retVal == CCanApi::IllegalParameter)
-                    fprintf(stderr, "+++ warning: CAN operation mode not supported (%02x)\n", opMode.byte);
-            } else
-                fprintf(stdout, "FAILED!\n");
-        }
+            if (retVal == CCanApi::IllegalParameter)
+                fprintf(stderr, "+++ warning: CAN operation mode not supported (%02xh)\n", opMode.byte);
+        } else
+            fprintf(stdout, "FAILED!\n");
+        result = CCanDriver::GetNextChannel(info);
     }
     return n;
 }
@@ -911,6 +915,8 @@ uint64_t CCanDriver::TransmitterTest(time_t duration, CANAPI_OpMode_t opMode, ui
     uint64_t frames = 0;
     uint64_t errors = 0;
     uint64_t calls = 0;
+
+    memset(&message, 0, sizeof(CANAPI_Message_t));
 
     fprintf(stderr, "\nPress ^C to abort.\n");
     message.id  = id;
@@ -974,6 +980,7 @@ uint64_t CCanDriver::TransmitterTest(uint64_t count, CANAPI_OpMode_t opMode, boo
     uint64_t calls = 0;
 
     srand((unsigned int)time(NULL));
+    memset(&message, 0, sizeof(CANAPI_Message_t));
 
     fprintf(stderr, "\nPress ^C to abort.\n");
     message.id  = id;
