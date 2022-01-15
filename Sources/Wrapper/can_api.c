@@ -52,7 +52,7 @@
 #ifdef _MSC_VER
 #define VERSION_MAJOR    0
 #define VERSION_MINOR    2
-#define VERSION_PATCH    1
+#define VERSION_PATCH    99
 #else
 #define VERSION_MAJOR    0
 #define VERSION_MINOR    2
@@ -647,6 +647,9 @@ int can_read(int handle, can_msg_t *msg, uint16_t timeout)
         return CANERR_NULLPTR;
     if (can[handle].status.can_stopped) // must be running
         return CANERR_OFFLINE;
+    memset(msg, 0, sizeof(can_msg_t));  // invalidate the message
+    msg->id = 0xFFFFFFFFU;
+    msg->sts = 1;
 repeat:
     if ((rc = canRead(can[handle].handle, &id, data, &len, &flags, &timestamp)) == canERR_NOMSG) {
         if (timeout > 0) {
@@ -673,9 +676,10 @@ repeat:
         return kvaser_error(rc);        //   something's wrong
     }
     if ((flags & canMSG_ERROR_FRAME)) { // error frame?
+        // TODO: encode status message (error frame)
         can[handle].status.receiver_empty = 1;
-            can[handle].counters.err++;
-            return CANERR_ERR_FRAME;    //   error frame received
+        can[handle].counters.err++;
+        return CANERR_ERR_FRAME;        //   error frame received
     }
     if ((flags & canMSG_EXT) && can[handle].mode.nxtd)
         goto repeat;                    // refuse extended frames
@@ -687,6 +691,7 @@ repeat:
     msg->fdf = (flags & canFDMSG_FDF)? 1 : 0;
     msg->brs = (flags & canFDMSG_BRS)? 1 : 0;
     msg->esi = (flags & canFDMSG_ESI)? 1 : 0;
+    msg->sts = 0;
     msg->dlc = (uint8_t)LEN2DLC(len); // unclear: is it a length or a DLC?
     memcpy(msg->data, data, CANFD_MAX_LEN);
     msg->timestamp.tv_sec = (time_t)(timestamp / 1000ul);
