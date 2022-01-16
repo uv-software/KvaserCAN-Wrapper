@@ -256,20 +256,16 @@ int can_test(int32_t board, uint8_t mode, const void *param, int *result)
     if ((rc = canGetChannelData(board, canCHANNELDATA_CHANNEL_CAP,
                                (void*)&feature, sizeof(feature))) != canOK)
         return kvaser_error(rc);
-#ifndef KVASER_VIRTUAL_CHANNELS
     if ((feature & canCHANNEL_CAP_VIRTUAL)) {
         if (result)                     // declare as not available
             *result = CANBRD_NOT_PRESENT;
         return CANERR_NOERROR;
     }
-#endif
-#ifndef KVASER_SIMULATED_CHANNELS
     if ((feature & canCHANNEL_CAP_SIMULATED)) {
         if (result)                     // declare as not available
             *result = CANBRD_NOT_PRESENT;
         return CANERR_NOERROR;
     }
-#endif
     if ((rc = canGetChannelData(board, canCHANNELDATA_CHANNEL_FLAGS,
                                (void*)&flags, sizeof(flags))) != canOK)
         return kvaser_error(rc);
