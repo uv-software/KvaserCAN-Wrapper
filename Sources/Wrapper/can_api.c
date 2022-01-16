@@ -52,7 +52,7 @@
 #ifdef _MSC_VER
 #define VERSION_MAJOR    0
 #define VERSION_MINOR    2
-#define VERSION_PATCH    99
+#define VERSION_PATCH    2
 #else
 #define VERSION_MAJOR    0
 #define VERSION_MINOR    2
@@ -824,7 +824,7 @@ char *can_hardware(int handle)
         return NULL;
     if (canGetChannelData(can[handle].channel, canCHANNELDATA_CARD_HARDWARE_REV, (void*)&rev, sizeof(uint64_t)) != canOK)
         return NULL;
-    snprintf(hardware, 256, "%s, hardware revision %u.%u", str, 
+    snprintf(hardware, 256, "%s, hardware revision %u.%u", str,
                             (uint16_t)((rev & 0x00000000FFFF0000UL) >> 16),
                             (uint16_t)((rev & 0x000000000000FFFFUL) >> 0));
 
