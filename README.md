@@ -121,7 +121,7 @@ Type `can_test /?` to display all program options.
 
 ### Required Kvaser CANlib SDK
 
-- Version 5.37 or later _(Latest is Greatest!)_
+- Version 5.39 or later _(Latest is Greatest!)_
 
 ## Known Bugs and Caveats
 
