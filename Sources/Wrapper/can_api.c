@@ -519,6 +519,8 @@ int can_start(int handle, const can_bitrate_t *bitrate)
 
 int can_reset(int handle)
 {
+    int rc = CANERR_FATAL;              // return code
+
     if (!init)                          // must be initialized
         return CANERR_NOTINIT;
     if (!IS_HANDLE_VALID(handle))       // must be a valid handle
@@ -526,12 +528,13 @@ int can_reset(int handle)
     if (can[handle].handle == canINVALID_HANDLE) // must be an opened handle
         return CANERR_HANDLE;
 
-    if (can[handle].status.can_stopped) {  // CAN started, then reset
-        (void)canBusOff(can[handle].handle);
+    if (!can[handle].status.can_stopped) {  // CAN started, then reset
+        rc = canBusOff(can[handle].handle);
+        can[handle].status.can_stopped = (rc == CANERR_NOERROR) ? 1 : 0;
+    } else {
+        rc = CANERR_NOERROR;
     }
-    can[handle].status.can_stopped = 1;   // CAN controller stopped!
-
-    return CANERR_NOERROR;
+    return rc;
 }
 
 int can_write(int handle, const can_msg_t *msg, uint16_t timeout)
