@@ -100,6 +100,7 @@ extern "C" {
 //#define KVASER_IO_CLOCK_DOMAIN   0x??U
 // TODO: define more or all parameters
 // ...
+#define KVASERCAN_MAX_BUFFER_SIZE 256U  /**< max. buffer size for GetProperty/SetProperty */
 /** @} */
 
 /** @name  CAN API Library ID
