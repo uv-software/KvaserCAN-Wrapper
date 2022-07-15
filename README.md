@@ -112,7 +112,7 @@ Type `can_test /?` to display all program options.
 
 ### Development Environment
 
-- Microsoft Visual Studio Community 2019 (Version 16.11.8)
+- Microsoft Visual Studio Community 2019 (Version 16.11.17)
 
 ### Tested CAN Hardware
 
