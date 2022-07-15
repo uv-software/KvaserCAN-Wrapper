@@ -46,15 +46,9 @@
 //  along with KvaserCAN-Wrapper.  If not, see <http://www.gnu.org/licenses/>.
 //
 #include "build_no.h"
-#ifdef _MSC_VER
 #define VERSION_MAJOR    0
 #define VERSION_MINOR    2
-#define VERSION_PATCH    2
-#else
-#define VERSION_MAJOR    0
-#define VERSION_MINOR    2
-#define VERSION_PATCH    0
-#endif
+#define VERSION_PATCH    3
 #define VERSION_BUILD    BUILD_NO
 #define VERSION_STRING   TOSTRING(VERSION_MAJOR) "." TOSTRING(VERSION_MINOR) "." TOSTRING(VERSION_PATCH) " (" TOSTRING(BUILD_NO) ")"
 #if defined(_WIN64)
@@ -63,9 +57,6 @@
 #define PLATFORM        "x86"
 #elif defined(__linux__)
 #define PLATFORM        "Linux"
-#elif defined(__APPLE__)
-#define PLATFORM        "macOS"
-#else
 #error Unsupported architecture
 #endif
 static const char version[] = "CAN API V3 for Kvaser CAN Interfaces, Version " VERSION_STRING;

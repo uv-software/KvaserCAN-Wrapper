@@ -136,15 +136,14 @@ typedef int canHandle;
 
 
 /**
- * Don't allow sharing of this CANlib channel between applications.
+ * Don't allow sharing of this CANlib channel.
  *
- * Two or more applications can share the same CAN channel. You can, for
- * example, have one application send messages on the bus and another
- * application that just monitors the bus. If this is not desired (for
- * performance or other reasons) you can open an exclusive handle to a
- * channel. This means that no other application can open a handle to the same
- * channel. Do this by passing the \ref canOPEN_EXCLUSIVE flag in the flags
- * argument to \ref canOpenChannel().
+ * Two or more threads or applications can share the same CAN channel by
+ * opening multiple handles to the same CANlib channel. If this is not desired
+ * you can open a single exclusive handle to a channel which is done by passing
+ * the \ref canOPEN_EXCLUSIVE flag in the flags argument to \ref
+ * canOpenChannel().  If a handle to the CANlib channel is already open, the
+ * call to \ref canOpenChannel() will fail.
  *
  * This define is used in \ref canOpenChannel()
  */
@@ -367,6 +366,10 @@ typedef int canHandle;
     CAN FD protocol. Indicates a bitrate of 2.0 Mbit/s and sampling point at
     80%. */
 #define canFD_BITRATE_2M_80P       (-1002)
+/** Used in \ref canSetBusParams() and \ref canSetBusParamsFd() when using the
+    CAN FD protocol. Indicates a bitrate of 2.0 Mbit/s and sampling point at
+    60%. */
+#define canFD_BITRATE_2M_60P       (-1007)
 /** Used in \ref canSetBusParams() and \ref canSetBusParamsFd() when using the
     CAN FD protocol. Indicates a bitrate of 4.0 Mbit/s and sampling point at
     80%. */
@@ -1031,7 +1034,7 @@ canStatus CANLIBAPI canReadErrorCounters (const CanHandle hnd,
  * \source_end
  *
  * This function sends a CAN message. The call returns immediately after queuing
- * the message to the driver.
+ * the message to the driver so the message has not necessarily been transmitted.
  *
  * If you are using the same channel via multiple handles, note that the
  * default behaviour is that the different handles will "hear" each other just as
@@ -1135,6 +1138,8 @@ canStatus CANLIBAPI canWriteSync (const CanHandle hnd, unsigned long timeout);
  *                   \ref canFDMSG_xxx if the CAN FD protocol is enabled) and
  *                   \ref canMSGERR_xxx values.
  * \param[out] time  Pointer to a buffer which receives the message time stamp.
+ *                   The unit of the time stamp is configurable using
+ *                   \ref canIOCTL_SET_TIMER_SCALE, default is 1 ms.
  *
  * \return \ref canOK (zero) if a message was read.
  * \return \ref canERR_NOMSG (negative) if there was no message available.
@@ -1146,7 +1151,7 @@ canStatus CANLIBAPI canWriteSync (const CanHandle hnd, unsigned long timeout);
  * page_user_guide_time Time Measurement
  *
  * \sa \ref canReadSpecific(), \ref canReadSpecificSkip(), \ref canReadSync(),
- *     \ref canReadSyncSpecific(), \ref canReadWait()
+ *     \ref canReadSyncSpecific(), \ref canReadWait(), \ref canIoCtl()
  *
  */
 canStatus CANLIBAPI canRead (const CanHandle hnd,
@@ -1192,6 +1197,8 @@ canStatus CANLIBAPI canRead (const CanHandle hnd,
  *                     \ref canFDMSG_xxx if the CAN FD protocol is enabled) and
  *                     \ref canMSGERR_xxx values.
  * \param[out] time    Pointer to a buffer which receives the message time stamp.
+ *                     The unit of the time stamp is configurable using
+ *                     \ref canIOCTL_SET_TIMER_SCALE, default is 1 ms.
  * \param[in]  timeout If no message is immediately available, this parameter
  *                     gives the number of milliseconds to wait for a message
  *                     before returning. 0xFFFFFFFF gives an infinite timeout.
@@ -1201,7 +1208,7 @@ canStatus CANLIBAPI canRead (const CanHandle hnd,
  * \return \ref canERR_xxx (negative) if failure
  *
  * \sa \ref canRead(), \ref canReadSpecific(), \ref canReadSpecificSkip(),
- *  \ref canReadSyncSpecific(), \ref canReadSync()
+ *  \ref canReadSyncSpecific(), \ref canReadSync(), \ref canIoCtl()
  *
  * \sa \ref page_user_guide_time Time Measurement
  */
@@ -2634,9 +2641,8 @@ typedef struct kvBusParamLimits {
    * The timer scale determines how precisely the channel's timestamps will be
    * displayed without changing the accuracy of the clock. \a buf points to a
    * DWORD which contains the desired time-stamp clock resolution in
-   * microseconds. The default value is 1000 microseconds, i.e.  one
-   * millisecond.
-
+   * microseconds. If you want to change the resolution to 10 microseconds, set
+   * the value to 10. The default value is 1000, i.e. one millisecond.
    *
    * \note The accuracy of the clock isn't affected.
    */
@@ -2648,13 +2654,13 @@ typedef struct kvBusParamLimits {
    *
    * Enabling transmit Acknowledges on a channel results in that channel receiving a
    * message with the TXACK flag enabled every time a message is successfully
-   * transmitted.
+   * transmitted on the bus.
    *
    * \a buf points to a DWORD which contains
    *
    * \li 0: to turn Transmit Acknowledges off.
    * \li 1: to turn Transmit Acknowledges on.
-   * \li 2: to turn Transmit Acknowledges off, even for the driver's internal
+   * \deprecated \li 2: to turn Transmit Acknowledges off, even for the driver's internal
    * usage. This might enhance performance but will cause some other APIs to
    * stop working (for example, the current size of the transmit queue can not
    * be read when this mode is active.)
@@ -3157,6 +3163,24 @@ typedef struct kvBusParamLimits {
    * \note This is only intended for internal use.
    */
 #  define canIOCTL_LIN_MODE                               45
+
+
+  /**
+   * This define is used in \ref canIoCtl(), \a buf mentioned below refers to an
+   * argument of that function.
+   *
+   * Enable reception of canMSG_LOCAL_TXACK
+   * When Local transmit acknowledge on a handle is enabled, the handle will receive
+   * messages with the canMSG_LOCAL_TXACK flag set every time a message is successfully
+   * transmitted on the bus by another handle using the same channel. It will not be received
+   * if it is sent on the same channel.
+   *
+   * \li 0: to turn Local Transmit Acknowledges off.
+   * \li 1: to turn Local Transmit Acknowledges on.
+   *
+   * The default value is 0, Local Transmit Acknowledge is off.
+   */
+#  define canIOCTL_SET_LOCAL_TXACK                     46
  /** @} */
 
 /** Used in \ref canIOCTL_SET_USER_IOPORT and \ref canIOCTL_GET_USER_IOPORT. */
@@ -3998,7 +4022,7 @@ canStatus CANLIBAPI canObjBufDisable (const CanHandle hnd, int idx);
  * set up an object buffer first with the message to send. The messages will be
  * sent as fast as possible from the hardware.
  *
- * This function is inteneded for certain diagnostic applications.
+ * This function is intended for certain diagnostic applications.
  *
  * \param[in] hnd       An open handle to a CAN channel.
  * \param[in] idx       The index of a CAN object buffer.
@@ -4114,8 +4138,8 @@ canStatus CANLIBAPI canResetBus (const CanHandle hnd);
  * \source_delphi   <b>function canWriteWait(handle: canHandle; id: Longint; var msg; dlc, flag, timeout: Cardinal): canStatus;     </b>
  * \source_end
  *
- * This function sends a CAN message. It returns when the message is sent, or
- * the timeout expires.
+ * This function sends a CAN message and returns when the message has been
+ * successfully transmitted, or the timeout expires.
  *
  * This is a convenience function that combines \ref canWrite() and \ref canWriteSync().
  *
@@ -4143,6 +4167,8 @@ canStatus CANLIBAPI canResetBus (const CanHandle hnd);
  *
  * \return \ref canOK (zero) if success
  * \return \ref canERR_xxx (negative) if failure
+ *
+ * \sa \ref canIOCTL_SET_TXACK
  */
 canStatus CANLIBAPI canWriteWait (const CanHandle hnd,
                                   long id,
@@ -6681,7 +6707,7 @@ typedef struct {
 /**
 * /struct
 * This define is used in \ref kvIoGetModulePins() and \ref kvIoSetModulePins().
-* This strcut represents a digital internal module
+* This struct represents a digital internal module
 */
 typedef struct {
   int type; /**< The type of the module. See: \ref kvIO_MODULE_TYPE_xxx.. */
@@ -6738,7 +6764,7 @@ typedef struct {
 /**
  * \ingroup kv_io
  *
- * \source_cs       <b>static Canlib.canStatus kvIoGetModulePins(int hnd, int module, out byte[] buffer, int bufsize);</b>
+ * \source_cs       <b>static Canlib.canStatus kvIoGetModulePins(int hnd, int module, object buffer);</b>
  *
  * \source_delphi   <b>function kvIoGetModulePins(hnd: canHandle; module: cardinal; var buffer; bufsize: cardinal): canStatus;</b>
  * \source_end
@@ -6763,7 +6789,7 @@ canStatus CANLIBAPI kvIoGetModulePins (const CanHandle hnd, unsigned int module,
 /**
  * \ingroup kv_io
  *
- * \source_cs       <b>static Canlib.canStatus kvIoSetModulePins(int hnd, int module, byte[] buffer, int bufsize);</b>
+ * \source_cs       <b>static Canlib.canStatus kvIoSetModulePins(int hnd, int module, object buffer);</b>
  *
  * \source_delphi   <b>function kvIoSetModulePins(hnd: canHandle; module: cardinal; var buffer; bufsize: cardinal): canStatus;</b>
  * \source_end
