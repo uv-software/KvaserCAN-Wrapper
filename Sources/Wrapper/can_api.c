@@ -917,7 +917,7 @@ static int map_bitrate2params(const can_bitrate_t *bitrate, btr_nominal_t *busPa
         return CANERR_BAUDRATE;
     if ((bitrate->btr.nominal.sjw < CANBTR_NOMINAL_SJW_MIN) || (CANBTR_NOMINAL_SJW_MAX < bitrate->btr.nominal.sjw))
         return CANERR_BAUDRATE;
-    if ((bitrate->btr.nominal.sam != 0/*CANBTR_NOMINAL_SAM_SINGLE*/ ) && (1/*CANBTR_NOMINAL_SAM_TRIPLE*/ != bitrate->btr.nominal.sam))
+    if ((bitrate->btr.nominal.sam != CANBTR_NOMINAL_SAM_SINGLE) && (CANBTR_NOMINAL_SAM_TRIPLE != bitrate->btr.nominal.sam))
         return CANERR_BAUDRATE;
     if (bitrate->btr.nominal.brp == 0)   // devide-by-zero!
         return CANERR_BAUDRATE;
