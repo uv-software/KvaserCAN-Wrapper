@@ -1156,6 +1156,7 @@ static int lib_parameter(uint16_t param, void *value, size_t nbyte)
     case CANPROP_GET_BUSLOAD:           // current bus load of the CAN controller (uint16_t)
     case CANPROP_GET_NUM_CHANNELS:      // numbers of CAN channels on the CAN interface (uint8_t)
     case CANPROP_GET_CAN_CHANNEL:       // active CAN channel on the CAN interface (uint8_t)
+    case CANPROP_GET_CAN_CLOCK:         // frequency of the CAN controller clock in [Hz] (int32_t)
     case CANPROP_GET_TX_COUNTER:        // total number of sent messages (uint64_t)
     case CANPROP_GET_RX_COUNTER:        // total number of reveiced messages (uint64_t)
     case CANPROP_GET_ERR_COUNTER:       // total number of reveiced error frames (uint64_t)
@@ -1267,15 +1268,16 @@ static int drv_parameter(int handle, uint16_t param, void *value, size_t nbyte)
         if (nbyte >= sizeof(uint8_t)) {
             if ((rc = can_busload(handle, &load, NULL)) == CANERR_NOERROR) {
                 if (nbyte > sizeof(uint8_t))
-                    *(uint16_t*)value = (uint16_t)load * 100U;  // 0 - 10000 ==> 0.00% - 100.00%
+                    *(uint16_t*)value = (uint16_t)load * 100U;  // 0..10000 ==> 0.00%..100.00%
                 else
-                    *(uint8_t*)value = (uint8_t)load;           // 0  -  100 ==> 0.00% - 100.00%
+                    *(uint8_t*)value = (uint8_t)load;           // 0..100% (note: legacy resolution)
                 rc = CANERR_NOERROR;
             }
         }
         break;
     case CANPROP_GET_NUM_CHANNELS:      // numbers of CAN channels on the CAN interface (uint8_t)
     case CANPROP_GET_CAN_CHANNEL:       // active CAN channel on the CAN interface (uint8_t)
+    case CANPROP_GET_CAN_CLOCK:         // frequency of the CAN controller clock in [Hz] (int32_t)
         // TODO: insert coin here
         rc = CANERR_NOTSUPP;
         break;

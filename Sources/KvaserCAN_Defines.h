@@ -97,7 +97,6 @@ extern "C" {
  *  @brief CANlib parameter to be read or written
  *  @{ */
 //#define KVASER_IO_SERIAL_NUMBER  0x??U
-//#define KVASER_IO_CLOCK_DOMAIN   0x??U
 // TODO: define more or all parameters
 // ...
 #define KVASERCAN_MAX_BUFFER_SIZE 256U  /**< max. buffer size for GetProperty/SetProperty */
@@ -108,11 +107,11 @@ extern "C" {
  *  @{ */
 #define KVASER_LIB_ID            600    /**< library ID (CAN/COP API V1 compatible) */
 #if defined(_WIN32) || defined (_WIN64)
- #define KVASER_LIB_CANLIB              "canLib32.DLL"
- #define KVASER_LIB_WRAPPER             "u3cankvl.dll"
+ #define KVASER_LIB_CANLIB      "canLib32.DLL"
+ #define KVASER_LIB_WRAPPER     "u3cankvl.dll"
 #elif defined(__APPLE__)
- #define KVASER_LIB_CANLIB              "(n/a)"
- #define KVASER_LIB_WRAPPER             "libUVCANKVL.dylib"
+ #define KVASER_LIB_CANLIB      "(n/a)"
+ #define KVASER_LIB_WRAPPER     "libUVCANKVL.dylib"
 #else
  #error Platform not supported
 #endif
@@ -120,11 +119,11 @@ extern "C" {
 
 /** @name  Miscellaneous
  *  @brief More or less useful stuff
- *  @{ */                               // TODO: to be moved or removed
-#define KVASER_LIB_VENDOR               "Kvaser AB, Sweden"
-#define KVASER_LIB_WEBSITE              "https://www.kvaser.com/"
-#define KVASER_LIB_HAZARD_NOTE          "If you connect your CAN device to a real CAN network when using this library,\n" \
-                                        "you might damage your application."
+ *  @{ */                       // TODO: to be moved or removed
+#define KVASER_LIB_VENDOR       "Kvaser AB, Sweden"
+#define KVASER_LIB_WEBSITE      "https://www.kvaser.com/"
+#define KVASER_LIB_HAZARD_NOTE  "If you connect your CAN device to a real CAN network when using this library,\n" \
+                                "you might damage your application."
 /** @} */
 
 #ifdef __cplusplus
