@@ -1,6 +1,6 @@
-### Wrapper Library for Kvaser CAN Interfaces (Windows&reg;)
+### CAN API V3 Wrapper Library for Kvaser CAN Interfaces (Windows&reg;)
 
-_Copyright &copy; 2017-2022  Uwe Vogt, UV Software, Berlin (info@uv-software.de)_
+_Copyright &copy; 2017-2022  Uwe Vogt, UV Software, Berlin (info@uv-software.com)_
 
 # CAN API V3 for Kvaser CAN Interfaces
 
@@ -12,8 +12,6 @@ This repo contains the source code for a CAN API V3 compatible wrapper library u
 The wrapper library is build upon Kvaser´s CANlib SDK.
 
 ### CAN Interface API, Version 3
-
-In case of doubt the source code:
 
 ```C++
 /// \name   KvaserCAN API
@@ -55,6 +53,14 @@ public:
     char *GetHardwareVersion();  // (for compatibility reasons)
     char *GetFirmwareVersion();  // (for compatibility reasons)
     static char *GetVersion();  // (for compatibility reasons)
+
+    static CANAPI_Return_t MapIndex2Bitrate(int32_t index, CANAPI_Bitrate_t &bitrate);
+    static CANAPI_Return_t MapString2Bitrate(const char *string, CANAPI_Bitrate_t &bitrate);
+    static CANAPI_Return_t MapBitrate2String(CANAPI_Bitrate_t bitrate, char *string, size_t length);
+    static CANAPI_Return_t MapBitrate2Speed(CANAPI_Bitrate_t bitrate, CANAPI_BusSpeed_t &speed);
+
+    static uint8_t Dlc2Len(uint8_t dlc) { return CCanApi::Dlc2Len(dlc); }
+    static uint8_t Len2Dlc(uint8_t len) { return CCanApi::Len2Dlc(len); }
 };
 /// \}
 ```
@@ -129,10 +135,14 @@ For a list of known bugs and caveats see tab [Issues](https://github.com/uv-soft
 
 ## This and That
 
+### Kvaser CANlib SDK
+
 Kvaser´s CANlib SDK can be downloaded form the [Kvaser](https://www.kvaser.com/) website. \
 Please note the copyright and license agreements.
 
-A version for macOS&reg; can be downloaded from / cloned at [GitHub](https://github.com/mac-can/MacCAN-KvaserCAN).
+### Wrapper Library for macOS&reg;
+
+A version for macOS can be downloaded from / cloned at [GitHub](https://github.com/mac-can/KvaserCAN-Library).
 
 ### Dual-License
 
@@ -146,7 +156,8 @@ You can choose between one of them if you use this work in whole or in part.
 
 Windows is a registered trademark of Microsoft Corporation in the United States and/or other countries. \
 Mac and macOS are trademarks of Apple Inc., registered in the U.S. and other countries. \
-All other company, product and service names mentioned herein are trademarks, registered trademarks or service marks of their respective owners.
+Linux is a registered trademark of Linus Torvalds. \
+All other company, product and service names mentioned herein may be trademarks, registered trademarks or service marks of their respective owners.
 
 ### Hazard Note
 
