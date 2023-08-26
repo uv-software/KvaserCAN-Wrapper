@@ -2,7 +2,7 @@
 //
 //  CAN Interface API, Version 3 (for Kvaser CAN Interfaces)
 //
-//  Copyright (c) 2017-2022 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
+//  Copyright (c) 2017-2023 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
 //  All rights reserved.
 //
 //  This file is part of KvaserCAN-Wrapper.
@@ -58,7 +58,7 @@
 #define KVASERCAN_LIBRARY_NAME  CANDLL_KVASER_32
 #define KVASERCAN_LIBRARY_VENDOR  "UV Software, Berlin"
 #define KVASERCAN_LIBRARY_LICENSE  "BSD-2-Clause OR GPL-3.0-or-later"
-#define KVASERCAN_LIBRARY_COPYRIGHT  "Copyright (c) 2017-2022  Uwe Vogt, UV Software, Berlin"
+#define KVASERCAN_LIBRARY_COPYRIGHT  "Copyright (c) 2017-2023  Uwe Vogt, UV Software, Berlin"
 #define KVASERCAN_LIBRARY_HAZARD_NOTE  "If you connect your CAN device to a real CAN network when using this library,\n" \
                                        "you might damage your application."
 /// \}
