@@ -68,7 +68,7 @@ typedef enum {
    */
     canERR_NOCHANNELS      = -5,
 
-    canERR_INTERRUPTED     = -6,    ///< Interrupted by signals
+    canERR_INTERRUPTED     = -6, ///< Interrupted by signals
   /**
    * <b>Timeout occurred</b>; A function waited for something to happen (for
    * example, the arrival of a message), but that something didn't happen.
@@ -94,7 +94,7 @@ typedef enum {
    * not, for example, a channel number.
    */
     canERR_INVHANDLE       = -10,
-    canERR_INIFILE         = -11,    ///< Error in the ini-file (16-bit only)
+    canERR_INIFILE         = -11, ///< Error in the ini-file (16-bit only)
   /**
    * <b>Driver type not supported</b>; CAN driver mode is not supported by the
    * present hardware.
@@ -105,7 +105,7 @@ typedef enum {
    * message was dropped.
    */
     canERR_TXBUFOFL        = -13,
-    canERR_RESERVED_1      = -14,    ///< Reserved
+    canERR_RESERVED_1      = -14, ///< Reserved
   /**
    * <b>A hardware error has occurred</b>; Something probably related to the
    * hardware happened. This could mean that the device does not respond (IRQ
@@ -131,10 +131,10 @@ typedef enum {
    * it makes a lot of fuss about something we don't understand.
    */
     canERR_DYNAINIT        = -18,
-    canERR_NOT_SUPPORTED   = -19,    ///< Operation not supported by hardware or firmware
-    canERR_RESERVED_5      = -20,    ///< Reserved
-    canERR_RESERVED_6      = -21,    ///< Reserved
-    canERR_RESERVED_2      = -22,    ///< Reserved
+    canERR_NOT_SUPPORTED   = -19, ///< Operation not supported by hardware or firmware
+    canERR_RESERVED_5      = -20, ///< Reserved
+    canERR_RESERVED_6      = -21, ///< Reserved
+    canERR_RESERVED_2      = -22, ///< Reserved
   /**
    * <b>Can't find or load kernel driver</b>; A device driver (kernel mode
    * driver for NT, VxD for W95/98) failed to load; or the DLL could not open
@@ -146,16 +146,16 @@ typedef enum {
    * really happened.
    */
     canERR_DRIVERFAILED    = -24,
-    canERR_NOCONFIGMGR     = -25,    ///< Can't find req'd config s/w (e.g. CS/SS)
-    canERR_NOCARD          = -26,    ///< The card was removed or not inserted
-    canERR_RESERVED_7      = -27,    ///< Reserved
+    canERR_NOCONFIGMGR     = -25, ///< Can't find req'd config s/w (e.g. CS/SS)
+    canERR_NOCARD          = -26, ///< The card was removed or not inserted
+    canERR_RESERVED_7      = -27, ///< Reserved
   /**
    * <b>Error (missing data) in the Registry</b>; A registry key is missing,
    * invalid, malformed, has gone for lunch or what not. can_verify.exe might
    * provide some insight.
    */
     canERR_REGISTRY        = -28,
-    canERR_LICENSE         = -29,    ///< The license is not valid.
+    canERR_LICENSE         = -29, ///< The license is not valid.
   /**
    * <b>Internal error in the driver</b>; Indicates an error condition in the
    * driver or DLL, which couldn't be properly handled. Please contact the
@@ -283,10 +283,10 @@ typedef enum {
  * Appears in the notification \c WM__CANLIB message.
  * @{
  */
-#define canEVENT_RX             32000       ///< when the queue of received CAN messages goes from empty to non-empty
-#define canEVENT_TX             32001       ///< when a CAN message has been transmitted
-#define canEVENT_ERROR          32002       ///< when a CAN bus error is reported by the CAN controller
-#define canEVENT_STATUS         32003       ///< when the CAN controller changes state
+#define canEVENT_RX             32000 ///< when the queue of received CAN messages goes from empty to non-empty
+#define canEVENT_TX             32001 ///< when a CAN message has been transmitted
+#define canEVENT_ERROR          32002 ///< when a CAN bus error is reported by the CAN controller
+#define canEVENT_STATUS         32003 ///< when the CAN controller changes state
 /**
  * An envvar in a t script changed.
  * \note Ignored by channels that does not have script capabilities,
@@ -294,8 +294,8 @@ typedef enum {
  * \sa \ref canCHANNEL_CAP_SCRIPT
  */
 #define canEVENT_ENVVAR         32004
-# define canEVENT_BUSONOFF       32005       ///< Bus on/off status changed
-# define canEVENT_REMOVED        32006       ///< Device removed
+#define canEVENT_BUSONOFF       32005 ///< Bus on/off status changed
+#define canEVENT_REMOVED        32006 ///< Device removed
 /** @} */
 
 /**
@@ -309,15 +309,15 @@ typedef enum {
  *
  * @{
  */
-#define canNOTIFY_NONE          0           ///< Turn notifications off.
-#define canNOTIFY_RX            0x0001      ///< CAN message reception notification
-#define canNOTIFY_TX            0x0002      ///< CAN message transmission notification
-#define canNOTIFY_ERROR         0x0004      ///< CAN bus error notification
-#define canNOTIFY_STATUS        0x0008      ///< CAN chip status change
-#define canNOTIFY_ENVVAR        0x0010      ///< An environment variable was changed by a script. Note that you will not be notified when an environment variable is updated from the Canlib API.
+#define canNOTIFY_NONE          0      ///< Turn notifications off.
+#define canNOTIFY_RX            0x0001 ///< CAN message reception notification
+#define canNOTIFY_TX            0x0002 ///< CAN message transmission notification
+#define canNOTIFY_ERROR         0x0004 ///< CAN bus error notification
+#define canNOTIFY_STATUS        0x0008 ///< CAN chip status change
+#define canNOTIFY_ENVVAR        0x0010 ///< An environment variable was changed by a script. Note that you will not be notified when an environment variable is updated from the Canlib API.
 
-# define canNOTIFY_BUSONOFF      0x0020      ///< Notify on bus on/off status changed
-# define canNOTIFY_REMOVED       0x0040      ///< Notify on device removed
+#define canNOTIFY_BUSONOFF      0x0020 ///< Notify on bus on/off status changed
+#define canNOTIFY_REMOVED       0x0040 ///< Notify on device removed
 /** @} */
 
 
@@ -337,17 +337,17 @@ typedef enum {
  *
  * @{
  */
-#define canSTAT_ERROR_PASSIVE   0x00000001  ///< The circuit is error passive
-#define canSTAT_BUS_OFF         0x00000002  ///< The circuit is Off Bus
-#define canSTAT_ERROR_WARNING   0x00000004  ///< At least one error counter > 96
-#define canSTAT_ERROR_ACTIVE    0x00000008  ///< The circuit is error active.
-#define canSTAT_TX_PENDING      0x00000010  ///< There are messages pending transmission
-#define canSTAT_RX_PENDING      0x00000020  ///< There are messages in the receive buffer
+#define canSTAT_ERROR_PASSIVE   0x00000001 ///< The circuit is error passive
+#define canSTAT_BUS_OFF         0x00000002 ///< The circuit is Off Bus
+#define canSTAT_ERROR_WARNING   0x00000004 ///< At least one error counter > 96
+#define canSTAT_ERROR_ACTIVE    0x00000008 ///< The circuit is error active.
+#define canSTAT_TX_PENDING      0x00000010 ///< There are messages pending transmission
+#define canSTAT_RX_PENDING      0x00000020 ///< There are messages in the receive buffer
 #define canSTAT_RESERVED_1      0x00000040
-#define canSTAT_TXERR           0x00000080  ///< There has been at least one TX error
-#define canSTAT_RXERR           0x00000100  ///< There has been at least one RX error of some sort
-#define canSTAT_HW_OVERRUN      0x00000200  ///< There has been at least one HW buffer overflow
-#define canSTAT_SW_OVERRUN      0x00000400  ///< There has been at least one SW buffer overflow
+#define canSTAT_TXERR           0x00000080 ///< There has been at least one TX error
+#define canSTAT_RXERR           0x00000100 ///< There has been at least one RX error of some sort
+#define canSTAT_HW_OVERRUN      0x00000200 ///< There has been at least one HW buffer overflow
+#define canSTAT_SW_OVERRUN      0x00000400 ///< There has been at least one SW buffer overflow
 #define canSTAT_OVERRUN         (canSTAT_HW_OVERRUN | canSTAT_SW_OVERRUN) ///< For convenience.
 /** @} */
 
@@ -368,17 +368,17 @@ typedef enum {
  *
  * @{
  */
-#define canMSG_MASK             0x00ff      ///< Used to mask the non-info bits
-#define canMSG_RTR              0x0001      ///< Message is a remote request
+#define canMSG_MASK             0x00ff ///< Used to mask the non-info bits
+#define canMSG_RTR              0x0001 ///< Message is a remote request
 
 /**
  * Message has a standard ID. If a message has an extended identifier but no
  * \ref canMSG_EXT flag, the most significant bits of the identifier will be
  * cut off.
  */
-#define canMSG_STD      0x0002   ///< Message has a standard (11-bit) identifier
-#define canMSG_EXT      0x0004   ///< Message has an extended (29-bit) identifier
-#define canMSG_WAKEUP   0x0008   ///< Message is a WAKEUP message (SWC hardware.)
+#define canMSG_STD      0x0002 ///< Message has a standard (11-bit) identifier
+#define canMSG_EXT      0x0004 ///< Message has an extended (29-bit) identifier
+#define canMSG_WAKEUP   0x0008 ///< Message is a WAKEUP message (SWC hardware.)
 
 /**
  * NERR was active during the message
@@ -398,18 +398,18 @@ typedef enum {
  * See the TJA1054 data sheet (available from Philips) for more detailed
  * information.
  */
-#define canMSG_NERR             0x0010   ///< NERR was active during the message (TJA1054 hardware)
-#define canMSG_ERROR_FRAME      0x0020   ///< Message represents an error frame.
-#define canMSG_TXACK            0x0040   ///< Message is a TX ACK (msg has really been sent)
-#define canMSG_TXRQ             0x0080   ///< Message is a TX REQUEST (msg was transfered to the chip)
-#define canMSG_DELAY_MSG        0x0100   ///< Message is NOT sent on the bus. The transmission of messages are delayed. The dlc specifies the delay in milliseconds (1..1000).
+#define canMSG_NERR             0x0010 ///< NERR was active during the message (TJA1054 hardware)
+#define canMSG_ERROR_FRAME      0x0020 ///< Message represents an error frame.
+#define canMSG_TXACK            0x0040 ///< Message is a TX ACK (msg has really been sent)
+#define canMSG_TXRQ             0x0080 ///< Message is a TX REQUEST (msg was transfered to the chip)
+#define canMSG_DELAY_MSG        0x0100 ///< Message is NOT sent on the bus. The transmission of messages are delayed. The dlc specifies the delay in milliseconds (1..1000).
 
-#define canMSG_LOCAL_TXACK  0x10000000   ///< Message was sent from another handle on the same can channel. 
+#define canMSG_LOCAL_TXACK  0x10000000 ///< Message was sent from another handle on the same can channel.
 
 // single shot flags:
-#define canMSG_SINGLE_SHOT      0x1000000      ///< Message is Single Shot, try to send once, no retransmission. This flag can only be used with transmitted messages.
-#define canMSG_TXNACK           0x2000000      ///< Message is a failed Single Shot, message was not sent. This flag is only used with received messages.
-#define canMSG_ABL              0x4000000      ///< Only together with canMSG_TXNACK, Single shot message was not sent because arbitration was lost. This flag is only used with received messages.
+#define canMSG_SINGLE_SHOT      0x1000000 ///< Message is Single Shot, try to send once, no retransmission. This flag can only be used with transmitted messages.
+#define canMSG_TXNACK           0x2000000 ///< Message is a failed Single Shot, message was not sent. This flag is only used with received messages.
+#define canMSG_ABL              0x4000000 ///< Only together with canMSG_TXNACK, Single shot message was not sent because arbitration was lost. This flag is only used with received messages.
 
 
 /**
@@ -422,10 +422,10 @@ typedef enum {
  * @{
  */
 #define canFDMSG_MASK            0xff0000
-#define canFDMSG_EDL             0x010000    ///< Obsolete, use \ref canFDMSG_FDF instead
-#define canFDMSG_FDF             0x010000    ///< Message is an FD message (CAN FD)
-#define canFDMSG_BRS             0x020000    ///< Message is sent/received with bit rate switch (CAN FD)
-#define canFDMSG_ESI             0x040000    ///< Sender of the message is in error passive mode (CAN FD)
+#define canFDMSG_EDL             0x010000 ///< Obsolete, use \ref canFDMSG_FDF instead
+#define canFDMSG_FDF             0x010000 ///< Message is an FD message (CAN FD)
+#define canFDMSG_BRS             0x020000 ///< Message is sent/received with bit rate switch (CAN FD)
+#define canFDMSG_ESI             0x040000 ///< Sender of the message is in error passive mode (CAN FD)
 /** @} */
 
 /** @} */
@@ -440,24 +440,24 @@ typedef enum {
  *
  * @{
  */
-#define canMSGERR_MASK          0xff00      ///< Used to mask the non-error bits
+#define canMSGERR_MASK          0xff00 ///< Used to mask the non-error bits
 // 0x0100 reserved
-#define canMSGERR_HW_OVERRUN    0x0200      ///< HW buffer overrun. \sa \ref section_user_guide_send_recv_overruns
-#define canMSGERR_SW_OVERRUN    0x0400      ///< SW buffer overrun. \sa \ref section_user_guide_send_recv_overruns
-#define canMSGERR_STUFF         0x0800      ///< Stuff error
-#define canMSGERR_FORM          0x1000      ///< Form error
-#define canMSGERR_CRC           0x2000      ///< CRC error
-#define canMSGERR_BIT0          0x4000      ///< Sent dom, read rec
-#define canMSGERR_BIT1          0x8000      ///< Sent rec, read dom
+#define canMSGERR_HW_OVERRUN    0x0200 ///< HW buffer overrun. \sa \ref section_user_guide_send_recv_overruns
+#define canMSGERR_SW_OVERRUN    0x0400 ///< SW buffer overrun. \sa \ref section_user_guide_send_recv_overruns
+#define canMSGERR_STUFF         0x0800 ///< Stuff error
+#define canMSGERR_FORM          0x1000 ///< Form error
+#define canMSGERR_CRC           0x2000 ///< CRC error
+#define canMSGERR_BIT0          0x4000 ///< Sent dom, read rec
+#define canMSGERR_BIT1          0x8000 ///< Sent rec, read dom
 
 // Convenience values for the message error flags.
-#define canMSGERR_OVERRUN       0x0600      ///< Any overrun condition. \sa \ref section_user_guide_send_recv_overruns
-#define canMSGERR_BIT           0xC000      ///< Any bit error.
-#define canMSGERR_BUSERR        0xF800      ///< Any RX error
+#define canMSGERR_OVERRUN       0x0600 ///< Any overrun condition. \sa \ref section_user_guide_send_recv_overruns
+#define canMSGERR_BIT           0xC000 ///< Any bit error.
+#define canMSGERR_BUSERR        0xF800 ///< Any RX error
 
 /** @} */
 
-#define canMSG_RESERVED_FOR_EXTENDING  0x80000000   ///< Reserved future use, tell user that there are more flags
+#define canMSG_RESERVED_FOR_EXTENDING  0x80000000 ///< Reserved future use, tell user that there are more flags
 
 /**
  * \name canTRANSCEIVER_LINEMODE_xxx
@@ -470,20 +470,20 @@ typedef enum {
  * \note Not implemented in Linux.
  * @{
  */
-#define canTRANSCEIVER_LINEMODE_NA          0  ///< Not Affected/Not available.
-#define canTRANSCEIVER_LINEMODE_SWC_SLEEP   4  ///< SWC Sleep Mode.
-#define canTRANSCEIVER_LINEMODE_SWC_NORMAL  5  ///< SWC Normal Mode.
-#define canTRANSCEIVER_LINEMODE_SWC_FAST    6  ///< SWC High-Speed Mode.
-#define canTRANSCEIVER_LINEMODE_SWC_WAKEUP  7  ///< SWC Wakeup Mode.
-#define canTRANSCEIVER_LINEMODE_SLEEP       8  ///< Sleep mode for those supporting it.
-#define canTRANSCEIVER_LINEMODE_NORMAL      9  ///< Normal mode (the inverse of sleep mode) for those supporting it.
-#define canTRANSCEIVER_LINEMODE_STDBY      10  ///< Standby for those who support it
-#define canTRANSCEIVER_LINEMODE_TT_CAN_H   11  ///< Truck & Trailer: operating mode single wire using CAN high
-#define canTRANSCEIVER_LINEMODE_TT_CAN_L   12  ///< Truck & Trailer: operating mode single wire using CAN low
-#define canTRANSCEIVER_LINEMODE_OEM1       13  ///< Reserved for OEM apps
-#define canTRANSCEIVER_LINEMODE_OEM2       14  ///< Reserved for OEM apps
-#define canTRANSCEIVER_LINEMODE_OEM3       15  ///< Reserved for OEM apps
-#define canTRANSCEIVER_LINEMODE_OEM4       16  ///< Reserved for OEM apps
+#define canTRANSCEIVER_LINEMODE_NA         0 ///< Not Affected/Not available.
+#define canTRANSCEIVER_LINEMODE_SWC_SLEEP  4 ///< SWC Sleep Mode.
+#define canTRANSCEIVER_LINEMODE_SWC_NORMAL 5 ///< SWC Normal Mode.
+#define canTRANSCEIVER_LINEMODE_SWC_FAST   6 ///< SWC High-Speed Mode.
+#define canTRANSCEIVER_LINEMODE_SWC_WAKEUP 7 ///< SWC Wakeup Mode.
+#define canTRANSCEIVER_LINEMODE_SLEEP      8 ///< Sleep mode for those supporting it.
+#define canTRANSCEIVER_LINEMODE_NORMAL     9 ///< Normal mode (the inverse of sleep mode) for those supporting it.
+#define canTRANSCEIVER_LINEMODE_STDBY      10 ///< Standby for those who support it
+#define canTRANSCEIVER_LINEMODE_TT_CAN_H   11 ///< Truck & Trailer: operating mode single wire using CAN high
+#define canTRANSCEIVER_LINEMODE_TT_CAN_L   12 ///< Truck & Trailer: operating mode single wire using CAN low
+#define canTRANSCEIVER_LINEMODE_OEM1       13 ///< Reserved for OEM apps
+#define canTRANSCEIVER_LINEMODE_OEM2       14 ///< Reserved for OEM apps
+#define canTRANSCEIVER_LINEMODE_OEM3       15 ///< Reserved for OEM apps
+#define canTRANSCEIVER_LINEMODE_OEM4       16 ///< Reserved for OEM apps
 
 /** @} */
 
@@ -491,10 +491,10 @@ typedef enum {
  * \anchor canTRANSCEIVER_RESNET_xxx
  *
  */
-#define canTRANSCEIVER_RESNET_NA            0
-#define canTRANSCEIVER_RESNET_MASTER        1
-#define canTRANSCEIVER_RESNET_MASTER_STBY   2
-#define canTRANSCEIVER_RESNET_SLAVE         3
+#define canTRANSCEIVER_RESNET_NA          0
+#define canTRANSCEIVER_RESNET_MASTER      1
+#define canTRANSCEIVER_RESNET_MASTER_STBY 2
+#define canTRANSCEIVER_RESNET_SLAVE       3
 
 /**
  * \name Transceiver (logical) types
@@ -510,34 +510,34 @@ typedef enum {
  * @{
  */
 // Also see src\include\hwnames.h and registered document 048.
-#define canTRANSCEIVER_TYPE_UNKNOWN         0  ///< Unknown or undefined
-#define canTRANSCEIVER_TYPE_251             1  ///< 82c251
-#define canTRANSCEIVER_TYPE_252             2  ///< 82c252, TJA1053, TJA1054
-#define canTRANSCEIVER_TYPE_DNOPTO          3  ///< Optoisolated 82C251
-#define canTRANSCEIVER_TYPE_W210            4  ///<
-#define canTRANSCEIVER_TYPE_SWC_PROTO       5  ///< AU5790 prototype
-#define canTRANSCEIVER_TYPE_SWC             6  ///< AU5790
-#define canTRANSCEIVER_TYPE_EVA             7  ///<
-#define canTRANSCEIVER_TYPE_FIBER           8  ///< 82c251 with fibre extension
-#define canTRANSCEIVER_TYPE_K251            9  ///< K-line + 82c251
-#define canTRANSCEIVER_TYPE_K              10  ///< K-line, without CAN
-#define canTRANSCEIVER_TYPE_1054_OPTO      11  ///< TJA1054 with optical isolation
-#define canTRANSCEIVER_TYPE_SWC_OPTO       12  ///< AU5790 with optical isolation
-#define canTRANSCEIVER_TYPE_TT             13  ///< B10011S Truck-And-Trailer
-#define canTRANSCEIVER_TYPE_1050           14  ///< TJA1050
-#define canTRANSCEIVER_TYPE_1050_OPTO      15  ///< TJA1050 with optical isolation
-#define canTRANSCEIVER_TYPE_1041           16  ///< TJA1041
-#define canTRANSCEIVER_TYPE_1041_OPTO      17  ///< TJA1041 with optical isolation
-#define canTRANSCEIVER_TYPE_RS485          18  ///< RS485 (i.e. J1708)
-#define canTRANSCEIVER_TYPE_LIN            19  ///< LIN
-#define canTRANSCEIVER_TYPE_KONE           20  ///< KONE
-#define canTRANSCEIVER_TYPE_CANFD          22  ///< CAN-FD
-#define canTRANSCEIVER_TYPE_CANFD_LIN      24  ///< HYBRID CAN-FD/LIN
-#define canTRANSCEIVER_TYPE_LINX_LIN       64
-#define canTRANSCEIVER_TYPE_LINX_J1708     66
-#define canTRANSCEIVER_TYPE_LINX_K         68
-#define canTRANSCEIVER_TYPE_LINX_SWC       70
-#define canTRANSCEIVER_TYPE_LINX_LS        72
+#define canTRANSCEIVER_TYPE_UNKNOWN    0 ///< Unknown or undefined
+#define canTRANSCEIVER_TYPE_251        1 ///< 82c251
+#define canTRANSCEIVER_TYPE_252        2 ///< 82c252, TJA1053, TJA1054
+#define canTRANSCEIVER_TYPE_DNOPTO     3 ///< Optoisolated 82C251
+#define canTRANSCEIVER_TYPE_W210       4 ///<
+#define canTRANSCEIVER_TYPE_SWC_PROTO  5 ///< AU5790 prototype
+#define canTRANSCEIVER_TYPE_SWC        6 ///< AU5790
+#define canTRANSCEIVER_TYPE_EVA        7 ///<
+#define canTRANSCEIVER_TYPE_FIBER      8 ///< 82c251 with fibre extension
+#define canTRANSCEIVER_TYPE_K251       9 ///< K-line + 82c251
+#define canTRANSCEIVER_TYPE_K          10 ///< K-line, without CAN
+#define canTRANSCEIVER_TYPE_1054_OPTO  11 ///< TJA1054 with optical isolation
+#define canTRANSCEIVER_TYPE_SWC_OPTO   12 ///< AU5790 with optical isolation
+#define canTRANSCEIVER_TYPE_TT         13 ///< B10011S Truck-And-Trailer
+#define canTRANSCEIVER_TYPE_1050       14 ///< TJA1050
+#define canTRANSCEIVER_TYPE_1050_OPTO  15 ///< TJA1050 with optical isolation
+#define canTRANSCEIVER_TYPE_1041       16 ///< TJA1041
+#define canTRANSCEIVER_TYPE_1041_OPTO  17 ///< TJA1041 with optical isolation
+#define canTRANSCEIVER_TYPE_RS485      18 ///< RS485 (i.e. J1708)
+#define canTRANSCEIVER_TYPE_LIN        19 ///< LIN
+#define canTRANSCEIVER_TYPE_KONE       20 ///< KONE
+#define canTRANSCEIVER_TYPE_CANFD      22 ///< CAN-FD
+#define canTRANSCEIVER_TYPE_CANFD_LIN  24 ///< HYBRID CAN-FD/LIN
+#define canTRANSCEIVER_TYPE_LINX_LIN   64
+#define canTRANSCEIVER_TYPE_LINX_J1708 66
+#define canTRANSCEIVER_TYPE_LINX_K     68
+#define canTRANSCEIVER_TYPE_LINX_SWC   70
+#define canTRANSCEIVER_TYPE_LINX_LS    72
 /** @} */
 
 #endif
