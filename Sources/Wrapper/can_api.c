@@ -412,8 +412,13 @@ int can_exit(int handle)
             }
         }
     }
-    // teardown the driver when all interfaces released
-    // TODO: required?
+    for (i = 0; i < KVASER_MAX_HANDLES; i++) {  // any open handle?
+        if (can[i].handle != canINVALID_HANDLE)
+            break;
+    }
+    if (i == KVASER_MAX_HANDLES) {      // if no open handle then
+        init = 0;                       //   clear initialization flag
+    }
     return CANERR_NOERROR;
 }
 
@@ -1202,7 +1207,7 @@ static int drv_parameter(int handle, uint16_t param, void *value, size_t nbyte)
         }
         break;
     case CANPROP_GET_DEVICE_NAME:       // device name of the CAN interface (char[256])
-        if (nbyte <= CANPROP_MAX_BUFFER_SIZE) {
+        if ((nbyte > 0U) && (nbyte <= CANPROP_MAX_BUFFER_SIZE)) {
             if ((sts = canGetChannelData(can[handle].channel, canCHANNELDATA_CHANNEL_NAME,
                                         (void*)value, (size_t)nbyte)) == canOK)
                 rc = CANERR_NOERROR;
