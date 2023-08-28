@@ -100,7 +100,7 @@ static const char version[] = "CAN API V3 for Kvaser CAN Interfaces, Version " V
 #define KVASER_FREQ_DEFAULT     (80000000)
 #define KVASER_CHANNEL_DEFAULT  (0)
 
-#ifndef OPTION_KVASER_CiA_BIT_TIMING
+#if (OPTION_KVASER_BIT_TIMING != OPTION_DISABLED)
 #define KVASER_BDR_1000(btr)    do{ btr.bitRate=canBITRATE_1M; } while(0)
 #define KVASER_BDR_500(btr)     do{ btr.bitRate=canBITRATE_500K; } while(0)
 #define KVASER_BDR_250(btr)     do{ btr.bitRate=canBITRATE_250K; } while(0)
@@ -476,12 +476,14 @@ int can_start(int handle, const can_bitrate_t *bitrate)
     memset(&data, 0, sizeof(btr_data_t));
 
     if (bitrate->index <= 0) {          // bit-rate from index
+        if (can[handle].mode.fdoe)
+            return CANERR_BAUDRATE;     //   CAN 2.0 only
         if ((rc = map_index2params(bitrate->index, &nominal)) != CANERR_NOERROR)
             return rc;
         if ((rc = canSetBusParams(can[handle].handle, nominal.bitRate, nominal.tseg1, nominal.tseg2,
-                                                     nominal.sjw, nominal.noSamp, nominal.syncmode)) != canOK)
-            return kvaser_error(rc);
-#ifndef OPTION_KVASER_CiA_BIT_TIMING
+            nominal.sjw, nominal.noSamp, nominal.syncmode)) != canOK)
+            return (rc != canERR_PARAM) ? kvaser_error(rc) : CANERR_BAUDRATE;
+#if (OPTION_KVASER_BIT_TIMING != OPTION_DISABLED)
         can[handle].frequency = KVASER_FREQ_DEFAULT;
 #else
         can[handle].frequency = CANBTR_FREQ_SJA1000;
@@ -492,13 +494,13 @@ int can_start(int handle, const can_bitrate_t *bitrate)
             return rc;
         if ((rc = canSetBusParams(can[handle].handle, nominal.bitRate, nominal.tseg1, nominal.tseg2,
                                                      nominal.sjw, nominal.noSamp, nominal.syncmode)) != canOK)
-            return kvaser_error(rc);
+            return (rc != canERR_PARAM) ? kvaser_error(rc) : CANERR_BAUDRATE;
         /* bit-rate for CAN FD data (BRSE) */
         if (can[handle].mode.fdoe && can[handle].mode.brse) {
             if ((rc = map_bitrate2paramsFd(bitrate, &data)) != CANERR_NOERROR)
                 return rc;
             if ((rc = canSetBusParamsFd(can[handle].handle, data.bitRate, data.tseg1, data.tseg2, data.sjw)) != canOK)
-                return kvaser_error(rc);
+                return (rc != canERR_PARAM) ? kvaser_error(rc) : CANERR_BAUDRATE;
         }
         can[handle].frequency = bitrate->btr.frequency;
     }
@@ -889,7 +891,7 @@ static int map_index2params(int index, btr_nominal_t *busParams)
 {
     switch (index) {
     case CANBTR_INDEX_1M: KVASER_BDR_1000((*busParams)); break;
-#ifndef OPTION_KVASER_CiA_BIT_TIMING
+#if (OPTION_KVASER_BIT_TIMING != OPTION_DISABLED)
     case CANBTR_INDEX_800K: return CANERR_BAUDRATE;
 #else
     case CANBTR_INDEX_800K: KVASER_BDR_800((*busParams)); break;
