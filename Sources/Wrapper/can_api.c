@@ -163,12 +163,19 @@ typedef struct {                        // frame counters:
     uint64_t err;                       //   number of receiced error frames
 }   can_counter_t;
 
+typedef struct {                        // error code capture:
+    uint8_t lec;                        //   last error code
+    uint8_t rx_err;                     //   receive error counter
+    uint8_t tx_err;                     //   transmit error counter
+}   can_error_t;
+
 typedef struct {                        // Kvaser CAN interface:
     CanHandle  handle;                  //   hardware channel handle
     int        channel;                 //   channel number of the CAN board
     long       frequency;               //   frequency of the CAN controller
     can_mode_t mode;                    //   operation mode of the CAN channel
     can_status_t status;                //   8-bit status register
+    can_error_t error;                  //   error code capture
     can_counter_t counters;             //   statistical counters
 }   can_interface_t;
 
@@ -229,6 +236,9 @@ int can_test(int32_t board, uint8_t mode, const void *param, int *result)
             can[i].frequency = KVASER_FREQ_DEFAULT;
             can[i].mode.byte = CANMODE_DEFAULT;
             can[i].status.byte = CANSTAT_RESET;
+            can[i].error.lec = 0x00u;
+            can[i].error.rx_err = 0u;
+            can[i].error.tx_err = 0u;
             can[i].counters.tx = 0ull;
             can[i].counters.rx = 0ull;
             can[i].counters.err = 0ull;
@@ -323,6 +333,9 @@ int can_init(int32_t board, uint8_t mode, const void *param)
             can[i].frequency = KVASER_FREQ_DEFAULT;
             can[i].mode.byte = CANMODE_DEFAULT;
             can[i].status.byte = CANSTAT_RESET;
+            can[i].error.lec = 0x00u;
+            can[i].error.rx_err = 0u;
+            can[i].error.tx_err = 0u;
             can[i].counters.tx = 0ull;
             can[i].counters.rx = 0ull;
             can[i].counters.err = 0ull;
@@ -511,7 +524,10 @@ int can_start(int handle, const can_bitrate_t *bitrate)
     if ((rc = canBusOn(can[handle].handle)) != canOK) // go bus on!
         return kvaser_error(rc);
 
-    can[handle].status.byte = 0x00;     // clear old status bits and counters
+    can[handle].status.byte = 0x00;     // clear old status, errors and counters
+    can[handle].error.lec = 0x00u;
+    can[handle].error.rx_err = 0u;
+    can[handle].error.tx_err = 0u;
     can[handle].counters.tx = 0ull;
     can[handle].counters.rx = 0ull;
     can[handle].counters.err = 0ull;
@@ -671,29 +687,59 @@ repeat:
     {
         return kvaser_error(rc);        //   something's wrong
     }
-    if ((flags & canMSG_ERROR_FRAME)) { // error frame?
-        // TODO: encode status message (error frame)
-        can[handle].status.receiver_empty = 1;
-        can[handle].counters.err++;
-        return CANERR_RX_EMPTY;         //   error frame received
+    if ((flags & canMSGERR_OVERRUN)) {  // queue overrun?
+        can[handle].status.queue_overrun = 1;
+        /* note: queue has overrun, but we have a message */
     }
     if ((flags & canMSG_EXT) && can[handle].mode.nxtd)
         goto repeat;                    // refuse extended frames
     if ((flags & canMSG_RTR) && can[handle].mode.nrtr)
         goto repeat;                    // refuse remote frames
-    msg->id = (int32_t)id;
-    msg->xtd = (flags & canMSG_EXT)? 1 : 0;
-    msg->rtr = (flags & canMSG_RTR)? 1 : 0;
-    msg->fdf = (flags & canFDMSG_FDF)? 1 : 0;
-    msg->brs = (flags & canFDMSG_BRS)? 1 : 0;
-    msg->esi = (flags & canFDMSG_ESI)? 1 : 0;
-    msg->sts = 0;
-    msg->dlc = (uint8_t)LEN2DLC(len); // unclear: is it a length or a DLC?
-    memcpy(msg->data, data, CANFD_MAX_LEN);
+    if ((flags & canMSG_ERROR_FRAME)) {
+        unsigned int txErr = 0, rxErr = 0;
+        (void)canReadErrorCounters(can[handle].handle, &txErr, &rxErr, NULL);
+        (void)can_status(can[handle].handle, NULL);
+        /* update status register from error frame */
+        can[handle].error.lec = (uint8_t)((flags & canMSGERR_BUSERR) >> 8);
+        can[handle].error.rx_err = (uint8_t)(rxErr & 0x00FF);
+        can[handle].error.tx_err = (uint8_t)(txErr & 0x00FF);
+        can[handle].status.bus_error = can[handle].error.lec ? 1 : 0;
+        /* refuse status message if suppressed by user */
+        if (!can[handle].mode.err)
+            goto repeat;
+        /* status message: ID=000h, DLC=4 (status, lec, rx errors, tx errors) */
+        msg->id = (int32_t)0;
+        msg->xtd = 0;
+        msg->rtr = 0;
+        msg->fdf = 0;
+        msg->brs = 0;
+        msg->esi = 0;
+        msg->sts = 1;
+        msg->dlc = 4u;
+        msg->data[0] = can[handle].status.byte;
+        msg->data[1] = can[handle].error.lec;
+        msg->data[2] = can[handle].error.rx_err;
+        msg->data[4] = can[handle].error.tx_err;
+        /* update error counter */
+        can[handle].counters.err++;
+    }
+    else {
+        /* decode Kvaser CAN message */
+        msg->id = (int32_t)id;
+        msg->xtd = (flags & canMSG_EXT) ? 1 : 0;
+        msg->rtr = (flags & canMSG_RTR) ? 1 : 0;
+        msg->fdf = (flags & canFDMSG_FDF) ? 1 : 0;
+        msg->brs = (flags & canFDMSG_BRS) ? 1 : 0;
+        msg->esi = (flags & canFDMSG_ESI) ? 1 : 0;
+        msg->sts = 0;
+        msg->dlc = (uint8_t)LEN2DLC(len);
+        memcpy(msg->data, data, CANFD_MAX_LEN);
+        /* update message counter */
+        can[handle].counters.rx++;
+    }
     msg->timestamp.tv_sec = (time_t)(timestamp / 1000ul);
     msg->timestamp.tv_nsec = (long)(timestamp % 1000ul) * 1000000l;
     can[handle].status.receiver_empty = 0; // message read
-    can[handle].counters.rx++;
 
     return CANERR_NOERROR;
 }
@@ -716,10 +762,11 @@ int can_status(int handle, uint8_t *status)
         return kvaser_error(rc);
 
     can[handle].status.bus_off = (flags & canSTAT_BUS_OFF)? 1 : 0;
-    can[handle].status.bus_error = (flags & canSTAT_ERROR_PASSIVE)? 1 : 0;
-    can[handle].status.warning_level = (flags & canSTAT_ERROR_WARNING)? 1 : 0;
-    can[handle].status.message_lost |= (flags & canSTAT_RXERR)? 1 : 0;
+    can[handle].status.bus_error = can[handle].error.lec ? 1 : 0;  // last eror code from error code capture (ECC)
+    can[handle].status.warning_level = (flags & (canSTAT_ERROR_WARNING | canSTAT_ERROR_PASSIVE))? 1 : 0;
     can[handle].status.transmitter_busy |= (flags & canSTAT_TX_PENDING)? 1 : 0;
+    can[handle].status.message_lost |= (flags & (canSTAT_OVERRUN /*| canSTAT_RXERR*/)) ? 1 : 0;  // FIXME: how?
+    can[handle].status.queue_overrun |= (flags & canSTAT_OVERRUN) ? 1 : 0;
     if (status)                         // status-register
       *status = can[handle].status.byte;
 
