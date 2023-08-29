@@ -1,6 +1,6 @@
 ### CAN API V3 Wrapper Library for Kvaser CAN Interfaces (Windows&reg;)
 
-_Copyright &copy; 2017-2022  Uwe Vogt, UV Software, Berlin (info@uv-software.com)_
+_Copyright &copy; 2017-2023 Uwe Vogt, UV Software, Berlin (info@uv-software.com)_
 
 # CAN API V3 for Kvaser CAN Interfaces
 
@@ -75,16 +75,16 @@ C:\Projects\CAN\Drivers\KvaserCAN>build_no.bat
 ```
 Repeat this step after each `git commit`, `git pull`, `git clone`, etc.
 
-To build all 32-bit targets (x86) run the script `build_86.bat`.
+To build all 32-bit targets (x86) run the script `x86_build.bat`.
 ```
 C:\Users\haumea>cd C:\Projects\CAN\Drivers\KvaserCAN
-C:\Projects\CAN\Drivers\KvaserCAN>build_86.bat
+C:\Projects\CAN\Drivers\KvaserCAN>x86_build.bat
 ```
 
-To build all 64-bit targets (x64) run the script `build_86.bat`.
+To build all 64-bit targets (x64) run the script `x64_build.bat`.
 ```
 C:\Users\haumea>cd C:\Projects\CAN\Drivers\KvaserCAN
-C:\Projects\CAN\Drivers\KvaserCAN>build_64.bat
+C:\Projects\CAN\Drivers\KvaserCAN>x64_build.bat
 ```
 
 #### uvKvaserCAN (DLL)
@@ -118,16 +118,17 @@ Type `can_test /?` to display all program options.
 
 ### Development Environment
 
-- Microsoft Visual Studio Community 2019 (Version 16.11.17)
+- Microsoft Visual Studio Community 2022 (Version 17.7.2)
+
+### Required Kvaser CANlib SDK
+
+- Version 5.41 or later _(Latest is Greatest!)_
 
 ### Tested CAN Hardware
 
 - Kvaser Leaf Light V2 - single channel, CAN 2.0 (EAN: 73-30130-00685-0)
 - Kvaser Leaf Pro HS V2 - single channel, CAN FD (EAN: 73-30130-00843-4)
-
-### Required Kvaser CANlib SDK
-
-- Version 5.39 or later _(Latest is Greatest!)_
+- Kvaser U100P - single channel, CAN FD (EAN: 73-30130-01174-8)
 
 ## Known Bugs and Caveats
 
