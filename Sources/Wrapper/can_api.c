@@ -288,32 +288,23 @@ int can_test(int32_t board, uint8_t mode, const void *param, int *result)
                (can[i].channel == board) && !(mode & CANMODE_SHRD))
                 *result = CANBRD_OCCUPIED; // CAN board occupied by ourself
     }
-#if (0)
-    if ((mode & CANMODE_FDOE) && !(feature & canCHANNEL_CAP_CAN_FD))
-        return CANERR_ILLPARA; // CAN FD operation requested, but not supported
-    if ((mode & CANMODE_BRSE) && !(mode & CANMODE_FDOE))
-        return CANERR_ILLPARA; // bit-rate switching requested, but CAN FD not enabled
-    if ((mode & CANMODE_NISO) && !(feature & canCHANNEL_CAP_CAN_FD_NONISO))
-        return CANERR_ILLPARA; // Non-ISO operation requested, but not supported
-    if ((mode & CANMODE_NISO) && !(mode & CANMODE_FDOE))
-        return CANERR_ILLPARA; // Non-ISO operation requested, but CAN FD not enabled
-    if ((mode & CANMODE_MON) && !(feature & canCHANNEL_CAP_SILENT_MODE))
-        return CANERR_ILLPARA; // listen-only mode requested, but not supported
-    /*if ((mode & CANMODE_ERR)) {} // error frame reporting can be turned on and off by ioctrl */
-    if ((mode & CANMODE_NXTD))  // TODO: how?
-        return CANERR_ILLPARA; // suppressing 29-bit id's is not supported
-    if ((mode & CANMODE_NRTR))  // TODO: how? + fdoe
-        return CANERR_ILLPARA; // suppressing remote frames is not supported
-#else
     // get operation capability from CAN board
     if ((rc = kvaser_capability(board, &capa)) != CANERR_NOERROR)
         return kvaser_error(rc);
+    // when the music's over, turn out the light
+    for (i = 0; i < KVASER_MAX_HANDLES; i++) {  // any open handle?
+        if (can[i].handle != canINVALID_HANDLE)
+            break;
+    }
+    if (i == KVASER_MAX_HANDLES) {      // if no open handle then
+        init = 0;                       //   clear initialization flag
+    }
     // check given operation mode against the operation capability
     if ((mode & ~capa.byte) != 0)
         return CANERR_ILLPARA;
     if ((mode & CANMODE_BRSE) && !(mode & CANMODE_FDOE))
         return CANERR_ILLPARA;
-#endif
+    // TODO: single point of exit (due to init-flag)
     (void)param;
     return CANERR_NOERROR;
 }
