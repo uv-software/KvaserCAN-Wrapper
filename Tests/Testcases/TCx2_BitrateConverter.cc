@@ -56,6 +56,15 @@
 #warning OPTION_CAN_2_0_ONLY not set, default = OPTION_DISABLED
 #endif
 #endif
+#ifndef FEATURE_BITRATE_SJA1000
+#define FEATURE_BITRATE_SJA1000  FEATURE_SUPPORTED
+#ifdef _MSC_VER
+#pragma message ( "FEATURE_BITRATE_SJA1000 not set, default = FEATURE_SUPPORTED" )
+#else
+#warning FEATURE_BITRATE_SJA1000 not set, default = FEATURE_SUPPORTED
+#endif
+#endif
+#define SHOW_RESULT  0  // set to non-zero valus to see conversion results
 
 #define NOM_BRP_MIN     CANBTR_NOMINAL_BRP_MIN
 #define NOM_BRP_MAX     CANBTR_NOMINAL_BRP_MAX
@@ -79,8 +88,6 @@
 
 #define CLEAR_BTR(btr)  memset(&btr, 0, sizeof(CANAPI_Bitrate_t))
 #define CLEAR_BPS(bps)  memset(&bps, 0, sizeof(CANAPI_BusSpeed_t))
-
-#define SHOW_RESULT  0  // set to non-zero valus to see conversion results
 
 class BitrateConverter : public testing::Test {
     virtual void SetUp() {}
@@ -621,9 +628,14 @@ TEST_F(BitrateConverter, GTEST_TESTCASE(BitrateToSpeedWithDivisonByZero, GTEST_E
 
 // @gtest TCx2.4.1: Map index to bit-rate with valid index(es)
 //
-// @expected: CANERR_
+// @expected: CANERR_NOERROR
 //
-TEST_F(BitrateConverter, GTEST_TESTCASE(IndexToBitrateWithValidIndexes, GTEST_ENABLED)) {
+#if (FEATURE_BITRATE_SJA1000 != FEATURE_UNSUPPORTED)
+#define GTEST_SJA1000_INDEXES_TO_BITRATE  GTEST_ENABLED
+#else
+#define GTEST_SJA1000_INDEXES_TO_BITRATE  GTEST_DISABLED
+#endif
+TEST_F(BitrateConverter, GTEST_TESTCASE(IndexToBitrateWithValidIndexes, GTEST_SJA1000_INDEXES_TO_BITRATE)) {
     CANAPI_Bitrate_t bitrate;
     CANAPI_BusSpeed_t speed;
     CANAPI_Return_t retVal;
@@ -912,7 +924,12 @@ TEST_F(BitrateConverter, GTEST_TESTCASE(StringToBitrateWithNullPointerForString,
 //
 // @expected: CANERR_NOERROR
 //
-TEST_F(BitrateConverter, GTEST_TESTCASE(BitrateToStringFromValidIndexes, GTEST_ENABLED)) {
+#if (FEATURE_BITRATE_SJA1000 != FEATURE_UNSUPPORTED)
+#define GTEST_SJA1000_INDEXES_TO_STRING  GTEST_ENABLED
+#else
+#define GTEST_SJA1000_INDEXES_TO_STRING  GTEST_DISABLED
+#endif
+TEST_F(BitrateConverter, GTEST_TESTCASE(BitrateToStringFromValidIndexes, GTEST_SJA1000_INDEXES_TO_STRING)) {
     CANAPI_Bitrate_t source = {};
     CANAPI_Bitrate_t target = {};
     CANAPI_Return_t retVal;
@@ -1123,6 +1140,7 @@ TEST_F(BitrateConverter, GTEST_TESTCASE(BitrateToStringFromInvalidCanValues, GTE
     // @end.
 }
 
+#if (OPTION_CAN_2_0_ONLY == OPTION_DISABLED)
 // @gtest TCx2.7.5: Print bit-rate strings from valid CAN FD bit-rate settings and BRS disabled
 //
 // @expected: CANERR_NOERROR
@@ -1430,6 +1448,7 @@ TEST_F(BitrateConverter, GTEST_TESTCASE(BitrateToStringFromInvalidCanFdValuesBrs
     counter.Clear();
     // @end.
 }
+#endif  // (OPTION_CAN_2_0_ONLY == OPTION_DISABLED)
 
 // @gtest TCx2.7.9: Print bit-rate to strings from well-formed bit-rate strings
 //
@@ -1583,4 +1602,4 @@ TEST_F(BitrateConverter, GTEST_TESTCASE(BitrateToStringWithNullPointerForString,
 //
 // @note: passing a pointer for 'btr0btr1' is not possible with the C++ API!
 
-//  $Id: TCx2_BitrateConverter.cc 1183 2023-08-27 11:04:45Z haumea $  Copyright (c) UV Software, Berlin.
+//  $Id: TCx2_BitrateConverter.cc 1188 2023-09-01 18:21:43Z haumea $  Copyright (c) UV Software, Berlin.

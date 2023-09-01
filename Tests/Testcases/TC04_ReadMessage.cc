@@ -47,6 +47,14 @@
 //
 #include "pch.h"
 
+#ifndef CAN_FD_SUPPORTED
+#define CAN_FD_SUPPORTED  FEATURE_SUPPORTED
+#ifdef _MSC_VER
+#pragma message ( "CAN_FD_SUPPORTED not set, default = FEATURE_SUPPORTED" )
+#else
+#warning CAN_FD_SUPPORTED not set, default = FEATURE_SUPPORTED
+#endif
+#endif
 #ifndef FEATURE_ERROR_FRAMES
 #define FEATURE_ERROR_FRAMES  FEATURE_SUPPORTED
 #ifdef _MSC_VER
@@ -1094,11 +1102,11 @@ TEST_F(ReadMessage, GTEST_TESTCASE(WithFlagRtrInOperationModeRtr, GTEST_ENABLED)
     trmMsg.esi = 0;
     trmMsg.dlc = g_Options.GetOpMode(DUT1).fdoe ? CANFD_MAX_DLC : CAN_MAX_DLC;
     memset(trmMsg.data, 0, CANFD_MAX_LEN);
-#endif
     // @
     // @note: This test cannot run in CAN FD operation mode
     if (g_Options.GetOpMode(DUT1).fdoe || g_Options.GetOpMode(DUT2).fdoe)
         GTEST_SKIP() << "This test run in CAN FD operation mode!";
+#endif
     // @pre:
     // @- initialize DUT1 with configured settings
     retVal = dut1.InitializeChannel();
@@ -1214,11 +1222,11 @@ TEST_F(ReadMessage, GTEST_TESTCASE(WithFlagRtrInOperationModeNoRtr, GTEST_ENABLE
     trmMsg.esi = 0;
     trmMsg.dlc = g_Options.GetOpMode(DUT1).fdoe ? CANFD_MAX_DLC : CAN_MAX_DLC;
     memset(trmMsg.data, 0, CANFD_MAX_LEN);
-#endif
     // @
     // @note: This test cannot run in CAN FD operation mode
     if (g_Options.GetOpMode(DUT1).fdoe || g_Options.GetOpMode(DUT2).fdoe)
         GTEST_SKIP() << "This test run in CAN FD operation mode!";
+#endif
     // @pre:
     // @- get configured operation mode and set bit NRTR
     opMode = dut1.GetOpMode();
@@ -1341,10 +1349,11 @@ TEST_F(ReadMessage, GTEST_TESTCASE(WithFlagStsInOperationModeNoErr, GTEST_ENABLE
     EXPECT_EQ(CCanApi::NoError, retVal);
     EXPECT_TRUE(status.can_stopped);
     // @- change bit-rate settings: DUT1 w/ slow bit-rate
-    if (!dut1.GetOpMode().fdoe)
-        SLOW_BITRATE(newBtr1);
-    else
-        SLOW_BITRATE_FD(newBtr1);
+    SLOW_BITRATE(newBtr1);
+#if (CAN_FD_SUPPORTED == FEATURE_SUPPORTED)
+    if (dut1.GetOpMode().fdoe) SLOW_BITRATE_FD(newBtr1);
+    // @  note: w/ BRSE if DUT1 is CAN FD capable
+#endif
     oldBtr1 = dut1.GetBitrate();
     dut1.SetBitrate(newBtr1);
     // dut1.ShowBitrateSettings("[   DUT1   ]");
@@ -1363,10 +1372,11 @@ TEST_F(ReadMessage, GTEST_TESTCASE(WithFlagStsInOperationModeNoErr, GTEST_ENABLE
     EXPECT_EQ(CCanApi::NoError, retVal);
     EXPECT_TRUE(status.can_stopped);
     // @- change bit-rate settings: DUT2 w/ fast bit-rate
-    if (!dut2.GetOpMode().fdoe)
-        FAST_BITRATE(newBtr2);
-    else
-        FAST_BITRATE_FD(newBtr2);
+    FAST_BITRATE(newBtr2);
+#if (CAN_FD_SUPPORTED == FEATURE_SUPPORTED)
+    if (dut2.GetOpMode().fdoe) FAST_BITRATE_FD(newBtr2);
+    // @  note: w/ BRSE if DUT2 is CAN FD capable
+#endif
     oldBtr2 = dut2.GetBitrate();
     dut2.SetBitrate(newBtr2);
     // dut2.ShowBitrateSettings("[   DUT2   ]");
@@ -1517,10 +1527,11 @@ TEST_F(ReadMessage, GTEST_TESTCASE(WithFlagStsInOperationModeErr, GTEST_STATUS_M
     EXPECT_EQ(CCanApi::NoError, retVal);
     EXPECT_TRUE(status.can_stopped);
     // @- change bit-rate settings: DUT1 w/ slow bit-rate
-    if (!dut1.GetOpMode().fdoe)
-        SLOW_BITRATE(newBtr1);
-    else
-        SLOW_BITRATE_FD(newBtr1);
+    SLOW_BITRATE(newBtr1);
+#if (CAN_FD_SUPPORTED == FEATURE_SUPPORTED)
+    if (opMode.fdoe) SLOW_BITRATE_FD(newBtr1);
+    // @  note: w/ BRSE if DUT1 is CAN FD capable
+#endif
     oldBtr1 = dut1.GetBitrate();
     dut1.SetBitrate(newBtr1);
     // dut1.ShowBitrateSettings("[   DUT1   ]");
@@ -1539,10 +1550,11 @@ TEST_F(ReadMessage, GTEST_TESTCASE(WithFlagStsInOperationModeErr, GTEST_STATUS_M
     EXPECT_EQ(CCanApi::NoError, retVal);
     EXPECT_TRUE(status.can_stopped);
     // @- change bit-rate settings: DUT2 w/ fast bit-rate
-    if (!dut2.GetOpMode().fdoe)
-        FAST_BITRATE(newBtr2);
-    else
-        FAST_BITRATE_FD(newBtr2);
+    FAST_BITRATE(newBtr2);
+#if (CAN_FD_SUPPORTED == FEATURE_SUPPORTED)
+    if (opMode.fdoe) SLOW_BITRATE_FD(newBtr2);
+    // @  note: w/ BRSE if DUT2 is CAN FD capable
+#endif
     oldBtr2 = dut2.GetBitrate();
     dut2.SetBitrate(newBtr2);
     // dut2.ShowBitrateSettings("[   DUT2   ]");
@@ -1876,4 +1888,4 @@ TEST_F(ReadMessage, GTEST_TESTCASE(WithDifferentTimeoutValues, GTEST_ENABLED)) {
 // @todo: (1) blocking read
 // @todo: (2) test reentrancy
 
-//  $Id: TC04_ReadMessage.cc 1184 2023-08-29 09:21:30Z haumea $  Copyright (c) UV Software, Berlin.
+//  $Id: TC04_ReadMessage.cc 1188 2023-09-01 18:21:43Z haumea $  Copyright (c) UV Software, Berlin.
