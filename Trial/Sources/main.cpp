@@ -73,6 +73,10 @@
 #define OPTION_TIME_ABS     (2)
 #define OPTION_TIME_REL     (3)
 
+#define CHANNEL  KVASER_CAN_CHANNEL0
+
+typedef CKvaserCAN  CCanDriver;
+
 #if defined(_WIN32) || defined(_WIN64)
  static void usleep(unsigned int usec);
  /* useconds_t: to be compatible with macOS */
@@ -84,9 +88,9 @@ static void verbose(const can_mode_t &mode, const can_bitrate_t &bitrate, const 
 
 static volatile int running = 1;
 
-static CKvaserCAN myDriver = CKvaserCAN();
+static CCanDriver myDriver = CCanDriver();
 #ifdef SECOND_CHANNEL
- static CKvaserCAN mySecond = CKvaserCAN();
+ static CCanDriver mySecond = CCanDriver();
 #endif
 
 int main(int argc, const char * argv[]) {
@@ -112,13 +116,13 @@ int main(int argc, const char * argv[]) {
     message.timestamp.tv_sec = 0;
     message.timestamp.tv_nsec = 0;
     CANAPI_Return_t retVal = 0;
-    int32_t channel = (int32_t)KVASER_CAN_CHANNEL0;
+    int32_t channel = (int32_t)CHANNEL;
     uint16_t rxTimeout = CANWAIT_INFINITE;
     uint16_t txTimeout = 0U;
     useconds_t txDelay = 0U;
     CCanApi::SChannelInfo info;
     CCanApi::EChannelState state;
-    //int32_t clocks[CANPROP_MAX_BUFFER_SIZE/sizeof(int32_t)];
+//    int32_t clocks[CANPROP_MAX_BUFFER_SIZE/sizeof(int32_t)];
     char szVal[CANPROP_MAX_BUFFER_SIZE];
     uint16_t u16Val;
     uint32_t u32Val;
@@ -230,7 +234,7 @@ int main(int argc, const char * argv[]) {
         if (!strcmp(argv[i], "XTD:OFF")) opMode.nxtd = 1;
         if (!strcmp(argv[i], "RTR:OFF")) opMode.nrtr = 1;
     }
-    fprintf(stdout, ">>> %s\n", CKvaserCAN::GetVersion());
+    fprintf(stdout, ">>> %s\n", CCanDriver::GetVersion());
     if ((signal(SIGINT, sigterm) == SIG_ERR) ||
 #if !defined(_WIN32) && !defined(_WIN64)
        (signal(SIGHUP, sigterm) == SIG_ERR) ||
@@ -283,11 +287,11 @@ int main(int argc, const char * argv[]) {
     if (option_list) {
         int n = 0;
 #if (1)
-        bool result = CKvaserCAN::GetFirstChannel(info);
+        bool result = CCanDriver::GetFirstChannel(info);
         while (result) {
             fprintf(stdout, ">>> CCanAPI::Get%sChannel(): %i = \'%s\' (%i = \'%s\')\n", !n ? "First" : "Next",
                     info.m_nChannelNo, info.m_szDeviceName, info.m_nLibraryId, info.m_szVendorName);
-            result = CKvaserCAN::GetNextChannel(info);
+            result = CCanDriver::GetNextChannel(info);
             n++;
         }
 #else
@@ -328,22 +332,22 @@ int main(int argc, const char * argv[]) {
     /* channel tester */
     if (option_test) {
 #if (1)
-        bool result = CKvaserCAN::GetFirstChannel(info);
+        bool result = CCanDriver::GetFirstChannel(info);
         while (result) {
-            retVal = CKvaserCAN::ProbeChannel(info.m_nChannelNo, opMode, state);
+            retVal = CCanDriver::ProbeChannel(info.m_nChannelNo, opMode, state);
             fprintf(stdout, ">>> CCanAPI::ProbeChannel(%i): state = %s", info.m_nChannelNo,
                             (state == CCanApi::ChannelOccupied) ? "occupied" :
                             (state == CCanApi::ChannelAvailable) ? "available" :
                             (state == CCanApi::ChannelNotAvailable) ? "not available" : "not testable");
             fprintf(stdout, "%s", (retVal == CCanApi::IllegalParameter) ? " (warning: Op.-Mode not supported)\n" : "\n");
-            result = CKvaserCAN::GetNextChannel(info);
+            result = CCanDriver::GetNextChannel(info);
         }
 #else
         retVal = myDriver.SetProperty(CANPROP_SET_FIRST_CHANNEL, (void *)NULL, 0U);
         while (retVal == CCanApi::NoError) {
             retVal = myDriver.GetProperty(CANPROP_GET_CHANNEL_NO, (void *)&i32Val, sizeof(int32_t));
             if (retVal == CCanApi::NoError) {
-                retVal = CKvaserCAN::ProbeChannel(i32Val, opMode, state);
+                retVal = CCanDriver::ProbeChannel(i32Val, opMode, state);
                 fprintf(stdout, ">>> CCanApi::ProbeChannel(%i): state = %s", i32Val,
                                 (state == CCanApi::ChannelOccupied) ? "occupied" :
                                 (state == CCanApi::ChannelAvailable) ? "available" :
