@@ -2,7 +2,7 @@
 /*
  *  CAN Interface API, Version 3 (for Kvaser CAN Interfaces)
  *
- *  Copyright (c) 2017-2022 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
+ *  Copyright (c) 2017-2023 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
  *  All rights reserved.
  *
  *  This file is part of KvaserCAN-Wrapper.
@@ -60,8 +60,6 @@
 
 /*  -----------  options  ------------------------------------------------
  */
-#define KVASER_TRM_TIMEOUT         55   // time-out value for canWriteWait
-#define KVASER_ASYNCHRONOUS_WRITE       // w/o transmit acknowledge
 #define KVASER_SHARED_ACCESS            // permit non-exclusive access
 #define KVASER_VIRTUAL_CHANNELS         // support of virtual channels
 /*#define KVASER_SIMULATED_CHANNELS     // support of simulated channels */
