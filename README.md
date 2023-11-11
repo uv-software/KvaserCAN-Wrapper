@@ -118,7 +118,7 @@ Type `can_test /?` to display all program options.
 
 ### Development Environment
 
-- Microsoft Visual Studio Community 2022 (Version 17.7.3)
+- Microsoft Visual Studio Community 2022 (Version 17.7.4)
 
 ### Required Kvaser CANlib SDK
 
