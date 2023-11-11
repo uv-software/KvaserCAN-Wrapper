@@ -462,7 +462,7 @@ int main(int argc, const char * argv[]) {
     if (option_transmit) {
         if ((txTimeout == 0U) && !option_retry)
             fprintf(stdout, "Attention: The program will be aborted when the transmitter is busy.\n"
-                            "           Use progrsm option RETRY to avoid this.\n");
+                            "           Use program option RETRY or T:<timeout> to avoid this.\n");
         fprintf(stdout, "Press Ctrl+C to abort..."); fflush(stdout);
         frames = 0;
         now = time(NULL);
@@ -568,6 +568,7 @@ retry_reply:
             }
         }
         else if (retVal != CCanApi::ReceiverEmpty) {
+            fprintf(stdout, ">>> myDriver.ReadMessage returned %i\n", retVal);
             goto teardown;
         }
 #ifdef SECOND_CHANNEL

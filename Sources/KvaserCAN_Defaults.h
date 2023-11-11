@@ -89,6 +89,7 @@ extern "C" {
 #define KVASER_CAN_BR_50K(x)    do{x.btr.frequency=KVASER_CAN_CLOCK;x.btr.nominal.brp=10;x.btr.nominal.tseg1=11;x.btr.nominal.tseg2= 4;x.btr.nominal.sjw= 1;x.btr.nominal.sam=0;} while(0)
 #define KVASER_CAN_BR_20K(x)    do{x.btr.frequency=KVASER_CAN_CLOCK;x.btr.nominal.brp=25;x.btr.nominal.tseg1=11;x.btr.nominal.tseg2= 4;x.btr.nominal.sjw= 1;x.btr.nominal.sam=0;} while(0)
 #define KVASER_CAN_BR_10K(x)    do{x.btr.frequency=KVASER_CAN_CLOCK;x.btr.nominal.brp=50;x.btr.nominal.tseg1=11;x.btr.nominal.tseg2= 4;x.btr.nominal.sjw= 1;x.btr.nominal.sam=0;} while(0)
+#define KVASER_CAN_BR_5K(x)     do{x.btr.frequency=KVASER_CAN_CLOCK;x.btr.nominal.brp=100;x.btr.nominal.tseg1=11;x.btr.nominal.tseg2=4;x.btr.nominal.sjw=1;x.btr.nominal.sam=0;} while(0)
 /** @} */
 
 #if (OPTION_CAN_2_0_ONLY == 0)
