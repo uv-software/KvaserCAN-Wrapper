@@ -51,7 +51,7 @@
 #include "build_no.h"
 #define VERSION_MAJOR    0
 #define VERSION_MINOR    2
-#define VERSION_PATCH    4
+#define VERSION_PATCH    5
 #define VERSION_BUILD    BUILD_NO
 #define VERSION_STRING   TOSTRING(VERSION_MAJOR) "." TOSTRING(VERSION_MINOR) "." TOSTRING(VERSION_PATCH) " (" TOSTRING(BUILD_NO) ")"
 #if defined(_WIN64)
@@ -610,11 +610,12 @@ int can_write(int handle, const can_msg_t *msg, uint16_t timeout)
         dlc = (unsigned int)(DLC2LEN(msg->dlc)); // why? acc. to docu is dlc DLC, not length
         memcpy(data, msg->data, DLC2LEN(msg->dlc));
     }
-#ifdef KVASER_ASYNCHRONOUS_WRITE
-    if ((rc = canWrite(can[handle].handle, id, &data, dlc, flags)) != canOK)
-#else
-    if ((rc = canWriteWait(can[handle].handle, id, &data, dlc, flags, KVASER_TRM_TIMEOUT)) != canOK)
-#endif
+    if (timeout == 0U)
+        rc = canWrite(can[handle].handle, id, &data, dlc, flags);
+    else
+        rc = canWriteWait(can[handle].handle, id, &data, dlc, flags,
+                (timeout < CANWAIT_INFINITE) ? (unsigned long)timeout : 0xFFFFFFFFUL);
+    if (rc != canOK)
     {
         if ((rc & canERR_TXBUFOFL)) {   //   transmit queue full?
             can[handle].status.transmitter_busy = 1;
@@ -656,7 +657,7 @@ int can_read(int handle, can_msg_t *msg, uint16_t timeout)
 repeat:
     if ((rc = canRead(can[handle].handle, &id, data, &len, &flags, &timestamp)) == canERR_NOMSG) {
         if (timeout > 0) {
-            switch (canWaitForEvent(can[handle].handle, (timeout != CANREAD_INFINITE) ? timeout : INFINITE)) {
+            switch (canWaitForEvent(can[handle].handle, (timeout != CANWAIT_INFINITE) ? (DWORD)timeout : (DWORD)INFINITE)) {
             case canOK:
                 break;                  //   one or more messages received
             case canERR_TIMEOUT:

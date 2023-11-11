@@ -39,7 +39,7 @@ public:
     CANAPI_Return_t ResetController();
 
     CANAPI_Return_t WriteMessage(CANAPI_Message_t message, uint16_t timeout = 0U);
-    CANAPI_Return_t ReadMessage(CANAPI_Message_t &message, uint16_t timeout = CANREAD_INFINITE);
+    CANAPI_Return_t ReadMessage(CANAPI_Message_t &message, uint16_t timeout = CANWAIT_INFINITE);
 
     CANAPI_Return_t GetStatus(CANAPI_Status_t &status);
     CANAPI_Return_t GetBusLoad(uint8_t &load);
@@ -161,7 +161,7 @@ You can choose between one of them if you use this work in whole or in part.
 Windows is a registered trademark of Microsoft Corporation in the United States and/or other countries. \
 Mac and macOS are trademarks of Apple Inc., registered in the U.S. and other countries. \
 Linux is a registered trademark of Linus Torvalds. \
-All other company, product and service names mentioned herein may be trademarks, registered trademarks or service marks of their respective owners.
+All other company, product and service names mentioned herein may be trademarks, registered trademarks, or service marks of their respective owners.
 
 ### Hazard Note
 
