@@ -528,7 +528,10 @@ TEST_F(GetProperty, GTEST_TESTCASE(IfControllerStarted, GTEST_ENABLED)) {
         // @-- get property value (incl. pre-initialization parameter)
         retVal = dut1.GetProperty(param, (void*)buffer, testcase.SizeOf());
         if (testcase.IsRequired()) {
-            EXPECT_EQ(CCanApi::NoError, retVal);
+            if (testcase.IsModeRunning())
+                EXPECT_EQ(CCanApi::NoError, retVal);
+            else
+                EXPECT_EQ(CCanApi::ControllerOnline, retVal);
         } else if (retVal != CCanApi::NoError){
             EXPECT_EQ(CCanApi::NotSupported, retVal);
         }
@@ -708,4 +711,4 @@ TEST_F(GetProperty, GTEST_TESTCASE(IfChannelTornDown, GTEST_ENABLED)) {
 }
 
 
-//  $Id: TC12_GetProperty.cc 1201 2023-09-13 11:09:28Z makemake $  Copyright (c) UV Software, Berlin.
+//  $Id: TC12_GetProperty.cc 1250 2024-03-04 18:33:06Z haumea $  Copyright (c) UV Software, Berlin.
