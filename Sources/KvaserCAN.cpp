@@ -2,7 +2,7 @@
 //
 //  CAN Interface API, Version 3 (for Kvaser CAN Interfaces)
 //
-//  Copyright (c) 2017-2023 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
+//  Copyright (c) 2017-2024 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
 //  All rights reserved.
 //
 //  This file is part of KvaserCAN-Wrapper.
@@ -314,6 +314,50 @@ EXPORT
 CANAPI_Return_t CKvaserCAN::SetProperty(uint16_t param, const void *value, uint32_t nbyte) {
     // modify a property value of the CAN interface
     return can_property(m_Handle, param, (void*)value, nbyte);
+}
+
+EXPORT
+CANAPI_Return_t CKvaserCAN::SetFilter11Bit(uint32_t code, uint32_t mask) {
+    uint64_t filter = ((uint64_t)code << 32) | (uint64_t)mask;
+    // set the 11-bit acceptance filter of the CAN interface
+    return can_property(m_Handle, CANPROP_SET_FILTER_11BIT, (void*)&filter, sizeof(uint64_t));
+}
+
+EXPORT
+CANAPI_Return_t CKvaserCAN::SetFilter29Bit(uint32_t code, uint32_t mask) {
+    uint64_t filter = ((uint64_t)code << 32) | (uint64_t)mask;
+    // set the 29-bit acceptance filter of the CAN interface
+    return can_property(m_Handle, CANPROP_SET_FILTER_29BIT, (void*)&filter, sizeof(uint64_t));
+}
+
+EXPORT
+CANAPI_Return_t CKvaserCAN::GetFilter11Bit(uint32_t &code, uint32_t &mask) {
+    uint64_t filter = 0U;
+    // retrieve the 11-bit acceptance filter of the CAN interface
+    CANAPI_Return_t rc = can_property(m_Handle, CANPROP_GET_FILTER_11BIT, (void*)&filter, sizeof(uint64_t));
+    if (CANERR_NOERROR == rc) {
+        code = (uint32_t)(filter >> 32);
+        mask = (uint32_t)(filter >> 0);
+    }
+    return rc;
+}
+
+EXPORT
+CANAPI_Return_t CKvaserCAN::GetFilter29Bit(uint32_t &code, uint32_t &mask) {
+    uint64_t filter = 0U;
+    // retrieve the 29-bit acceptance filter of the CAN interface
+    CANAPI_Return_t rc = can_property(m_Handle, CANPROP_GET_FILTER_29BIT, (void*)&filter, sizeof(uint64_t));
+    if (CANERR_NOERROR == rc) {
+        code = (uint32_t)(filter >> 32);
+        mask = (uint32_t)(filter >> 0);
+    }
+    return rc;
+}
+
+EXPORT
+CANAPI_Return_t CKvaserCAN::ResetFilters() {
+    // reset all acceptance filters of the CAN interface
+    return can_property(m_Handle, CANPROP_SET_FILTER_RESET, NULL, 0U);
 }
 
 EXPORT

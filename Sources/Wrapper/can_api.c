@@ -2,7 +2,7 @@
 /*
  *  CAN Interface API, Version 3 (for Kvaser CAN Interfaces)
  *
- *  Copyright (c) 2017-2023 Uwe Vogt, UV Software, Berlin (info@uv-software.de)
+ *  Copyright (c) 2017-2024 Uwe Vogt, UV Software, Berlin (info@uv-software.de)
  *  All rights reserved.
  *
  *  This file is part of KvaserCAN-Wrapper.
@@ -137,6 +137,10 @@ static const char version[] = "CAN API V3 for Kvaser CAN Interfaces, Version " V
                                 ((x) > 12) ? 0xA : \
                                 ((x) > 8) ?  0x9 : (x)
 #endif
+#define FILTER_STD_CODE         (uint32_t)(0x000)
+#define FILTER_STD_MASK         (uint32_t)(0x000)
+#define FILTER_XTD_CODE         (uint32_t)(0x00000000)
+#define FILTER_XTD_MASK         (uint32_t)(0x00000000)
 
 /*  -----------  types  --------------------------------------------------
  */
@@ -157,6 +161,13 @@ typedef struct {                        // data bit-rate:
     unsigned int sjw;                   //   sync. jump width
 }   btr_data_t;
 
+typedef struct {                        // message filtering:
+    struct {                            //   acceptance filter:
+        uint32_t code;                  //     acceptance code
+        uint32_t mask;                  //     acceptance mask
+    } std, xtd;                         //   for standard and extended frames
+}   can_filter_t;
+
 typedef struct {                        // frame counters:
     uint64_t tx;                        //   number of transmitted CAN frames
     uint64_t rx;                        //   number of received CAN frames
@@ -174,6 +185,7 @@ typedef struct {                        // Kvaser CAN interface:
     int        channel;                 //   channel number of the CAN board
     long       frequency;               //   frequency of the CAN controller
     can_mode_t mode;                    //   operation mode of the CAN channel
+    can_filter_t filter;                //   message filter settings
     can_status_t status;                //   8-bit status register
     can_error_t error;                  //   error code capture
     can_counter_t counters;             //   statistical counters
@@ -183,8 +195,10 @@ typedef struct {                        // Kvaser CAN interface:
 /*  -----------  prototypes  ---------------------------------------------
  */
 
-static int kvaser_error(canStatus);    // Kvaser specific errors
+static int kvaser_error(canStatus);     // Kvaser specific errors
 static canStatus kvaser_capability(int channel, can_mode_t *capability);
+static canStatus kvaser_set_filter(int handle, uint64_t filter, int xtd);
+static canStatus kvaser_reset_filter(int handle);
 
 static int map_index2params(int index, btr_nominal_t *busParams);
 static int map_bitrate2params(const can_bitrate_t *bitrate, btr_nominal_t *busParams);
@@ -195,11 +209,13 @@ static int map_paramsFd2bitrate(const btr_data_t *busParams, long canClock, can_
 static int lib_parameter(uint16_t param, void *value, size_t nbyte);
 static int drv_parameter(int handle, uint16_t param, void *value, size_t nbyte);
 
+static void var_init(void);             // initialize variables
+
 
 /*  -----------  variables  ----------------------------------------------
  */
 
-can_board_t can_boards[KVASER_BOARDS+1]=// list of CAN Interface boards:
+can_board_t can_boards[KVASER_BOARDS+1] = // list of CAN Interface channels:
 {
     {KVASER_CAN_CHANNEL0,                 "Kvaser CAN Channel 0"},
     {KVASER_CAN_CHANNEL1,                 "Kvaser CAN Channel 1"},
@@ -230,19 +246,7 @@ int can_test(int32_t board, uint8_t mode, const void *param, int *result)
     int i, n;
 
     if (!init) {                        // when not init before:
-        for (i = 0; i < KVASER_MAX_HANDLES; i++) {
-            can[i].handle = canINVALID_HANDLE;
-            can[i].channel = KVASER_CHANNEL_DEFAULT;
-            can[i].frequency = KVASER_FREQ_DEFAULT;
-            can[i].mode.byte = CANMODE_DEFAULT;
-            can[i].status.byte = CANSTAT_RESET;
-            can[i].error.lec = 0x00u;
-            can[i].error.rx_err = 0u;
-            can[i].error.tx_err = 0u;
-            can[i].counters.tx = 0ull;
-            can[i].counters.rx = 0ull;
-            can[i].counters.err = 0ull;
-        }
+        var_init();                     //   initialize the variables
         canInitializeLibrary();         //   initialize the driver
         init = 1;                       //   set initialization flag
     }
@@ -318,21 +322,9 @@ int can_init(int32_t board, uint8_t mode, const void *param)
     int i;
 
     if (!init) {                        // when not init before:
-        for (i = 0; i < KVASER_MAX_HANDLES; i++) {
-            can[i].handle = canINVALID_HANDLE;
-            can[i].channel = KVASER_CHANNEL_DEFAULT;
-            can[i].frequency = KVASER_FREQ_DEFAULT;
-            can[i].mode.byte = CANMODE_DEFAULT;
-            can[i].status.byte = CANSTAT_RESET;
-            can[i].error.lec = 0x00u;
-            can[i].error.rx_err = 0u;
-            can[i].error.tx_err = 0u;
-            can[i].counters.tx = 0ull;
-            can[i].counters.rx = 0ull;
-            can[i].counters.err = 0ull;
-        }
-        canInitializeLibrary();         // initialize the driver
-        init = 1;                       // set initialization flag
+        var_init();                     //   initialize the variables
+        canInitializeLibrary();         //   initialize the driver
+        init = 1;                       //   set initialization flag
     }
     for (i = 0; i < KVASER_MAX_HANDLES; i++) {
         if ((can[i].handle != canINVALID_HANDLE) &&
@@ -926,6 +918,50 @@ static canStatus kvaser_capability(int channel, can_mode_t *capability)
     return canOK;
 }
 
+static canStatus kvaser_set_filter(int handle, uint64_t filter, int xtd)
+{
+    canStatus rc;                       // return value
+
+    /* the acceptance code and mask are coded together in a 64-bit value, each of them using 4 bytes
+     * the acceptance code is in the most significant bytes, the mask in the least significant bytes
+     */
+    unsigned int code = (unsigned int)((filter >> 32)) & (unsigned int)(xtd ? CAN_MAX_XTD_ID : CAN_MAX_STD_ID);
+    unsigned int mask = (unsigned int)((filter >>  0)) & (unsigned int)(xtd ? CAN_MAX_XTD_ID : CAN_MAX_STD_ID);
+
+    /* set the acceptance filter */
+    if ((rc = canSetAcceptanceFilter(handle, code, mask, xtd)) != canOK)
+        return rc;
+
+    /* store the acceptance filter values (they cannot be read from the channel) */
+    if (!xtd) {
+        can[handle].filter.std.code = code;
+        can[handle].filter.std.mask = mask;
+    } else {
+        can[handle].filter.xtd.code = code;
+        can[handle].filter.xtd.mask = mask;
+    }
+    return canOK;
+}
+
+static canStatus kvaser_reset_filter(int handle)
+{
+    canStatus rc;                       // return value
+
+    /* reset the acceptance filter for extended identifier */
+    if ((rc = canSetAcceptanceFilter(handle, FILTER_XTD_CODE, FILTER_XTD_MASK, 1)) != canOK)
+        return rc;
+    can[handle].filter.xtd.code = FILTER_XTD_CODE;
+    can[handle].filter.xtd.mask = FILTER_XTD_MASK;
+
+    /* reset the acceptance filter for standard identifier */
+    if ((rc = canSetAcceptanceFilter(handle, FILTER_STD_CODE, FILTER_STD_MASK, 0)) != canOK)
+        return rc;
+    can[handle].filter.std.code = FILTER_STD_CODE;
+    can[handle].filter.std.mask = FILTER_STD_MASK;
+
+    return canOK;
+}
+
 static int map_index2params(int index, btr_nominal_t *busParams)
 {
     switch (index) {
@@ -1058,7 +1094,8 @@ static int lib_parameter(uint16_t param, void *value, size_t nbyte)
 
     if (value == NULL) {                // check for null-pointer
         if ((param != CANPROP_SET_FIRST_CHANNEL) &&
-           (param != CANPROP_SET_NEXT_CHANNEL))
+            (param != CANPROP_SET_NEXT_CHANNEL) &&
+            (param != CANPROP_SET_FILTER_RESET))
             return CANERR_NULLPTR;
     }
     /* CAN library properties */
@@ -1206,6 +1243,11 @@ static int lib_parameter(uint16_t param, void *value, size_t nbyte)
     case CANPROP_GET_RCV_QUEUE_SIZE:    // maximum number of message the receive queue can hold (uint32_t)
     case CANPROP_GET_RCV_QUEUE_HIGH:    // maximum number of message the receive queue has hold (uint32_t)
     case CANPROP_GET_RCV_QUEUE_OVFL:    // overflow counter of the receive queue (uint64_t)
+    case CANPROP_GET_FILTER_11BIT:      // acceptance filter code and mask for 11-bit identifier (uint64_t)
+    case CANPROP_GET_FILTER_29BIT:      // acceptance filter code and mask for 29-bit identifier (uint64_t)
+    case CANPROP_SET_FILTER_11BIT:      // set value for acceptance filter code and mask for 11-bit identifier (uint64_t)
+    case CANPROP_SET_FILTER_29BIT:      // set value for acceptance filter code and mask for 29-bit identifier (uint64_t)
+    case CANPROP_SET_FILTER_RESET:      // reset acceptance filter code and mask to default values (NULL)
         // note: a device parameter requires a valid handle.
         if (!init)
             rc = CANERR_NOTINIT;
@@ -1233,7 +1275,8 @@ static int drv_parameter(int handle, uint16_t param, void *value, size_t nbyte)
 
     if (value == NULL) {                // check for null-pointer
         if ((param != CANPROP_SET_FIRST_CHANNEL) &&
-           (param != CANPROP_SET_NEXT_CHANNEL))
+            (param != CANPROP_SET_NEXT_CHANNEL) &&
+            (param != CANPROP_SET_FILTER_RESET))
             return CANERR_NULLPTR;
     }
     /* CAN interface properties */
@@ -1348,6 +1391,67 @@ static int drv_parameter(int handle, uint16_t param, void *value, size_t nbyte)
         // note: cannot be determined
         rc = CANERR_NOTSUPP;
         break;
+    case CANPROP_GET_FILTER_11BIT:      // acceptance filter code and mask for 11-bit identifier (uint64_t)
+        if (nbyte >= sizeof(uint64_t)) {
+            *(uint64_t*)value = ((uint64_t)can[handle].filter.std.code << 32)
+                              | ((uint64_t)can[handle].filter.std.mask);
+            rc = CANERR_NOERROR;
+        }
+        break;
+    case CANPROP_GET_FILTER_29BIT:      // acceptance filter code and mask for 29-bit identifier (uint64_t)
+        if (nbyte >= sizeof(uint64_t)) {
+            *(uint64_t*)value = ((uint64_t)can[handle].filter.xtd.code << 32)
+                              | ((uint64_t)can[handle].filter.xtd.mask);
+            rc = CANERR_NOERROR;
+        }
+        break;
+    case CANPROP_SET_FILTER_11BIT:      // set value for acceptance filter code and mask for 11-bit identifier (uint64_t)
+        if (nbyte >= sizeof(uint64_t)) {
+            if (!(*(uint64_t*)value & 0xFFFFF800FFFFF800ULL)) {
+                // note: code and mask must not exceed 11-bit identifier
+                if (can[handle].status.can_stopped) {
+                    // note: set filter only if the CAN controller is in INIT mode
+                    if ((sts = kvaser_set_filter(handle, *(uint64_t*)value, 0)) == canOK)
+                        rc = CANERR_NOERROR;
+                    else
+                        rc = kvaser_error(sts);
+                }
+                else
+                    rc = CANERR_ONLINE;
+            }
+            else
+                rc = CANERR_ILLPARA;
+        }
+        break;
+    case CANPROP_SET_FILTER_29BIT:      // set value for acceptance filter code and mask for 29-bit identifier (uint64_t)
+        if (nbyte >= sizeof(uint64_t)) {
+            if (!(*(uint64_t*)value & 0xE0000000E0000000ULL) && !can[handle].mode.nxtd) {
+                // note: code and mask must not exceed 29-bit identifier and 29-bit mode must not be suppressed
+                if (can[handle].status.can_stopped) {
+                    // note: set filter only if the CAN controller is in INIT mode
+                    if ((sts = kvaser_set_filter(handle, *(uint64_t*)value, 1)) == canOK)
+                        rc = CANERR_NOERROR;
+                    else
+                        rc = kvaser_error(sts);
+                }
+                else
+                    rc = CANERR_ONLINE;
+            }
+            else
+                rc = CANERR_ILLPARA;
+        }
+        break;
+    case CANPROP_SET_FILTER_RESET:      // reset acceptance filter code and mask to default values (NULL)
+        if (can[handle].status.can_stopped) {
+            // note: reset filter only if the CAN controller is in INIT mode
+            if ((sts = kvaser_reset_filter(handle)) == canOK)
+                rc = CANERR_NOERROR;
+            else
+                rc = kvaser_error(sts);
+        }
+        else
+            rc = CANERR_ONLINE;
+        break;
     default:
         if ((CANPROP_GET_VENDOR_PROP <= param) &&  // get a vendor-specific property value (void*)
            (param < (CANPROP_GET_VENDOR_PROP + CANPROP_VENDOR_PROP_RANGE))) {
@@ -1370,6 +1474,29 @@ static int drv_parameter(int handle, uint16_t param, void *value, size_t nbyte)
         break;
     }
     return rc;
+}
+
+static void var_init(void)
+{
+    int i;
+
+    for (i = 0; i < KVASER_MAX_HANDLES; i++) {
+        can[i].handle = canINVALID_HANDLE;
+        can[i].channel = KVASER_CHANNEL_DEFAULT;
+        can[i].frequency = KVASER_FREQ_DEFAULT;
+        can[i].mode.byte = CANMODE_DEFAULT;
+        can[i].status.byte = CANSTAT_RESET;
+        can[i].filter.std.code = FILTER_STD_CODE;
+        can[i].filter.std.mask = FILTER_STD_MASK;
+        can[i].filter.xtd.code = FILTER_XTD_CODE;
+        can[i].filter.xtd.mask = FILTER_XTD_MASK;
+        can[i].error.lec = 0x00u;
+        can[i].error.rx_err = 0u;
+        can[i].error.tx_err = 0u;
+        can[i].counters.tx = 0ull;
+        can[i].counters.rx = 0ull;
+        can[i].counters.err = 0ull;
+    }
 }
 
 /*  -----------  revision control  ---------------------------------------
