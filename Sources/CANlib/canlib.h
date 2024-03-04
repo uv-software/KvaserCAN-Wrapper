@@ -3398,6 +3398,8 @@ canStatus CANLIBAPI canGetDriverMode(const CanHandle hnd, int *lineMode, int *re
    *
    */
 #define canVERSION_CANLIB32_BETA        3
+
+
 /** @} */
 
 
