@@ -17,7 +17,6 @@
 #else
  #include <windows.h>
 #endif
-
 #include <inttypes.h>
 
 //#define SECOND_CHANNEL
@@ -128,8 +127,8 @@ int main(int argc, const char * argv[]) {
     CCanApi::EChannelState state;
 //    int32_t clocks[CANPROP_MAX_BUFFER_SIZE/sizeof(int32_t)];
     char szVal[CANPROP_MAX_BUFFER_SIZE];
-    uint16_t u16Val;
     uint32_t u32Val;
+    uint16_t u16Val;
     uint8_t u8Val;
     int32_t i32Val;
     int frames = 0;
@@ -442,14 +441,14 @@ int main(int argc, const char * argv[]) {
             fprintf(stdout, ">>> myDriver.GetProperty(CANPROP_GET_OP_MODE): value = 0x%02X\n", u8Val);
     }
     /* acceptance filtering */
-    if (accCode11 || accMask11) {
+    if ((accCode11 != CANACC_CODE_11BIT) || (accMask11 != CANACC_MASK_11BIT)) {
         retVal = myDriver.SetFilter11Bit(accCode11, accMask11);
         if (retVal != CCanApi::NoError) {
             fprintf(stderr, "+++ error: myDriver.SetFilter11Bit returned %i\n", retVal);
             goto teardown;
         }
     }
-    if (accCode29 || accMask29) {
+    if ((accCode29 != CANACC_CODE_29BIT) || (accMask29 != CANACC_MASK_29BIT)) {
         retVal = myDriver.SetFilter29Bit(accCode29, accMask29);
         if (retVal != CCanApi::NoError) {
             fprintf(stderr, "+++ error: myDriver.SetFilter29Bit returned %i\n", retVal);
