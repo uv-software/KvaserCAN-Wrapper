@@ -127,6 +127,7 @@ int main(int argc, const char * argv[]) {
     CCanApi::EChannelState state;
 //    int32_t clocks[CANPROP_MAX_BUFFER_SIZE/sizeof(int32_t)];
     char szVal[CANPROP_MAX_BUFFER_SIZE];
+    uint64_t u64Val;
     uint32_t u32Val;
     uint16_t u16Val;
     uint8_t u8Val;
@@ -419,6 +420,21 @@ int main(int argc, const char * argv[]) {
         else
             fprintf(stderr, "+++ error: myDriver.GetProperty(CANPROP_GET_DEVICE_DLLNAME) returned %i\n", retVal);
         /* vendor-specific properties */
+        retVal = myDriver.GetProperty(KVASERCAN_PROPERTY_CANLIB_VERSION, (void*)&u16Val, sizeof(uint16_t));
+        if (retVal == CCanApi::NoError)
+            fprintf(stdout, ">>> myDriver.GetProperty(KVASERCAN_PROPERTY_CANLIB_VERSION): value = %u.%u\n", (uint8_t)(u16Val >> 8), (uint8_t)u16Val);
+        else
+            fprintf(stderr, "+++ error: myDriver.GetProperty(KVASERCAN_PROPERTY_CANLIB_VERSION) returned %i\n", retVal);
+        retVal = myDriver.GetProperty(KVASERCAN_PROPERTY_DRIVER_NAME, (void*)szVal, CANPROP_MAX_BUFFER_SIZE);
+        if (retVal == CCanApi::NoError)
+            fprintf(stdout, ">>> myDriver.GetProperty(KVASERCAN_PROPERTY_DRIVER_NAME): value = '%s'\n", szVal);
+        else
+            fprintf(stderr, "+++ error: myDriver.GetProperty(KVASERCAN_PROPERTY_DRIVER_NAME) returned %i\n", retVal);
+        retVal = myDriver.GetProperty(KVASERCAN_PROPERTY_DRIVER_VERSION, (void*)&u64Val, sizeof(uint64_t));
+        if (retVal == CCanApi::NoError)
+            fprintf(stdout, ">>> myDriver.GetProperty(KVASERCAN_PROPERTY_DRIVER_VERSION): value = %u.%u\n", (uint16_t)(u64Val >> 48), (uint16_t)(u64Val >> 32));
+        else
+            fprintf(stderr, "+++ error: myDriver.GetProperty(KVASERCAN_PROPERTY_DRIVER_VERSION) returned %i\n", retVal);
 #if (0)
         retVal = myDriver.GetProperty(KVASERCAN_PROPERTY_SERIAL_NUMBER, (void *)szVal, CANPROP_MAX_BUFFER_SIZE);
         if (retVal == CCanApi::NoError)

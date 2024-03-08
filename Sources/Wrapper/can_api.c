@@ -1254,6 +1254,12 @@ static int lib_parameter(uint16_t param, void *value, size_t nbyte)
         else
             rc = CANERR_HANDLE;
         break;
+    case KVASER_CANLIB_VERSION:         // version number of the CANlib DLL (uint16_t)
+        if (nbyte >= sizeof(uint16_t)) {
+            *(uint16_t*)value = (uint16_t)canGetVersionEx(canVERSION_CANLIB32_PRODVER);
+            rc = CANERR_NOERROR;
+        }
+        break;
     default:
         rc = CANERR_NOTSUPP;
         break;
@@ -1292,7 +1298,7 @@ static int drv_parameter(int handle, uint16_t param, void *value, size_t nbyte)
         break;
     case CANPROP_GET_DEVICE_NAME:       // device name of the CAN interface (char[256])
         if ((nbyte > 0U) && (nbyte <= CANPROP_MAX_BUFFER_SIZE)) {
-            if ((sts = canGetChannelData(can[handle].channel, canCHANNELDATA_CHANNEL_NAME,
+            if ((sts = canGetChannelData(can[handle].channel, canCHANNELDATA_DEVDESCR_ASCII,  // deprecated: canCHANNELDATA_CHANNEL_NAME
                                         (void*)value, (size_t)nbyte)) == canOK)
                 rc = CANERR_NOERROR;
             else
@@ -1451,6 +1457,22 @@ static int drv_parameter(int handle, uint16_t param, void *value, size_t nbyte)
         }
         else
             rc = CANERR_ONLINE;
+        break;
+    case KVASER_DRIVER_VERSION:         // Kvaser's version number of the driver (uint64_t)
+        if (nbyte >= sizeof(uint64_t)) {
+            if ((sts = canGetChannelData(can[handle].channel, canCHANNELDATA_DRIVER_PRODUCT_VERSION,
+                                        (void*)value, (size_t)nbyte)) == canOK)
+                rc = CANERR_NOERROR;
+            else
+                rc = kvaser_error(sts);
+        }
+        break;
+    case KVASER_DRIVER_NAME:            // Kvaser's name of the driver (char[256])
+        if ((nbyte > 0U) && (nbyte <= CANPROP_MAX_BUFFER_SIZE)) {
+            if ((sts = canGetChannelData(can[handle].channel, canCHANNELDATA_DRIVER_NAME,
+                                        (void*)value, (size_t)nbyte)) == canOK)
+                rc = CANERR_NOERROR;
+        }
         break;
     default:
         if ((CANPROP_GET_VENDOR_PROP <= param) &&  // get a vendor-specific property value (void*)
