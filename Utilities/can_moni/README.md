@@ -1,5 +1,5 @@
-__CAN Monitor for Kvaser CAN Interfaces, Version 0.2.5__ \
-Copyright &copy; 2007,2017-2023 by Uwe Vogt, UV Software, Berlin
+__CAN Monitor for Kvaser CAN Interfaces, Version 0.3.0__ \
+Copyright &copy; 2007,2017-2024 by Uwe Vogt, UV Software, Berlin
 
 ```
 Usage: can_moni <interface> [<option>...]
@@ -10,6 +10,10 @@ Options:
   /Ascii=(ON|OFF)                        display data bytes in ASCII (default=ON)
   /Wraparound=(No|8|10|16|32|64)         wraparound after n data bytes (default=NO)
   /eXclude=[~]<id>[-<id>]{,<id>[-<id>]}  exclude CAN-IDs: <id>[-<id>]{,<id>[-<id>]}
+  /CODE:<id>                             acceptance code for 11-bit IDs (default=0x000)
+  /MASK:<id>                             acceptance mask for 11-bit IDs (default=0x000)
+  /XTD-CODE:<id>                         acceptance code for 29-bit IDs (default=0x00000000)
+  /XTD-MASK:<id>                         acceptance mask for 29-bit IDs (default=0x00000000)
   /Mode=(2.0|FDf[+BRS])                  CAN operation mode: CAN 2.0 or CAN FD mode
   /SHARED                                shared CAN controller access (if supported)
   /MONitor=(No|Yes) | /LISTEN-ONLY       monitor mode (listen-only, transmitter is off)
