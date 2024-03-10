@@ -124,7 +124,7 @@ static struct SProperty {
     /* note:  SET_NEXT_CHANNEL is also defined as a setter because it gets the next (virtual) index (see above), but it can be EOF when there is no device entry */
     { CANPROP_SET_NEXT_CHANNEL    , 0U /* NULL pointer*/,    LIB_PARAM, PROP_GETTER, PROP_REQUIRED, MODE_RUNNING, "set index to the next entry in the interface list (NULL)" },
     /* end marker */
-    { CANPROP_INVALID, 0U, false, false, false, "" }
+    { CANPROP_INVALID, 0U, false, false, false, false, "" }
 };
 
 CProperties::CProperties() {
@@ -187,4 +187,4 @@ const char* CProperties::Description() {
         return aProperties[MAX_PROPERTIES].m_szDescription;
 }
 
-// $Id: Properties.cpp 1250 2024-03-04 18:33:06Z haumea $  Copyright (c) UV Software, Berlin //
+// $Id: Properties.cpp 1253 2024-03-09 20:14:41Z haumea $  Copyright (c) UV Software, Berlin //
