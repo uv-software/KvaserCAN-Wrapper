@@ -55,8 +55,7 @@
 #define PLATFORM        "x64"
 #elif defined(_WIN32)
 #define PLATFORM        "x86"
-#elif defined(__linux__)
-#define PLATFORM        "Linux"
+#else
 #error Unsupported architecture
 #endif
 static const char version[] = "CAN API V3 for Kvaser CAN Interfaces, Version " VERSION_STRING;

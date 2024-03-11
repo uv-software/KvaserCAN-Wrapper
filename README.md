@@ -147,12 +147,13 @@ For a list of known bugs and caveats see tab [Issues](https://github.com/uv-soft
 Kvaser´s CANlib SDK can be downloaded form the [Kvaser](https://www.kvaser.com/) website. \
 Please note the copyright and license agreements.
 
-### CAN API V3 Reference
-
-A generic documentation of the CAN API V3 application programming interface can be found [here](https://uv-software.github.io/CANAPI-Docs). 
 ### Wrapper Library for macOS&reg;
 
 A version for macOS can be downloaded from / cloned at [GitHub](https://github.com/mac-can/KvaserCAN-Library).
+
+### CAN API V3 Reference
+
+A generic documentation of the CAN API V3 application programming interface can be found [here](https://uv-software.github.io/CANAPI-Docs/#/).
 
 ### Dual-License
 
