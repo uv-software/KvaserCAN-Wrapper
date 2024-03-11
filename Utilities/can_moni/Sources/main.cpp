@@ -150,7 +150,7 @@ static const char LICENSE[]     = "This program is free software: you can redist
                                   "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n" \
                                   "GNU General Public License for more details.\n\n" \
                                   "You should have received a copy of the GNU General Public License\n" \
-                                  "along with this program.  If not, see <http://www.gnu.org/licenses/>.";
+                                  "along with this program.  If not, see <https://www.gnu.org/licenses/>.";
 #define basename(x)  "can_moni" // FIXME: Where is my `basename' function?
 
 int main(int argc, const char * argv[]) {
