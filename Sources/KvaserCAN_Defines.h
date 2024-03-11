@@ -120,8 +120,11 @@ extern "C" {
 /** @name  CAN API Property Value
  *  @brief CANlib parameter to be read or written
  *  @{ */
-//#define KVASER_IO_SERIAL_NUMBER  0x??U
-// TODO: define more or all parameters
+#define KVASER_CANLIB_VERSION  (CANPROP_DRIVER_SPECIFIC + 0U)
+#define KVASER_DRIVER_VERSION  (CANPROP_DRIVER_SPECIFIC + 22U)
+#define KVASER_DRIVER_NAME     (CANPROP_DRIVER_SPECIFIC + 27U)
+//#define KVASER_IO_SERIAL_NUMBER  (CANPROP_DRIVER_SPECIFIC + 7U)
+ // TODO: define more or all parameters
 // ...
 #define KVASERCAN_MAX_BUFFER_SIZE 256U  /**< max. buffer size for GetProperty/SetProperty */
 /** @} */

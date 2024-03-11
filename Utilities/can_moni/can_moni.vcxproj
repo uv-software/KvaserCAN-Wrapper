@@ -31,6 +31,7 @@
     <ClInclude Include="..\..\Sources\CANAPI\CANAPI_Defines.h" />
     <ClInclude Include="..\..\Sources\CANAPI\CANAPI_Types.h" />
     <ClInclude Include="..\..\Sources\KvaserCAN.h" />
+    <ClInclude Include="..\..\Sources\KvaserCAN_Defaults.h" />
     <ClInclude Include="..\..\Sources\KvaserCAN_Defines.h" />
     <ClInclude Include="Driver.h" />
     <ClInclude Include="Sources\Message.h" />

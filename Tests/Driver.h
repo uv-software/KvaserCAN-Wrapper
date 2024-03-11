@@ -2,7 +2,7 @@
 //
 //  CAN Interface API, Version 3 (Testing)
 //
-//  Copyright (c) 2004-2023 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
+//  Copyright (c) 2004-2024 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
 //  All rights reserved.
 //
 //  This file is part of CAN API V3.
@@ -68,6 +68,7 @@ typedef CKvaserCAN  CCanDriver;
 #define FEATURE_BITRATE_SAM         FEATURE_SUPPORTED
 #define FEATURE_BITRATE_FD_SAM      FEATURE_UNSUPPORTED
 #define FEATURE_BITRATE_SJA1000     FEATURE_UNSUPPORTED
+#define FEATURE_FILTERING           FEATURE_SUPPORTED
 #define FEATURE_ERROR_FRAMES        FEATURE_SUPPORTED
 #define FEATURE_ERROR_CODE_CAPTURE  FEATURE_UNSUPPORTED
 #define FEATURE_BLOCKING_READ       FEATURE_SUPPORTED

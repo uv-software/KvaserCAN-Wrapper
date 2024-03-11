@@ -2,7 +2,7 @@
 //
 //  CAN Monitor for generic Interfaces (CAN API V3)
 //
-//  Copyright (c) 2007,2012-2023 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
+//  Copyright (c) 2007,2012-2024 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -21,8 +21,8 @@
 #define DRIVER_H_INCLUDED
 #include "build_no.h"
 #define VERSION_MAJOR      0
-#define VERSION_MINOR      2
-#define VERSION_PATCH      5
+#define VERSION_MINOR      3
+#define VERSION_PATCH      0
 #define VERSION_BUILD      BUILD_NO
 #define VERSION_STRING     TOSTRING(VERSION_MAJOR) "." TOSTRING(VERSION_MINOR) "." TOSTRING(VERSION_PATCH) " (" TOSTRING(BUILD_NO) ")"
 #if defined(_WIN64)
@@ -44,7 +44,7 @@
 #define CAN_FD_SUPPORTED   1  // don't touch that dial
 #endif
 #define MONITOR_INTEFACE  "Kvaser CAN Interfaces"
-#define MONITOR_COPYRIGHT "2007,2012-2023 by Uwe Vogt, UV Software, Berlin"
+#define MONITOR_COPYRIGHT "2007,2012-2024 by Uwe Vogt, UV Software, Berlin"
 
 #include "KvaserCAN.h"
 

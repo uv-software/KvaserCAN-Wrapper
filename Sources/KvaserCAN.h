@@ -2,7 +2,7 @@
 //
 //  CAN Interface API, Version 3 (for Kvaser CAN Interfaces)
 //
-//  Copyright (c) 2017-2023 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
+//  Copyright (c) 2017-2024 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
 //  All rights reserved.
 //
 //  This file is part of KvaserCAN-Wrapper.
@@ -59,7 +59,7 @@
 #define KVASERCAN_LIBRARY_NAME  CANDLL_KVASER_32
 #define KVASERCAN_LIBRARY_VENDOR  "UV Software, Berlin"
 #define KVASERCAN_LIBRARY_LICENSE  "BSD-2-Clause OR GPL-3.0-or-later"
-#define KVASERCAN_LIBRARY_COPYRIGHT  "Copyright (c) 2017-2023  Uwe Vogt, UV Software, Berlin"
+#define KVASERCAN_LIBRARY_COPYRIGHT  "Copyright (c) 2017-2024 by Uwe Vogt, UV Software, Berlin"
 #define KVASERCAN_LIBRARY_HAZARD_NOTE  "If you connect your CAN device to a real CAN network when using this library,\n" \
                                        "you might damage your application."
 /// \}
@@ -114,6 +114,12 @@ public:
     CANAPI_Return_t GetProperty(uint16_t param, void *value, uint32_t nbyte);
     CANAPI_Return_t SetProperty(uint16_t param, const void *value, uint32_t nbyte);
 
+    CANAPI_Return_t SetFilter11Bit(uint32_t code, uint32_t mask);
+    CANAPI_Return_t SetFilter29Bit(uint32_t code, uint32_t mask);
+    CANAPI_Return_t GetFilter11Bit(uint32_t &code, uint32_t &mask);
+    CANAPI_Return_t GetFilter29Bit(uint32_t &code, uint32_t &mask);
+    CANAPI_Return_t ResetFilters();
+
     char *GetHardwareVersion();  // (for compatibility reasons)
     char *GetFirmwareVersion();  // (for compatibility reasons)
     static char *GetVersion();  // (for compatibility reasons)
@@ -160,6 +166,9 @@ public:
 //#define KVASERCAN_PROPERTY_RCV_QUEUE_SIZE   (CANPROP_GET_RCV_QUEUE_SIZE)
 //#define KVASERCAN_PROPERTY_RCV_QUEUE_HIGH   (CANPROP_GET_RCV_QUEUE_HIGH)
 //#define KVASERCAN_PROPERTY_RCV_QUEUE_OVFL   (CANPROP_GET_RCV_QUEUE_OVFL)
-//#define KVASERCAN_PROPERTY_SERIAL_NUMBER    (CANPROP_GET_VENDOR_PROP + KVASER_IO_SERIAL_NUMBER)
+#define KVASERCAN_PROPERTY_CANLIB_VERSION   (KVASER_CANLIB_VERSION)
+#define KVASERCAN_PROPERTY_DRIVER_VERSION   (KVASER_DRIVER_VERSION)
+#define KVASERCAN_PROPERTY_DRIVER_NAME      (KVASER_DRIVER_NAME)
+//#define KVASERCAN_PROPERTY_SERIAL_NUMBER    (KVASER_CARD_SERIAL_NO)
 /// \}
 #endif // KVASERCAN_H_INCLUDED
