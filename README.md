@@ -120,7 +120,7 @@ Type `can_test /?` to display all program options.
 
 ### Target Platform
 
-- Windows 10 (x64 operating systems)
+- Windows 10 & 11 (x64 operating systems)
 
 ### Development Environment
 
