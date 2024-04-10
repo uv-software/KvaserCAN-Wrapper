@@ -118,8 +118,8 @@ int main(int argc, const char * argv[]) {
     int32_t channel = (int32_t)CHANNEL;
     uint32_t accCode11 = CANACC_CODE_11BIT;
     uint32_t accMask11 = CANACC_MASK_11BIT;
-    uint16_t accCode29 = CANACC_CODE_29BIT;
-    uint16_t accMask29 = CANACC_MASK_29BIT;
+    uint32_t accCode29 = CANACC_CODE_29BIT;
+    uint32_t accMask29 = CANACC_MASK_29BIT;
     uint16_t rxTimeout = CANWAIT_INFINITE;
     uint16_t txTimeout = 0U;
     useconds_t txDelay = 0U;
