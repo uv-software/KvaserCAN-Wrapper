@@ -73,8 +73,8 @@ extern "C" {
 #ifndef OPTION_DISABLED
 #define OPTION_DISABLED  0  /**< if a define is not defined, it is automatically set to 0 */
 #endif
-#ifndef OPTION_PCAN_BIT_TIMING
-#define OPTION_PCAN_BIT_TIMING OPTION_DISABLED
+#ifndef OPTION_KVASER_BIT_TIMING
+#define OPTION_KVASER_BIT_TIMING OPTION_DISABLED
 #endif
 #if (OPTION_KVASER_BIT_TIMING != OPTION_DISABLED)
 #ifdef _MSC_VER
