@@ -7,8 +7,8 @@
 //
 //  This file is part of CAN API V3.
 //
-//  CAN API V3 is dual-licensed under the BSD 2-Clause "Simplified" License and
-//  under the GNU General Public License v3.0 (or any later version).
+//  CAN API V3 is dual-licensed under the BSD 2-Clause "Simplified" License
+//  and under the GNU General Public License v3.0 (or any later version).
 //  You can choose between one of them if you use this file.
 //
 //  BSD 2-Clause "Simplified" License:
@@ -43,7 +43,7 @@
 //  GNU General Public License for more details.
 //
 //  You should have received a copy of the GNU General Public License
-//  along with CAN API V3.  If not, see <http://www.gnu.org/licenses/>.
+//  along with CAN API V3.  If not, see <https://www.gnu.org/licenses/>.
 //
 #ifndef DRIVER_H_INCLUDED
 #define DRIVER_H_INCLUDED
@@ -79,6 +79,7 @@ typedef CKvaserCAN  CCanDriver;
 //  (§5) define macros for CAN Classic bit-rate settings
 //       at least BITRATE_1M, BITRATE_500K, BITRATE_250K, BITRATE_125K, 
 //                BITRATE_100K, BITRATE_50K, BITRATE_20K, BITRATE_10K
+#if (OPTION_KVASER_BIT_TIMING == 1)
 #define BITRATE_1M(x)    KVASER_CAN_BR_1M(x)
 #define BITRATE_800K(x)  KVASER_CAN_BR_800K(x)
 #define BITRATE_500K(x)  KVASER_CAN_BR_500K(x)
@@ -89,6 +90,18 @@ typedef CKvaserCAN  CCanDriver;
 #define BITRATE_20K(x)   KVASER_CAN_BR_20K(x)
 #define BITRATE_10K(x)   KVASER_CAN_BR_10K(x)
 #define BITRATE_5K(x)    KVASER_CAN_BR_5K(x)
+#else
+#define BITRATE_1M(x)    DEFAULT_CAN_BR_1M(x)  
+#define BITRATE_800K(x)  DEFAULT_CAN_BR_800K(x)
+#define BITRATE_500K(x)  DEFAULT_CAN_BR_500K(x)
+#define BITRATE_250K(x)  DEFAULT_CAN_BR_250K(x)
+#define BITRATE_125K(x)  DEFAULT_CAN_BR_125K(x)
+#define BITRATE_100K(x)  DEFAULT_CAN_BR_100K(x)
+#define BITRATE_50K(x)   DEFAULT_CAN_BR_50K(x) 
+#define BITRATE_20K(x)   DEFAULT_CAN_BR_20K(x) 
+#define BITRATE_10K(x)   DEFAULT_CAN_BR_10K(x) 
+#define BITRATE_5K(x)    DEFAULT_CAN_BR_5K(x)  
+#endif
 
 //  (§6) define macros for workarounds (e.g. TC01_3_ISSUE)
 #define TC09_8_ISSUE_BUS_OFF  WORKAROUND_ENABLED  // 2023-08-28: test hangs up
