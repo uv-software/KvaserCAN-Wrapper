@@ -22,7 +22,7 @@
 //#define SECOND_CHANNEL
 #define ISSUE_198   (0)
 
-#if (1)
+#if (OPTION_KVASER_BIT_TIMING == 1)
 #define BITRATE_1M(x)    KVASER_CAN_BR_1M(x)
 #define BITRATE_800K(x)  KVASER_CAN_BR_800K(x)
 #define BITRATE_500K(x)  KVASER_CAN_BR_500K(x)
@@ -45,7 +45,6 @@
 #define BITRATE_10K(x)   DEFAULT_CAN_BR_10K(x) 
 #define BITRATE_5K(x)    DEFAULT_CAN_BR_5K(x)  
 #endif
-#if (1)
 #define BITRATE_FD_1M(x)      KVASER_CAN_FD_BR_1M(x)
 #define BITRATE_FD_500K(x)    KVASER_CAN_FD_BR_500K(x)
 #define BITRATE_FD_250K(x)    KVASER_CAN_FD_BR_250K(x)
@@ -54,16 +53,7 @@
 #define BITRATE_FD_500K4M(x)  KVASER_CAN_FD_BR_500K4M(x)
 #define BITRATE_FD_250K2M(x)  KVASER_CAN_FD_BR_250K2M(x)
 #define BITRATE_FD_125K1M(x)  KVASER_CAN_FD_BR_125K1M(x)
-#else
-#define BITRATE_FD_1M(x)      DEFAULT_CAN_FD_BR_1M(x)
-#define BITRATE_FD_500K(x)    DEFAULT_CAN_FD_BR_500K(x)
-#define BITRATE_FD_250K(x)    DEFAULT_CAN_FD_BR_250K(x)
-#define BITRATE_FD_125K(x)    DEFAULT_CAN_FD_BR_125K(x)
-#define BITRATE_FD_1M8M(x)    DEFAULT_CAN_FD_BR_1M8M(x)
-#define BITRATE_FD_500K4M(x)  DEFAULT_CAN_FD_BR_500K4M(x)
-#define BITRATE_FD_250K2M(x)  DEFAULT_CAN_FD_BR_250K2M(x)
-#define BITRATE_FD_125K1M(x)  DEFAULT_CAN_FD_BR_125K1M(x)
-#endif
+
 #define OPTION_NO   (0)
 #define OPTION_YES  (1)
 
@@ -118,8 +108,8 @@ int main(int argc, const char * argv[]) {
     int32_t channel = (int32_t)CHANNEL;
     uint32_t accCode11 = CANACC_CODE_11BIT;
     uint32_t accMask11 = CANACC_MASK_11BIT;
-    uint16_t accCode29 = CANACC_CODE_29BIT;
-    uint16_t accMask29 = CANACC_MASK_29BIT;
+    uint32_t accCode29 = CANACC_CODE_29BIT;
+    uint32_t accMask29 = CANACC_MASK_29BIT;
     uint16_t rxTimeout = CANWAIT_INFINITE;
     uint16_t txTimeout = 0U;
     useconds_t txDelay = 0U;
@@ -271,7 +261,7 @@ int main(int argc, const char * argv[]) {
             fprintf(stderr, "+++ error: myDriver.GetProperty(CANPROP_GET_PATCH_NO) returned %i\n", retVal);
         retVal = myDriver.GetProperty(CANPROP_GET_BUILD_NO, (void *)&u32Val, sizeof(uint32_t));
         if (retVal == CCanApi::NoError)
-            fprintf(stdout, ">>> myDriver.GetProperty(CANPROP_GET_BUILD_NO): value = 0x%07" PRIx32 "\n", u32Val);
+            fprintf(stdout, ">>> myDriver.GetProperty(CANPROP_GET_BUILD_NO): value = %07" PRIx32 "\n", u32Val);
         else
             fprintf(stderr, "+++ error: myDriver.GetProperty(CANPROP_GET_BUILD_NO) returned %i\n", retVal);
         retVal = myDriver.GetProperty(CANPROP_GET_LIBRARY_ID, (void *)&i32Val, sizeof(int32_t));
@@ -344,7 +334,8 @@ int main(int argc, const char * argv[]) {
         bool result = CCanDriver::GetFirstChannel(info);
         while (result) {
             retVal = CCanDriver::ProbeChannel(info.m_nChannelNo, opMode, state);
-            fprintf(stdout, ">>> CCanAPI::ProbeChannel(%i): state = %s", info.m_nChannelNo,
+            fprintf(stdout, ">>> CCanAPI::ProbeChannel(%i): %s = %s",
+                             info.m_nChannelNo, info.m_szDeviceName,
                             (state == CCanApi::ChannelOccupied) ? "occupied" :
                             (state == CCanApi::ChannelAvailable) ? "available" :
                             (state == CCanApi::ChannelNotAvailable) ? "not available" : "not testable");

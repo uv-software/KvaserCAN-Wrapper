@@ -2,7 +2,7 @@
 /*
  *  CAN Interface API, Version 3 (for Kvaser CAN Interfaces)
  *
- *  Copyright (c) 2017-2023 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
+ *  Copyright (c) 2017-2024 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
  *  All rights reserved.
  *
  *  This file is part of KvaserCAN-Wrapper.
@@ -43,7 +43,7 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with KvaserCAN-Wrapper.  If not, see <http://www.gnu.org/licenses/>.
+ *  along with KvaserCAN-Wrapper.  If not, see <https://www.gnu.org/licenses/>.
  */
 /** @addtogroup  can_api
  *  @{
@@ -124,7 +124,7 @@ extern "C" {
 #define KVASER_DRIVER_VERSION  (CANPROP_DRIVER_SPECIFIC + 22U)
 #define KVASER_DRIVER_NAME     (CANPROP_DRIVER_SPECIFIC + 27U)
 //#define KVASER_IO_SERIAL_NUMBER  (CANPROP_DRIVER_SPECIFIC + 7U)
- // TODO: define more or all parameters
+// TODO: define more or all parameters
 // ...
 #define KVASERCAN_MAX_BUFFER_SIZE 256U  /**< max. buffer size for GetProperty/SetProperty */
 /** @} */
@@ -134,7 +134,7 @@ extern "C" {
  *  @{ */
 #define KVASER_LIB_ID            600    /**< library ID (CAN/COP API V1 compatible) */
 #if defined(_WIN32) || defined (_WIN64)
- #define KVASER_LIB_CANLIB      "canLib32.DLL"
+ #define KVASER_LIB_CANLIB      "canLib32.dll"
  #define KVASER_LIB_WRAPPER     "u3cankvl.dll"
 #elif defined(__APPLE__)
  #define KVASER_LIB_CANLIB      "(n/a)"
@@ -146,7 +146,7 @@ extern "C" {
 
 /** @name  Miscellaneous
  *  @brief More or less useful stuff
- *  @{ */                       // TODO: to be moved or removed
+ *  @{ */
 #define KVASER_LIB_VENDOR       "Kvaser AB, Sweden"
 #define KVASER_LIB_WEBSITE      "https://www.kvaser.com/"
 #define KVASER_LIB_HAZARD_NOTE  "If you connect your CAN device to a real CAN network when using this library,\n" \
@@ -162,5 +162,5 @@ extern "C" {
 /*  ----------------------------------------------------------------------
  *  Uwe Vogt,  UV Software,  Chausseestrasse 33 A,  10115 Berlin,  Germany
  *  Tel.: +49-30-46799872,  Fax: +49-30-46799873,  Mobile: +49-170-3801903
- *  E-Mail: uwe.vogt@uv-software.de,  Homepage: http://www.uv-software.de/
+ *  E-Mail: uwe.vogt@uv-software.de, Homepage: https://www.uv-software.de/
  */
