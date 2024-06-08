@@ -55,16 +55,15 @@
 #endif
 #endif
 #if defined(_WIN64)
-#define PLATFORM        "x64"
+#define PLATFORM  "x64"
 #elif defined(_WIN32)
-#define PLATFORM        "x86"
+#define PLATFORM  "x86"
 #else
 #error Platform not supported
 #endif
 
 /*  -----------  includes  -----------------------------------------------
  */
-
 #include "can_defs.h"
 #include "can_api.h"
 #include "can_btr.h"
@@ -1452,7 +1451,7 @@ static int drv_parameter(int handle, uint16_t param, void *value, size_t nbyte)
         if (nbyte >= sizeof(uint64_t)) {
             if (!(*(uint64_t*)value & 0xE0000000E0000000ULL) &&   // TODO: replace by a define
                 !can[handle].mode.nxtd) {
-                // note: code and mask must not exceed 29-bit identifier and 
+                // note: code and mask must not exceed 29-bit identifier and
                 //       extended frame format mode must not be suppressed
                 if (can[handle].status.can_stopped) {
                     // note: set filter only if the CAN controller is in INIT mode

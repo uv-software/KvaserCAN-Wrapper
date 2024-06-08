@@ -54,6 +54,7 @@
 /*  -----------  includes  ------------------------------------------------
  */
 
+#include "Version.h"
 #include "CANAPI_Defines.h"
 #include "KvaserCAN_Defines.h"
 
