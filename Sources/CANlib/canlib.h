@@ -4896,7 +4896,7 @@ kvStatus CANLIBAPI kvSetNotifyCallback(const CanHandle hnd,
  */
 
 /**
-* Unkown bus type.
+* Unknown bus type.
 * \note Not inplemented in linux.
 */
 #define kvBUSTYPE_NONE          0
