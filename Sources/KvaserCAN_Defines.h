@@ -134,10 +134,10 @@ extern "C" {
  *  @{ */
 #define KVASER_LIB_ID            600    /**< library ID (CAN/COP API V1 compatible) */
 #if defined(_WIN32) || defined (_WIN64)
- #define KVASER_LIB_CANLIB      "canLib32.dll"
+ #define KVASER_LIB_CANLIB      "canlib32.dll"
  #define KVASER_LIB_WRAPPER     "u3cankvl.dll"
 #elif defined(__APPLE__)
- #define KVASER_LIB_CANLIB      "(n/a)"
+ #define KVASER_LIB_CANLIB      "(driverless)"
  #define KVASER_LIB_WRAPPER     "libUVCANKVL.dylib"
 #else
  #error Platform not supported

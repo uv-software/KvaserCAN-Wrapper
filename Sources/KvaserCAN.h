@@ -79,7 +79,7 @@ public:
     // CKvaserCAN-specific error codes (CAN API V3 extension)
     enum EErrorCodes {
         // note: range 0...-99 is reserved by CAN API V3
-        GeneralError = VendorSpecific, ///< mapped Kvaser CANlib error codes
+        GeneralError = VendorSpecific
     };
     // CCanApi overrides
     static bool GetFirstChannel(SChannelInfo &info, void *param = NULL);
