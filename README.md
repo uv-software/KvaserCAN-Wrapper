@@ -1,6 +1,6 @@
 ### CAN API V3 Wrapper Library for Kvaser CAN Interfaces (Windows&reg;)
 
-_Copyright &copy; 2017-2024 Uwe Vogt, UV Software, Berlin (info@uv-software.com)_
+_Copyright &copy; 2017-2024  Uwe Vogt, UV Software, Berlin (info@uv-software.com)_
 
 ![MSBuild](https://github.com/uv-software/KvaserCAN-Wrapper/actions/workflows/msbuild.yml/badge.svg)
 
