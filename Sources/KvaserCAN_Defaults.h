@@ -64,26 +64,6 @@ extern "C" {
 /*  -----------  options  ------------------------------------------------
  */
 
-/** @name  Compiler Switches
- *  @brief Options for conditional compilation.
- *  @{ */
-/** @note  Set define OPTION_KVASER_BIT_TIMING to a non-zero value to compile
- *         with non CiA bit-timing (e.g. in the build environment).
- */
-#ifndef OPTION_DISABLED
-#define OPTION_DISABLED  0  /**< if a define is not defined, it is automatically set to 0 */
-#endif
-#ifndef OPTION_KVASER_BIT_TIMING
-#define OPTION_KVASER_BIT_TIMING OPTION_DISABLED
-#endif
-#if (OPTION_KVASER_BIT_TIMING != OPTION_DISABLED)
-#ifdef _MSC_VER
-#pragma message ( "Compilation with non CiA bit-timming!" )
-#else
-#warning Compilation with non CiA bit-timming!
-#endif
-#endif
-/** @} */
 
 /*  -----------  defines  ------------------------------------------------
  */
@@ -100,15 +80,15 @@ extern "C" {
 /** @name  Kvaser CAN 2.0 Bit-rate Settings
  *  @brief Default values (not compatible to CiA CANopen DS-301 spec.).
  *  @{ */
-#define KVASER_CAN_BR_1M(x)     do{x.btr.frequency=KVASER_CAN_CLOCK;x.btr.nominal.brp= 1;x.btr.nominal.tseg1= 5;x.btr.nominal.tseg2= 2;x.btr.nominal.sjw= 1;x.btr.nominal.sam=0;} while(0)
-#define KVASER_CAN_BR_800K(x)   do{x.btr.frequency=KVASER_CAN_CLOCK;x.btr.nominal.brp= 1;x.btr.nominal.tseg1= 7;x.btr.nominal.tseg2= 2;x.btr.nominal.sjw= 1;x.btr.nominal.sam=0;} while(0)
-#define KVASER_CAN_BR_500K(x)   do{x.btr.frequency=KVASER_CAN_CLOCK;x.btr.nominal.brp= 2;x.btr.nominal.tseg1= 5;x.btr.nominal.tseg2= 2;x.btr.nominal.sjw= 1;x.btr.nominal.sam=0;} while(0)
-#define KVASER_CAN_BR_250K(x)   do{x.btr.frequency=KVASER_CAN_CLOCK;x.btr.nominal.brp= 4;x.btr.nominal.tseg1= 5;x.btr.nominal.tseg2= 2;x.btr.nominal.sjw= 1;x.btr.nominal.sam=0;} while(0)
-#define KVASER_CAN_BR_125K(x)   do{x.btr.frequency=KVASER_CAN_CLOCK;x.btr.nominal.brp= 4;x.btr.nominal.tseg1=11;x.btr.nominal.tseg2= 4;x.btr.nominal.sjw= 1;x.btr.nominal.sam=0;} while(0)
-#define KVASER_CAN_BR_100K(x)   do{x.btr.frequency=KVASER_CAN_CLOCK;x.btr.nominal.brp= 5;x.btr.nominal.tseg1=11;x.btr.nominal.tseg2= 4;x.btr.nominal.sjw= 1;x.btr.nominal.sam=0;} while(0)
-#define KVASER_CAN_BR_50K(x)    do{x.btr.frequency=KVASER_CAN_CLOCK;x.btr.nominal.brp=10;x.btr.nominal.tseg1=11;x.btr.nominal.tseg2= 4;x.btr.nominal.sjw= 1;x.btr.nominal.sam=0;} while(0)
-#define KVASER_CAN_BR_20K(x)    do{x.btr.frequency=KVASER_CAN_CLOCK;x.btr.nominal.brp=25;x.btr.nominal.tseg1=11;x.btr.nominal.tseg2= 4;x.btr.nominal.sjw= 1;x.btr.nominal.sam=0;} while(0)
-#define KVASER_CAN_BR_10K(x)    do{x.btr.frequency=KVASER_CAN_CLOCK;x.btr.nominal.brp=50;x.btr.nominal.tseg1=11;x.btr.nominal.tseg2= 4;x.btr.nominal.sjw= 1;x.btr.nominal.sam=0;} while(0)
+#define KVASER_CAN_BR_1M(x)     do{x.btr.frequency=KVASER_CAN_CLOCK;x.btr.nominal.brp=1;  x.btr.nominal.tseg1=5; x.btr.nominal.tseg2=2;x.btr.nominal.sjw=1;x.btr.nominal.sam=0;} while(0)
+#define KVASER_CAN_BR_800K(x)   do{x.btr.frequency=KVASER_CAN_CLOCK;x.btr.nominal.brp=1;  x.btr.nominal.tseg1=7; x.btr.nominal.tseg2=2;x.btr.nominal.sjw=1;x.btr.nominal.sam=0;} while(0)
+#define KVASER_CAN_BR_500K(x)   do{x.btr.frequency=KVASER_CAN_CLOCK;x.btr.nominal.brp=2;  x.btr.nominal.tseg1=5; x.btr.nominal.tseg2=2;x.btr.nominal.sjw=1;x.btr.nominal.sam=0;} while(0)
+#define KVASER_CAN_BR_250K(x)   do{x.btr.frequency=KVASER_CAN_CLOCK;x.btr.nominal.brp=4;  x.btr.nominal.tseg1=5; x.btr.nominal.tseg2=2;x.btr.nominal.sjw=1;x.btr.nominal.sam=0;} while(0)
+#define KVASER_CAN_BR_125K(x)   do{x.btr.frequency=KVASER_CAN_CLOCK;x.btr.nominal.brp=4;  x.btr.nominal.tseg1=11;x.btr.nominal.tseg2=4;x.btr.nominal.sjw=1;x.btr.nominal.sam=0;} while(0)
+#define KVASER_CAN_BR_100K(x)   do{x.btr.frequency=KVASER_CAN_CLOCK;x.btr.nominal.brp=5;  x.btr.nominal.tseg1=11;x.btr.nominal.tseg2=4;x.btr.nominal.sjw=1;x.btr.nominal.sam=0;} while(0)
+#define KVASER_CAN_BR_50K(x)    do{x.btr.frequency=KVASER_CAN_CLOCK;x.btr.nominal.brp=10; x.btr.nominal.tseg1=11;x.btr.nominal.tseg2=4;x.btr.nominal.sjw=1;x.btr.nominal.sam=0;} while(0)
+#define KVASER_CAN_BR_20K(x)    do{x.btr.frequency=KVASER_CAN_CLOCK;x.btr.nominal.brp=25; x.btr.nominal.tseg1=11;x.btr.nominal.tseg2=4;x.btr.nominal.sjw=1;x.btr.nominal.sam=0;} while(0)
+#define KVASER_CAN_BR_10K(x)    do{x.btr.frequency=KVASER_CAN_CLOCK;x.btr.nominal.brp=50; x.btr.nominal.tseg1=11;x.btr.nominal.tseg2=4;x.btr.nominal.sjw=1;x.btr.nominal.sam=0;} while(0)
 #define KVASER_CAN_BR_5K(x)     do{x.btr.frequency=KVASER_CAN_CLOCK;x.btr.nominal.brp=100;x.btr.nominal.tseg1=11;x.btr.nominal.tseg2=4;x.btr.nominal.sjw=1;x.btr.nominal.sam=0;} while(0)
 /** @} */
 
@@ -116,7 +96,7 @@ extern "C" {
 /** @name  Kvaser CAN FD Bit-rate Settings w/o Bit-rate Switching
  *  @brief Default values for long frames only (0 to 64 bytes).
  *  @{ */
-#define KVASER_CAN_FD_BR_1M(x)      do {x.btr.frequency=KVASER_CAN_FD_CLOCK;x.btr.nominal.brp=2;x.btr.nominal.tseg1=31;x.btr.nominal.tseg2= 8;x.btr.nominal.sjw= 8;} while(0)
+#define KVASER_CAN_FD_BR_1M(x)      do {x.btr.frequency=KVASER_CAN_FD_CLOCK;x.btr.nominal.brp=2;x.btr.nominal.tseg1=31;x.btr.nominal.tseg2=8; x.btr.nominal.sjw=8; } while(0)
 #define KVASER_CAN_FD_BR_500K(x)    do {x.btr.frequency=KVASER_CAN_FD_CLOCK;x.btr.nominal.brp=2;x.btr.nominal.tseg1=63;x.btr.nominal.tseg2=16;x.btr.nominal.sjw=16;} while(0)
 #define KVASER_CAN_FD_BR_250K(x)    do {x.btr.frequency=KVASER_CAN_FD_CLOCK;x.btr.nominal.brp=4;x.btr.nominal.tseg1=63;x.btr.nominal.tseg2=16;x.btr.nominal.sjw=16;} while(0)
 #define KVASER_CAN_FD_BR_125K(x)    do {x.btr.frequency=KVASER_CAN_FD_CLOCK;x.btr.nominal.brp=8;x.btr.nominal.tseg1=63;x.btr.nominal.tseg2=16;x.btr.nominal.sjw=16;} while(0)
@@ -125,8 +105,8 @@ extern "C" {
 /** @name  Kvaser CAN FD Bit-rate Settings with Bit-rate Switching
  *  @brief Default values for long and fast frames only (up to 8 Mbps).
  *  @{ */
-#define KVASER_CAN_FD_BR_1M8M(x)    do {x.btr.frequency=KVASER_CAN_FD_CLOCK;x.btr.nominal.brp=2;x.btr.nominal.tseg1=31;x.btr.nominal.tseg2= 8;x.btr.nominal.sjw= 8;x.btr.data.brp=1;x.btr.data.tseg1= 7;x.btr.data.tseg2=2;x.btr.data.sjw=1;} while(0)
-#define KVASER_CAN_FD_BR_500K4M(x)  do {x.btr.frequency=KVASER_CAN_FD_CLOCK;x.btr.nominal.brp=2;x.btr.nominal.tseg1=63;x.btr.nominal.tseg2=16;x.btr.nominal.sjw=16;x.btr.data.brp=2;x.btr.data.tseg1= 7;x.btr.data.tseg2=2;x.btr.data.sjw=2;} while(0)
+#define KVASER_CAN_FD_BR_1M8M(x)    do {x.btr.frequency=KVASER_CAN_FD_CLOCK;x.btr.nominal.brp=2;x.btr.nominal.tseg1=31;x.btr.nominal.tseg2=8; x.btr.nominal.sjw=8; x.btr.data.brp=1;x.btr.data.tseg1=7; x.btr.data.tseg2=2;x.btr.data.sjw=1;} while(0)
+#define KVASER_CAN_FD_BR_500K4M(x)  do {x.btr.frequency=KVASER_CAN_FD_CLOCK;x.btr.nominal.brp=2;x.btr.nominal.tseg1=63;x.btr.nominal.tseg2=16;x.btr.nominal.sjw=16;x.btr.data.brp=2;x.btr.data.tseg1=7; x.btr.data.tseg2=2;x.btr.data.sjw=2;} while(0)
 #define KVASER_CAN_FD_BR_250K2M(x)  do {x.btr.frequency=KVASER_CAN_FD_CLOCK;x.btr.nominal.brp=4;x.btr.nominal.tseg1=63;x.btr.nominal.tseg2=16;x.btr.nominal.sjw=16;x.btr.data.brp=2;x.btr.data.tseg1=15;x.btr.data.tseg2=4;x.btr.data.sjw=4;} while(0)
 #define KVASER_CAN_FD_BR_125K1M(x)  do {x.btr.frequency=KVASER_CAN_FD_CLOCK;x.btr.nominal.brp=8;x.btr.nominal.tseg1=63;x.btr.nominal.tseg2=16;x.btr.nominal.sjw=16;x.btr.data.brp=2;x.btr.data.tseg1=31;x.btr.data.tseg2=8;x.btr.data.sjw=8;} while(0)
 /** @} */
