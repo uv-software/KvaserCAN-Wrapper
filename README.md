@@ -95,6 +95,8 @@ C:\Users\haumea>cd C:\Projects\CAN\Drivers\KvaserCAN
 C:\Projects\CAN\Drivers\KvaserCAN>x64_build.bat
 ```
 
+### Libraries
+
 #### uvKvaserCAN (DLL)
 
 ___uvKvaserCAN___ is a dynamic link library with a CAN API V3 compatible application programming interface for use in __C++__ applications.
@@ -104,6 +106,8 @@ See header file `KvaserCAN.h` for a description of all class members.
 
 ___u3cankvl___ is a dynamic link library with a CAN API V3 compatible application programming interface for use in __C__ applications.
 See header file `can_api.h` for a description of all API functions.
+
+### Utilities
 
 #### can_moni (CLI)
 
@@ -122,7 +126,7 @@ Type `can_test /?` to display all program options.
 
 ### Target Platform
 
-- Windows 10 & 11 (x64 operating systems)
+- Windows 11 (x64 operating systems)
 
 ### Development Environment
 
@@ -160,13 +164,13 @@ A generic documentation of the CAN API V3 application programming interface can 
 ### Dual-License
 
 Except where otherwise noted, this work is dual-licensed under the terms of the BSD 2-Clause "Simplified" License
-and under the terms of the GNU General Public License v3.0 (or any later version).
+and under the terms of the GNU General Public License v2.0 (or any later version).
 You can choose between one of them if you use these portions of this work in whole or in part.
 
 ### Trademarks
 
 Windows is a registered trademark of Microsoft Corporation in the United States and/or other countries. \
-Mac and macOS are trademarks of Apple Inc., registered in the U.S. and other countries. \
+Mac and macOS are trademarks of Apple Inc., registered in the U.S. and other countries and regions. \
 Linux is a registered trademark of Linus Torvalds. \
 All other company, product and service names mentioned herein may be trademarks, registered trademarks, or service marks of their respective owners.
 
