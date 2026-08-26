@@ -1,5 +1,5 @@
-__CAN Tester for Kvaser CAN Interfaces, Version 0.3.1__ \
-Copyright &copy; 2005-2010,2012-2024 by Uwe Vogt, UV Software, Berlin
+__CAN Tester for Kvaser CAN Interfaces, Version 0.3.2__ \
+Copyright &copy; 2005-2010,2012-2026 by Uwe Vogt, UV Software, Berlin
 
 ```
 Usage: can_test <interface> [<option>...]

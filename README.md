@@ -1,6 +1,6 @@
 ### CAN API V3 Wrapper Library for Kvaser CAN Interfaces (Windows&reg;)
 
-_Copyright &copy; 2017-2024  Uwe Vogt, UV Software, Berlin (info@uv-software.com)_
+_Copyright &copy; 2017-2026 Uwe Vogt, UV Software, Berlin (info@uv-software.com)_
 
 ![MSBuild](https://github.com/uv-software/KvaserCAN-Wrapper/actions/workflows/msbuild.yml/badge.svg)
 
@@ -126,7 +126,7 @@ Type `can_test /?` to display all program options.
 
 ### Development Environment
 
-- Microsoft Visual Studio Community 2022 (Version 17.10.1)
+- Microsoft Visual Studio Community 2022 (Version 17.14.39)
 
 ### Required Kvaser CANlib SDK
 
@@ -134,9 +134,9 @@ Type `can_test /?` to display all program options.
 
 ### Tested CAN Hardware
 
-- Kvaser Leaf Light V2 - single channel, CAN 2.0 (EAN: 73-30130-00685-0)
-- Kvaser Leaf Pro HS V2 - single channel, CAN FD (EAN: 73-30130-00843-4)
-- Kvaser U100P - single channel, CAN FD (EAN: 73-30130-01174-8)
+- Kvaser Leaf Light V2 - single channel, CAN 2.0 (EAN: 73-30130-00685-0; Firmware: 4.12.211)
+- Kvaser Leaf Pro HS V2 - single channel, CAN FD (EAN: 73-30130-00843-4; Firmware: 3.39.788)
+- Kvaser U100P - single channel, CAN FD (EAN: 73-30130-01174-8; Firmware: 3.39.788)
 
 ## Known Bugs and Caveats
 
