@@ -81,7 +81,7 @@ _All rights reserved._
   - _If there is any error then **stop** here or create an issue for each error in the repo._
   - Copy the test report into the binary's directory `$(PROJROOT)\Binaries`.
 6. Run the CAN API V3 GoogleTest program with two Kvaser CAN devices in CAN FD mode:
-  - `C:\Projects\CAN\Drivers\KvaserCAN\Tests>x64\Debug\kvl_testing --can_dut1="Kvaser CAN Channel 1" --can_dut2="Kvaser CAN Channel 2" --can_mode=FDF+BRS --can_bitrate=DEFAULT --gtest_output=xml:TestReport_KvaserCAN_FD.xml --run_all=YES --smoketest_frames=100000` [...]
+  - `C:\Projects\CAN\Drivers\KvaserCAN\Tests>x64\Debug\kvl_testing --can_dut1="Kvaser CAN Channel 0" --can_dut2="Kvaser CAN Channel 1" --can_mode=FDF+BRS --can_bitrate=DEFAULT --gtest_output=xml:TestReport_KvaserCAN_FD.xml --run_all=YES --smoketest_frames=100000` [...]
   - _If there is any error then **stop** here or create an issue for each error in the repo._
   - Copy the test report into the binary's directory `$(PROJROOT)\Binaries`.
 7. Pack the artifacts into a .zip-archive, e.g. `artifacts.zip`:
