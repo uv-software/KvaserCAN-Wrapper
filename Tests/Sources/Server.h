@@ -47,26 +47,35 @@
 //  You should have received a copy of the GNU General Public License along
 //  with CAN API V3; if not, see <https://www.gnu.org/licenses/>.
 //
-#ifndef BITRATES_H_INCLUDED
-#define BITRATES_H_INCLUDED
+#ifndef SERVER_H_INCLUDED
+#define SERVER_H_INCLUDED
 
-typedef const char *TBitrateString;
+#if _MSC_VER > 1000
+#pragma once
+#endif
 
-class CBitrates {
-private:
-    int m_nIndex;
+#include "Device.h"
+
+#include "CanTcpServer.h"
+#include "CanTcpClient.h"
+
+class CCanServer : public CCanTcpServer {
 public:
-    // constructor / destructor
-    CBitrates();
-    virtual ~CBitrates() {};
-    // methods
-    TBitrateString GetFirstEntry(bool fValid = true);
-    TBitrateString GetNextEntry(bool fValid = true);
-    // predicates
-    bool IsInRange();
-    bool IsCanFdWithBrse();
+    CCanServer();
+    ~CCanServer();
+
+    bool AttachDevice(CCanDevice *device);
+    bool DetachDevice();
+
+    CANAPI_Return_t StartServer(const char *service);
+    CANAPI_Return_t StopServer();
+
+    void ShowServerPort(const char* prefix);
 };
-#endif // BITRATES_H_INCLUDED
+#if (OPTION_CANTCP_ENABLED != 0)
+// The one and only server object
+extern CCanServer g_CanServer;
+#endif
+#endif // SERVER_H_INCLUDED
 
-// $Id: Bitrates.h 1411 2025-01-17 18:59:07Z quaoar $  Copyright (c) UV Software, Berlin //
-
+// $Id: Server.h 1486 2025-03-02 15:50:07Z quaoar $  Copyright (c) UV Software, Berlin.

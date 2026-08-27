@@ -1,17 +1,18 @@
-//  SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-or-later
+//  SPDX-License-Identifier: BSD-2-Clause OR GPL-2.0-or-later
 //
 //  CAN Interface API, Version 3 (Testing)
 //
-//  Copyright (c) 2004-2024 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
+//  Copyright (c) 2004-2025 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
 //  All rights reserved.
 //
 //  This file is part of CAN API V3.
 //
 //  CAN API V3 is dual-licensed under the BSD 2-Clause "Simplified" License
-//  and under the GNU General Public License v3.0 (or any later version).
+//  and under the GNU General Public License v2.0 (or any later version).
 //  You can choose between one of them if you use this file.
 //
-//  BSD 2-Clause "Simplified" License:
+//  (1) BSD 2-Clause "Simplified" License
+//
 //  Redistribution and use in source and binary forms, with or without
 //  modification, are permitted provided that the following conditions are met:
 //  1. Redistributions of source code must retain the above copyright notice, this
@@ -31,10 +32,11 @@
 //  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 //  OF CAN API V3, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-//  GNU General Public License v3.0 or later:
-//  CAN API V3 is free software: you can redistribute it and/or modify
+//  (2) GNU General Public License v2.0 or later
+//
+//  CAN API V3 is free software; you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
+//  the Free Software Foundation; either version 2 of the License, or
 //  (at your option) any later version.
 //
 //  CAN API V3 is distributed in the hope that it will be useful,
@@ -42,8 +44,8 @@
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
 //
-//  You should have received a copy of the GNU General Public License
-//  along with CAN API V3.  If not, see <https://www.gnu.org/licenses/>.
+//  You should have received a copy of the GNU General Public License along
+//  with CAN API V3; if not, see <https://www.gnu.org/licenses/>.
 //
 #include "pch.h"
 
@@ -56,6 +58,40 @@ protected:
     // ...
 };
 
+// @gtest TCxX.0: Get test information
+//
+// @expected: CANERR_NOERROR
+//
+TEST_F(Summary, GTEST_TESTCASE(GetTestInformation, GTEST_ENABLED)) {
+    // @
+    // @note: This test is optional!
+    if (!g_Options.RunTestBitrateConverter())
+        GTEST_SKIP() << "This test is optional: '--run_all=YES'";
+    // @test:
+    RecordProperty("GoogleTestVersion", GTEST_VERSION);
+    RecordProperty("TestSuiteRevision", REVISION_NO);
+#if (OPTION_REGESSION_TEST != 0)
+    RecordProperty("RegressionText", "Enabled");
+#else
+    RecordProperty("RegressionTest", "Disabled");
+#endif
+#if (OPTION_CANAPI_RETVALS != 0)
+    RecordProperty("CanApiRetVals", "Enabled");
+#else
+    RecordProperty("CanApiRetVals", "Disabled");
+#endif
+#if (OPTION_CAN_2_0_ONLY != 0)
+    RecordProperty("Can2.0Only", "Enabled");
+#else
+    RecordProperty("Can2.0Only", "Disabled");
+#endif
+    RecordProperty("TestFrames", g_Options.GetNumberOfTestFrames());
+    RecordProperty("SmoketestFrames", g_Options.GetNumberOfSmokeTestFrames());
+    RecordProperty("ClassicalCAN", g_Options.RunCanClassicOnly() ? "Yes" : "No");
+    RecordProperty("3rdDevice", g_Options.Is3rdDevicePresent() ? "Yes" : "No");
+    RecordProperty("RtrDevice", g_Options.IsRtrDevicePresent() ? "Yes" : "No");
+    // @end.
+}
 // @gtest TCxX.1: Get library information
 //
 // @expected: CANERR_NOERROR
@@ -143,31 +179,31 @@ TEST_F(Summary, GTEST_TESTCASE(GetLibraryInformation, GTEST_ENABLED)) {
 #else
     RecordProperty("OperationMode", "CAN CC (2.0)");
 #endif
-    // @ regested bit-rate settings
+    // @ requested bit-rate settings
     bitrate = g_Options.GetBitrate(DUT1);
     if (CCanDevice::MapBitrate2Speed(bitrate, speed) == CCanApi::NoError) {
 #if (OPTION_CAN_2_0_ONLY == 0)
         if (opMode.fdoe) {
-            snprintf(string, CANPROP_MAX_BUFFER_SIZE, "%.3f kbps (SP=%.2f%%, SJW=%u)\n",
+            snprintf(string, CANPROP_MAX_BUFFER_SIZE, "%.3f kbps (SP=%.2f%%, SJW=%u)",
                 speed.nominal.speed / 1000.f, speed.nominal.samplepoint * 100.f,
                 bitrate.btr.nominal.sjw);
             string[CANPROP_MAX_BUFFER_SIZE] = '\0';
             RecordProperty("BusSpeed.Nominal", string);
-            snprintf(string, CANPROP_MAX_BUFFER_SIZE, "%.3f kbps (SP=%.2f%%, SJW=%u)\n",
+            snprintf(string, CANPROP_MAX_BUFFER_SIZE, "%.3f kbps (SP=%.2f%%, SJW=%u)",
                 speed.data.speed / 1000.f, speed.data.samplepoint * 100.f,
                 bitrate.btr.data.sjw);
             string[CANPROP_MAX_BUFFER_SIZE] = '\0';
             RecordProperty("BusSpeed.DataPhase", string);
         }
         else {
-            snprintf(string, CANPROP_MAX_BUFFER_SIZE, "%.3f kbps (SP=%.2f%%, SJW=%u, SAM=%u)\n",
+            snprintf(string, CANPROP_MAX_BUFFER_SIZE, "%.3f kbps (SP=%.2f%%, SJW=%u, SAM=%u)",
                 speed.nominal.speed / 1000.f, speed.nominal.samplepoint * 100.f,
                 bitrate.btr.nominal.sjw, bitrate.btr.nominal.sam);
             string[CANPROP_MAX_BUFFER_SIZE] = '\0';
             RecordProperty("BusSpeed.Nominal", string);
         }
 #else
-        snprintf(string, CANPROP_MAX_BUFFER_SIZE, "%.3f kbps (SP=%.2f%%, SJW=%u, SAM=%u)\n",
+        snprintf(string, CANPROP_MAX_BUFFER_SIZE, "%.3f kbps (SP=%.2f%%, SJW=%u, SAM=%u)",
             speed.nominal.speed / 1000.f, speed.nominal.samplepoint * 100.f,
             bitrate.btr.nominal.sjw, bitrate.btr.nominal.sam);
         string[CANPROP_MAX_BUFFER_SIZE] = '\0';
@@ -427,4 +463,4 @@ TEST_F(Summary, GTEST_TESTCASE(GetDevice2Information, GTEST_ENABLED)) {
     // @end.
 }
 
-//  $Id: TCxX_Summary.cc 1333 2024-06-01 22:18:12Z makemake $  Copyright (c) UV Software, Berlin.
+//  $Id: TCxX_Summary.cc 1541 2025-09-23 16:34:04Z quaoar $  Copyright (c) UV Software, Berlin.

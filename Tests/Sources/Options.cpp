@@ -1,17 +1,18 @@
-//  SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-or-later
+//  SPDX-License-Identifier: BSD-2-Clause OR GPL-2.0-or-later
 //
 //  CAN Interface API, Version 3 (Testing)
 //
-//  Copyright (c) 2004-2024 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
+//  Copyright (c) 2004-2025 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
 //  All rights reserved.
 //
 //  This file is part of CAN API V3.
 //
 //  CAN API V3 is dual-licensed under the BSD 2-Clause "Simplified" License
-//  and under the GNU General Public License v3.0 (or any later version).
+//  and under the GNU General Public License v2.0 (or any later version).
 //  You can choose between one of them if you use this file.
 //
-//  BSD 2-Clause "Simplified" License:
+//  (1) BSD 2-Clause "Simplified" License
+//
 //  Redistribution and use in source and binary forms, with or without
 //  modification, are permitted provided that the following conditions are met:
 //  1. Redistributions of source code must retain the above copyright notice, this
@@ -31,10 +32,11 @@
 //  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 //  OF CAN API V3, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-//  GNU General Public License v3.0 or later:
-//  CAN API V3 is free software: you can redistribute it and/or modify
+//  (2) GNU General Public License v2.0 or later
+//
+//  CAN API V3 is free software; you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
+//  the Free Software Foundation; either version 2 of the License, or
 //  (at your option) any later version.
 //
 //  CAN API V3 is distributed in the hope that it will be useful,
@@ -42,8 +44,8 @@
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
 //
-//  You should have received a copy of the GNU General Public License
-//  along with CAN API V3.  If not, see <https://www.gnu.org/licenses/>.
+//  You should have received a copy of the GNU General Public License along
+//  with CAN API V3; if not, see <https://www.gnu.org/licenses/>.
 //
 #ifdef _MSC_VER
 //no Microsoft extensions please!
@@ -74,6 +76,11 @@
 #define OPTION_RUN_ALL           "--run_all"
 #define OPTION_RUN_QUICK         "--run_quick"
 #define OPTION_RUN_CALLSEQUENCES "--run_callsequences"
+#define OPTION_INTERACTIVE_START "--interactive_start"
+#if (OPTION_CANTCP_ENABLED != 0)
+#define OPTION_GATEWAY           "--gateway"
+#define OPTION_LOGGING           "--logging"
+#endif
 
 static const bool c_fCanClassic = false;
 static const bool c_f3rdDevice = false;
@@ -81,6 +88,10 @@ static const bool c_fRtrDevice = false;
 static const bool c_fRunQuick = false;
 static const bool c_fCallSequences = false;
 static const bool c_fBitrateConverter = false;
+static const bool c_fStartInteractive = false;
+#if (OPTION_CANTCP_ENABLED != 0)
+static const char c_szService[] = "60000";
+#endif
 #if (OPTION_CANAPI_LIBRARY != 0)
 static const char c_szDefaultSearchPath[] = ".";
 #endif
@@ -113,6 +124,7 @@ COptions::COptions() {
     // test options
     m_s32TestFrames = (int32_t)TEST_FRAMES;
     m_s32SmokeTestFrames = (int32_t)TEST_TRAFFIC;
+    m_fStartInteractive = c_fStartInteractive;
     m_fCallSequences = c_fCallSequences;
     m_fBitrateConverter = c_fBitrateConverter;
     m_fCanClassic = c_fCanClassic;
@@ -120,6 +132,12 @@ COptions::COptions() {
     m_fRtrDevice = c_fRtrDevice;
     m_fRunQuick = c_fRunQuick;
     m_fShowHelp = false;
+#if (OPTION_CANTCP_ENABLED != 0)
+    // server options
+    m_Server.m_fEnable = false;
+    m_Server.m_szService = (char*)c_szService;
+    m_Server.m_nLogging = 0;
+#endif
 }
 
 bool COptions::GetChannelInfoByDeviceName(const char *name, CCanApi::SChannelInfo &info) {
@@ -181,6 +199,11 @@ int COptions::ScanOptions(int argc, char* argv[], char* err, size_t len) {
     int rtr_device = 0;
     int run_callsequences = 0;
     int run_quick = 0;
+    #if (OPTION_CANTCP_ENABLED != 0)
+    int opt_gateway = 0;
+    int opt_logging = 0;
+#endif
+    int opt_interactive = 0;
     char* opt = NULL;
     //char *arg = NULL;
 #if (CAN_FD_SUPPORTED == FEATURE_SUPPORTED)
@@ -189,7 +212,6 @@ int COptions::ScanOptions(int argc, char* argv[], char* err, size_t len) {
 #endif
     long baudrate = 0;
     long frames = 0;
-
     for (int i = 1; i < argc; i++) {
         // option: --can_help [to be scanned first]
         if (strcmp(argv[i], OPTION_HELP) == 0) {
@@ -298,7 +320,7 @@ int COptions::ScanOptions(int argc, char* argv[], char* err, size_t len) {
                 return false;
             }
         }
-        // option: --can_mode=(CAN2.0|CANFD[+BRS])
+        // option: --can_mode=(CANCC|CANFD[+BRS])
 #if (CAN_FD_SUPPORTED == FEATURE_SUPPORTED)
         else if (strncmp(argv[i], OPTION_MODE, strlen(OPTION_MODE)) == 0)
         {
@@ -319,7 +341,9 @@ int COptions::ScanOptions(int argc, char* argv[], char* err, size_t len) {
                     !strcasecmp(opt, "classic") ||
                     !strcasecmp(opt, "CAN2.0") ||
                     !strcasecmp(opt, "CAN20") ||
-                    !strcasecmp(opt, "2.0")) {
+                    !strcasecmp(opt, "2.0") ||
+                    !strcasecmp(opt, "CC") ||
+                    !strcasecmp(opt, "CCF")) {
                     m_Dut[DUT1].m_OpMode.fdoe = m_Dut[DUT2].m_OpMode.fdoe = 0;
                     m_Dut[DUT1].m_OpMode.brse = m_Dut[DUT2].m_OpMode.brse = 0;
                 }
@@ -662,6 +686,82 @@ int COptions::ScanOptions(int argc, char* argv[], char* err, size_t len) {
             else
                 m_fRunQuick = true;
         }
+#if (OPTION_CANTCP_ENABLED != 0)
+        // option: --gateway=<port>
+        else if (strncmp(argv[i], OPTION_GATEWAY, strlen(OPTION_GATEWAY)) == 0)
+        {
+            if (opt_gateway++) {
+                if (err)
+                    snprintf(err, len, "duplicated option %s", OPTION_GATEWAY);
+                return false;
+            }
+            if (((opt = strchr(argv[i], '=')) != NULL) &&
+                (argv[i][strlen(OPTION_GATEWAY)] == '=')) {
+                if (strlen(++opt) == 0) {
+                    if (err)
+                        snprintf(err, len, "missing argument for option %s", OPTION_GATEWAY);
+                    return false;
+                }
+                m_Server.m_szService = opt;
+                m_Server.m_fEnable = true;
+            }
+            else {
+                if (err)
+                    snprintf(err, len, "missing argument for option %s", OPTION_GATEWAY);
+                return false;
+            }
+        }
+        // option: --logging=<level> (with <level> >= 0)
+        else if (strncmp(argv[i], OPTION_LOGGING, strlen(OPTION_LOGGING)) == 0)
+        {
+            if (opt_logging++) {
+                if (err)
+                    snprintf(err, len, "duplicated option %s", OPTION_LOGGING);
+                return false;
+            }
+            if (((opt = strchr(argv[i], '=')) != NULL) &&
+                (argv[i][strlen(OPTION_LOGGING)] == '=')) {
+                if (strlen(++opt) == 0) {
+                    if (err)
+                        snprintf(err, len, "missing argument for option %s", OPTION_LOGGING);
+                    return false;
+                }
+                if ((sscanf(opt, "%d", &m_Server.m_nLogging) != 1) || (m_Server.m_nLogging < 0)) {
+                    snprintf(err, len, "illegal argument in option %s", OPTION_LOGGING);
+                    return false;
+                }
+            }
+            else {
+                if (err)
+                    snprintf(err, len, "missing argument for option %s", OPTION_LOGGING);
+                return false;
+            }
+        }
+#endif
+        // option: --interactive[=(YES|NO)]
+        else if (strncmp(argv[i], OPTION_INTERACTIVE_START, strlen(OPTION_INTERACTIVE_START)) == 0)
+        {
+            if (opt_interactive++) {
+                if (err)
+                    snprintf(err, len, "duplicated option %s", OPTION_INTERACTIVE_START);
+                return false;
+            }
+            if (((opt = strchr(argv[i], '=')) != NULL) &&
+                (argv[i][strlen(OPTION_INTERACTIVE_START)] == '=')) {
+                if (strlen(++opt) == 0) {
+                    if (err)
+                        snprintf(err, len, "missing argument for option %s", OPTION_INTERACTIVE_START);
+                    return false;
+                }
+                if ((strcasecmp(opt, "YES") == 0) || (strcasecmp(opt, "ON") == 0) ||
+                    (strcasecmp(opt, "Y") == 0) || (strcasecmp(opt, "1") == 0))
+                    m_fStartInteractive = true;
+                else
+                    m_fStartInteractive = false;
+            }
+            else
+                m_fStartInteractive = true;
+        }
         // unknown option (note: GoogleTest does not eat option '--help')
         else if (strcmp(argv[i], "--help") != 0) {
             if (err)
@@ -685,9 +785,9 @@ int COptions::ShowHelp() {
         std::cout << "      This option must be given before option " << OPTION_DUT1 << " and " << OPTION_DUT2 << "." << std::endl;
 #endif
 #if (CAN_FD_SUPPORTED == FEATURE_SUPPORTED)
-        std::cout << "  " << OPTION_MODE << "=(CAN2.0|CANFD[+BRS])" << std::endl;
+        std::cout << "  " << OPTION_MODE << "=(CANCC|CANFD[+BRS])" << std::endl;
         std::cout << "      CAN operation mode: CAN 2.0 or CAN FD format." <<  std::endl;
-        std::cout << "              CAN2.0    = CAN classic (default)" << std::endl;
+        std::cout << "              CANCC     = CAN classic (default)" << std::endl;
         std::cout << "              CANFD     = CAN FD long frames only" << std::endl;
         std::cout << "              CANFD+BRS = CAN FD long and fast frames" << std::endl;
 #endif
@@ -738,19 +838,32 @@ int COptions::ShowHelp() {
         std::cout << "      Disables or enables the execution of test cases with non-default bit-rate settings (default=" << (c_f3rdDevice ? "yes" : "no") << ")." << std::endl;
         std::cout << "  " << OPTION_RTR_DEVICE << "[=(NO|YES)]" << std::endl;
         std::cout << "      Enables or disables the execution of test cases for which a RTR answering device is required (default=" << (c_fRtrDevice ? "yes" : "no") << ")." << std::endl;
+#if (OPTION_CANTCP_ENABLED != 0)
+        std::cout << "  " << OPTION_GATEWAY << "=<port>" << std::endl;
+        std::cout << "      Starts the RocketCAN server on the specified port." << std::endl;
+        std::cout << "  " << OPTION_LOGGING << "=<level>" << std::endl;
+        std::cout << "      Sets the logging level of the RocketCAN server (0 = no logging)." << std::endl;
+#endif
         std::cout << "  " << OPTION_RUN_CALLSEQUENCES << "[=(NO|YES)]" << std::endl;
         std::cout << "      Enables or disables the execution of test cases from suite 'CallSequences' (default=" << (c_fCallSequences ? "yes" : "no") << ")." << std::endl;
         std::cout << "  " << OPTION_RUN_ALL << "[=(NO|YES)]" << std::endl;
         std::cout << "      Enables or disables the execution all optional tests (default=no)." << std::endl;
         std::cout << "  " << OPTION_RUN_QUICK << "[=(NO|YES)]" << std::endl;
         std::cout << "      Disables or enables the execution of long lasting test cases (default=" << (c_fRunQuick ? "yes" : "no") << ")." << std::endl;
+        std::cout << "  " << OPTION_INTERACTIVE_START << "[=(NO|YES)]" << std::endl;
+        std::cout << "      Starts test execution only when the Anykey is pressed (default=" << (c_fStartInteractive ? "yes" : "no") << ")." << std::endl;
         std::cout << std::endl;
         std::cout << "Hazard Note:" << std::endl;
         std::cout << "  If you connect your CAN device to a real CAN network when using this program," << std::endl;
         std::cout << "  you might damage your application." << std::endl;
+    #if (OPTION_CANTCP_ENABLED != 0)
+        std::cout << "  If you open a port for socket communication while using this program, it may" << std::endl;
+        std::cout << "  expose your computer to security vulnerabilities, unauthorized access, data" << std::endl;
+        std::cout << "  interception, denial of service attacks, and resource exhaustion." << std::endl;
+    #endif
         std::cout << std::endl;
     }
     return m_fShowHelp;
 }
 
-// $Id: Options.cpp 1315 2024-05-26 12:23:58Z makemake $  Copyright (c) UV Software, Berlin //
+// $Id: Options.cpp 1486 2025-03-02 15:50:07Z quaoar $  Copyright (c) UV Software, Berlin //
