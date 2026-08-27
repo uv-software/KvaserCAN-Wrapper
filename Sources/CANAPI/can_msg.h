@@ -1,17 +1,18 @@
-/*  SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-or-later */
+/*  SPDX-License-Identifier: BSD-2-Clause OR GPL-2.0-or-later */
 /*
  *  CAN Interface API, Version 3 (Message Formatter)
  *
- *  Copyright (c) 2019-2024 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
+ *  Copyright (c) 2019-2025 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
  *  All rights reserved.
  *
  *  This file is part of CAN API V3.
  *
- *  CAN API V3 is dual-licensed under the BSD 2-Clause "Simplified" License
- *  and under the GNU General Public License v3.0 (or any later version).
- *  You can choose between one of them if you use this file.
+ *  CAN API V3 is dual-licensed under the BSD 2-Clause "Simplified" License and
+ *  under the GNU General Public License v2.0 (or any later version). You can
+ *  choose between one of them if you use CAN API V3 in whole or in part.
  *
- *  BSD 2-Clause "Simplified" License:
+ *  (1) BSD 2-Clause "Simplified" License
+ *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
  *  1. Redistributions of source code must retain the above copyright notice, this
@@ -31,10 +32,11 @@
  *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *  OF CAN API V3, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *  GNU General Public License v3.0 or later:
- *  CAN API V3 is free software: you can redistribute it and/or modify
+ *  (2) GNU General Public License v2.0 or later
+ *
+ *  CAN API V3 is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
+ *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
  *
  *  CAN API V3 is distributed in the hope that it will be useful,
@@ -42,16 +44,16 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with CAN API V3.  If not, see <https://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU General Public License along
+ *  with CAN API V3; if not, see <https://www.gnu.org/licenses/>.
  */
 /** @file        can_msg.h
  *
  *  @brief       CAN Message Formatter
  *
- *  @author      $Author: eris $
+ *  @author      $Author: sedna $
  *
- *  @version     $Rev: 1270 $
+ *  @version     $Rev: 1490 $ of $Date: 2025-03-06 21:06:42 +0100 (Do, 06 Mrz 2025) $
  *
  *  @defgroup    can_msg CAN Message Formatter
  *  @{
@@ -66,18 +68,21 @@ extern "C" {
 /*  -----------  includes  -----------------------------------------------
  */
 
-#if (OPTION_CANAPI_COMPANIONS != 0)     // set it in the build environment!
-#include "CANAPI_Types.h"               //   use CAN API V3 types and defines
-#else                                   // otherwise:
-#define CANBTR_STANDALONE_VARIANT       //   don't include CAN API V3 headers
-#include <stdint.h>                     //   C99 header for sized integer types
-#include <stdbool.h>                    //   C99 header for boolean type
-#include <time.h>                       //   time types for time-stamp
+#if (OPTION_CANAPI_COMPANIONS != 0)     /* set it in the build environment! */
+#include "CANAPI_Types.h"               /*   use CAN API V3 types and defines */
+#else                                   /* otherwise: */
+#define CANMSG_STANDALONE_VARIANT       /*   don't include CAN API V3 headers */
+#include <stdint.h>                     /*   C99 header for sized integer types */
+#include <stdbool.h>                    /*   C99 header for boolean type */
+#include <time.h>                       /*   for structure 'timespec' */
 #endif
 
 /*  -----------  options  ------------------------------------------------
  */
 
+/** @name  Compiler Switches
+ *  @brief Options for conditional compilation.
+ *  @{ */
 /** @note  Set define OPTION_CANAPI_COMPANIONS to a non-zero value to compile
  *         this module in conjunction with the CAN API V3 sources (e.g. in
  *         the build environment).
@@ -85,18 +90,22 @@ extern "C" {
 /** @note  Set define OPTION_CAN_2_0_ONLY to a non-zero value to compile
  *         with CAN 2.0 frame format only (e.g. in the build environment).
  */
-#if (OPTION_CAN_2_0_ONLY != 0)
+#ifndef OPTION_DISABLED
+#define OPTION_DISABLED  0  /**< if a define is not defined, it is automatically set to 0 */
+#endif
+#if (OPTION_CAN_2_0_ONLY != OPTION_DISABLED)
 #ifdef _MSC_VER
-#pragma message ( "Compilation with with legacy CAN 2.0 frame format!" )
+#pragma message ( "Compilation with legacy CAN 2.0 frame format!" )
 #else
-#warning Compilation with with legacy CAN 2.0 frame format!
+#warning Compilation with legacy CAN 2.0 frame format!
 #endif
 #endif
+/** @} */
 
 /*  -----------  defines  ------------------------------------------------
  */
 
-#ifdef CANBTR_STANDALONE_VARIANT
+#ifdef CANMSG_STANDALONE_VARIANT
 /** @name  CAN Identifier
  *  @brief CAN Identifier range
  *  @{ */
@@ -223,14 +232,14 @@ typedef enum msg_fmt_wraparound_t_ {
 
 /** @brief       CAN Time-stamp:
  */
-#ifdef CANMSG_STANDALONE
+#ifdef CANMSG_STANDALONE_VARIANT
 typedef struct timespec msg_timestamp_t;  /* w/ nanoseconds resolution */
 #else
 typedef can_timestamp_t msg_timestamp_t;  /* CAN API V3 time-stamp */
 #endif
 /** @brief       CAN Message (with Time-stamp):
  */
-#ifdef CANMSG_STANDALONE
+#ifdef CANMSG_STANDALONE_VARIANT
 typedef struct msg_message_t_ {
     uint32_t id;                        /**< CAN identifier */
     struct {
@@ -240,10 +249,11 @@ typedef struct msg_message_t_ {
         uint8_t fdf : 1;                /**< flag: CAN FD format */
         uint8_t brs : 1;                /**< flag: bit-rate switching */
         uint8_t esi : 1;                /**< flag: error state indicator */
-        uint8_t : 2;
+        uint8_t : 1;
 #else
-        uint8_t : 5;
+        uint8_t : 4;
 #endif
+        uint8_t err : 1;                /**< flag: error frame (ECC) */
         uint8_t sts : 1;                /**< flag: status message */
     };
 #if (OPTION_CAN_2_0_ONLY == 0)
@@ -281,62 +291,62 @@ typedef enum msg_direction_t_ {
 /*  -----------  prototypes  ---------------------------------------------
  */
 
-/** @brief       ...
+/** @brief       Returns the given CAN API V3 message as a formatted string.
  *
- *  @param[in]   message - ...
+ *  @param[in]   message  CAN API V3 messge
  *
- *  @returns     pointer to a zero-terminated string.
+ *  @returns     pointer to a zero-terminated string, or NULL on error.
  */
-char *msg_format_message(const msg_message_t *message, msg_direction_t direction,
-                               msg_counter_t counter, msg_channel_t channel);
+extern char *msg_format_message(const msg_message_t *message, msg_direction_t direction,
+                                      msg_counter_t counter, msg_channel_t channel);
 
-/** @brief       ...
+/** @brief       Returns the time-stamp of a CAN API V3 message as a formatted string.
  *
- *  @param[in]   message - ...
+ *  @param[in]   message  CAN API V3 messge
  *
- *  @returns     pointer to a zero-terminated string.
+ *  @returns     pointer to a zero-terminated string, or NULL on error.
  */
-char *msg_format_time(const msg_message_t *message);
+extern char *msg_format_time(const msg_message_t *message);
 
-/** @brief       ...
+/** @brief       Returns the idnetifier of a CAN API V3 message as a formatted string.
  *
- *  @param[in]   message - ...
+ *  @param[in]   message  CAN API V3 messge
  *
- *  @returns     pointer to a zero-terminated string.
+ *  @returns     pointer to a zero-terminated string, or NULL on error.
  */
-char *msg_format_id(const msg_message_t *message);
+extern char *msg_format_id(const msg_message_t *message);
 
-/** @brief       ...
+/** @brief       Returns the flags of a CAN API V3 message as a formatted string.
  *
- *  @param[in]   message - ...
+ *  @param[in]   message  CAN API V3 messge
  *
- *  @returns     pointer to a zero-terminated string.
+ *  @returns     pointer to a zero-terminated string, or NULL on error.
  */
-char *msg_format_flags(const msg_message_t *message);
+extern char *msg_format_flags(const msg_message_t *message);
 
-/** @brief       ...
+/** @brief       Returns the data length code of a CAN API V3 message as a formatted string.
  *
- *  @param[in]   message - ...
+ *  @param[in]   message  CAN API V3 messge
  *
- *  @returns     pointer to a zero-terminated string.
+ *  @returns     pointer to a zero-terminated string, or NULL on error.
  */
-char *msg_format_dlc(const msg_message_t *message);
+extern char *msg_format_dlc(const msg_message_t *message);
 
-/** @brief       ...
+/** @brief       Returns the data of a CAN API V3 message as a formatted string (binary representation).
  *
- *  @param[in]   message - ...
+ *  @param[in]   message  CAN API V3 messge
  *
- *  @returns     pointer to a zero-terminated string.
+ *  @returns     pointer to a zero-terminated string, or NULL on error.
  */
-char *msg_format_data(const msg_message_t *message);
+extern char *msg_format_data(const msg_message_t *message);
 
-/** @brief       ...
+/** @brief       Returns the data of a CAN API V3 message as a formatted string (ASCII representation).
  *
- *  @param[in]   message - ...
+ *  @param[in]   message  CAN API V3 messge
  *
- *  @returns     pointer to a zero-terminated string.
+ *  @returns     pointer to a zero-terminated string, or NULL on error.
  */
-char *msg_format_ascii(const msg_message_t *message);
+extern char *msg_format_ascii(const msg_message_t *message);
 
 /** @brief       set message output format {DEFAULT, ...}.
  *
@@ -344,7 +354,7 @@ char *msg_format_ascii(const msg_message_t *message);
  *
  *  @returns     non-zero value on success, otherwise 0.
  */
-int msg_set_format(msg_format_t format);
+extern int msg_set_format(msg_format_t format);
 
 /** @brief       set formatter option: time-stamp {ZERO, ABS, REL}.
  *
@@ -352,7 +362,7 @@ int msg_set_format(msg_format_t format);
  *
  *  @returns     non-zero value on success, otherwise 0.
  */
-int msg_set_fmt_time_stamp(msg_fmt_timestamp_t option);
+extern int msg_set_fmt_time_stamp(msg_fmt_timestamp_t option);
 
 /** @brief       set formatter option: time-stamp in usec {OFF, ON}.
  *
@@ -360,7 +370,7 @@ int msg_set_fmt_time_stamp(msg_fmt_timestamp_t option);
  *
  *  @returns     non-zero value on success, otherwise 0.
  */
-int msg_set_fmt_time_usec(msg_fmt_option_t option);
+extern int msg_set_fmt_time_usec(msg_fmt_option_t option);
 
 /** @brief       set formatter option: time format {TIME, SEC, DJD}.
  *
@@ -368,7 +378,7 @@ int msg_set_fmt_time_usec(msg_fmt_option_t option);
  *
  *  @returns     non-zero value on success, otherwise 0.
  */
-int msg_set_fmt_time_format(msg_fmt_time_t option);
+extern int msg_set_fmt_time_format(msg_fmt_time_t option);
 
 /** @brief       set formatter option: identifier {HEX, DEC, OCT, BIN}.
  *
@@ -376,7 +386,7 @@ int msg_set_fmt_time_format(msg_fmt_time_t option);
  *
  *  @returns     non-zero value on success, otherwise 0.
  */
-int msg_set_fmt_id(msg_fmt_number_t option);
+extern int msg_set_fmt_id(msg_fmt_number_t option);
 
 /** @brief       set formatter option: extended identifier {OFF, ON}.
  *
@@ -384,7 +394,7 @@ int msg_set_fmt_id(msg_fmt_number_t option);
  *
  *  @returns     non-zero value on success, otherwise 0.
  */
-int msg_set_fmt_id_xtd(msg_fmt_option_t option);
+extern int msg_set_fmt_id_xtd(msg_fmt_option_t option);
 
 /** @brief       set formatter option: DLC/length {HEX, DEC, OCT, BIN}.
  *
@@ -392,7 +402,7 @@ int msg_set_fmt_id_xtd(msg_fmt_option_t option);
  *
  *  @returns     non-zero value on success, otherwise 0.
  */
-int msg_set_fmt_dlc(msg_fmt_number_t option);
+extern int msg_set_fmt_dlc(msg_fmt_number_t option);
 
 /** @brief       set formatter option: CAN FD format {DLC, LENGTH}.
  *
@@ -400,7 +410,7 @@ int msg_set_fmt_dlc(msg_fmt_number_t option);
  *
  *  @returns     non-zero value on success, otherwise 0.
  */
-int msg_set_fmt_dlc_format(msg_fmt_canfd_t option);
+extern int msg_set_fmt_dlc_format(msg_fmt_canfd_t option);
 
 /** @brief       set formatter option: DLC in brackets {'\0', '(', '['}.
  *
@@ -408,7 +418,7 @@ int msg_set_fmt_dlc_format(msg_fmt_canfd_t option);
  *
  *  @returns     non-zero value on success, otherwise 0.
  */
-int msg_set_fmt_dlc_brackets(int option);
+extern int msg_set_fmt_dlc_brackets(int option);
 
 /** @brief       set formatter option: message flags {ON, OFF}.
  *
@@ -416,7 +426,7 @@ int msg_set_fmt_dlc_brackets(int option);
  *
  *  @returns     non-zero value on success, otherwise 0.
  */
-int msg_set_fmt_flags(msg_fmt_option_t option);
+extern int msg_set_fmt_flags(msg_fmt_option_t option);
 
 /** @brief       set formatter option: message data {HEX, DEC, OCT, BIN}.
  *
@@ -424,7 +434,7 @@ int msg_set_fmt_flags(msg_fmt_option_t option);
  *
  *  @returns     non-zero value on success, otherwise 0.
  */
-int msg_set_fmt_data(msg_fmt_number_t option);
+extern int msg_set_fmt_data(msg_fmt_number_t option);
 
 /** @brief       set formatter option: data as ASCII {ON, OFF}.
  *
@@ -432,7 +442,7 @@ int msg_set_fmt_data(msg_fmt_number_t option);
  *
  *  @returns     non-zero value on success, otherwise 0.
  */
-int msg_set_fmt_ascii(msg_fmt_option_t option);
+extern int msg_set_fmt_ascii(msg_fmt_option_t option);
 
 /** @brief       set formatter option: substitute for non-printable characters.
  *
@@ -440,7 +450,7 @@ int msg_set_fmt_ascii(msg_fmt_option_t option);
  *
  *  @returns     non-zero value on success, otherwise 0.
  */
-int msg_set_fmt_ascii_subst(int option);
+extern int msg_set_fmt_ascii_subst(int option);
 
 /** @brief       set formatter option: message source {OFF, ON}.
  *
@@ -448,7 +458,7 @@ int msg_set_fmt_ascii_subst(int option);
  *
  *  @returns     non-zero value on success, otherwise 0.
  */
-int msg_set_fmt_channel(msg_fmt_option_t option);
+extern int msg_set_fmt_channel(msg_fmt_option_t option);
 
 /** @brief       set formatter option: message counter {ON, OFF}.
  *
@@ -456,7 +466,7 @@ int msg_set_fmt_channel(msg_fmt_option_t option);
  *
  *  @returns     non-zero value on success, otherwise 0.
  */
-int msg_set_fmt_counter(msg_fmt_option_t option);
+extern int msg_set_fmt_counter(msg_fmt_option_t option);
 
 /** @brief       set formatter option: separator {SPACES, TABS}.
  *
@@ -464,7 +474,7 @@ int msg_set_fmt_counter(msg_fmt_option_t option);
  *
  *  @returns     non-zero value on success, otherwise 0.
  */
-int msg_set_fmt_separator(msg_fmt_separator_t option);
+extern int msg_set_fmt_separator(msg_fmt_separator_t option);
 
 /** @brief       set formatter option: wraparound {NO, 8, 16, 32, 64}.
  *
@@ -472,7 +482,7 @@ int msg_set_fmt_separator(msg_fmt_separator_t option);
  *
  *  @returns     non-zero value on success, otherwise 0.
  */
-int msg_set_fmt_wraparound(msg_fmt_wraparound_t option);
+extern int msg_set_fmt_wraparound(msg_fmt_wraparound_t option);
 
 /** @brief       set formatter option: end-of-line character {OFF, ON}.
  *
@@ -480,7 +490,7 @@ int msg_set_fmt_wraparound(msg_fmt_wraparound_t option);
  *
  *  @returns     non-zero value on success, otherwise 0.
  */
-int msg_set_fmt_eol(msg_fmt_option_t option);
+extern int msg_set_fmt_eol(msg_fmt_option_t option);
 
 /** @brief       set formatter option: prompt for received messages (char[6+1]).
  *
@@ -488,7 +498,7 @@ int msg_set_fmt_eol(msg_fmt_option_t option);
  *
  *  @returns     non-zero value on success, otherwise 0.
  */
-int msg_set_fmt_rx_prompt(const char *option);
+extern int msg_set_fmt_rx_prompt(const char *option);
 
 /** @brief       set formatter option: prompt for sent messages (char[6+1]).
  *
@@ -496,7 +506,47 @@ int msg_set_fmt_rx_prompt(const char *option);
  *
  *  @returns     non-zero value on success, otherwise 0.
  */
-int msg_set_fmt_tx_prompt(const char *option);
+extern int msg_set_fmt_tx_prompt(const char *option);
+
+/** @brief Parse CAN API V3 message from ASCII string.
+ *
+ *  The syntax is taken from 'cansend' utility of the Linux SocketCAN package.
+ *  
+ *  <can_frame>:
+ *   <can_id>#{data}          for CAN CC data frames
+ *   <can_id>#R{len}          for CAN CC remote frames
+ *   <can_id>#{data}_{dlc}    for CAN CC data frames with 9..F DLC
+ *   <can_id>#R{len}_{dlc}    for CAN CC remote frames with 9..F DLC
+ *   <can_id>##<flags>{data}  for CAN FD data frames (up to 64 bytes)
+ *
+ *  <can_id>:
+ *   3 (SFF) or 8 (EFF) hex characters
+ *  {data}:
+ *   0..8 (0..64 CAN FD) ASCII hex-values (optionally separated by '.')
+ *  {len}:
+ *   an optional 0..8 value as RTR frames can contain a valid dlc field
+ *  _{dlc}:
+ *   an optional 9..F data length code value when payload length is 8
+ *  <flags>:
+ *   a single ASCII Hex value (0 .. F) which defines CAN FD flags:
+ *     0x4: FDF (CAN FD frame)
+ *     0x1: BRS (Bit Rate Switch)
+ *     0x2: ESI (Error State Indicator)
+ *   Valid combinations are:
+ *     0x4: FDF
+ *     0x5: FDF and BRS
+ *     0x6: FDF and ESI
+ *     0x7: FDF, BRS and ESI
+ *
+ *  @param[in]  str  ASCII string
+ *  @param[out] msg  CAN API V3 message
+ *  @param[out] cnt  count (default: 1)
+ *  @param[out] cyc  cycle time (in [us])
+ *  @param[out] inc  increment: 0 = none, 1 = increment, -1 = decrement
+ * 
+ *  @return 0 on success, -1 on error 
+ */
+extern int msg_parse(const char *str, msg_message_t *msg, uint32_t *cnt, uint64_t *cyc, int *inc);
 
 
 #ifdef __cplusplus
