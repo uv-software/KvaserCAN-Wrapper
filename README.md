@@ -1,6 +1,6 @@
 ### CAN API V3 Wrapper Library for Kvaser CAN Interfaces (Windows&reg;)
 
-_Copyright &copy; 2017-2026 Uwe Vogt, UV Software, Berlin (info@uv-software.com)_
+_Copyright &copy; 2017-2026 Uwe Vogt, UV Software, Berlin (info@uv-software.de)_
 
 ![MSBuild](https://github.com/uv-software/KvaserCAN-Wrapper/actions/workflows/msbuild.yml/badge.svg)
 
@@ -83,17 +83,12 @@ C:\Projects\CAN\Drivers\KvaserCAN>build_no.bat
 ```
 Repeat this step after each `git commit`, `git pull`, `git clone`, etc.
 
-To build all 32-bit targets (x86) run the script `x86_build.bat`.
-```
-C:\Users\haumea>cd C:\Projects\CAN\Drivers\KvaserCAN
-C:\Projects\CAN\Drivers\KvaserCAN>x86_build.bat
-```
-
-To build all 64-bit targets (x64) run the script `x64_build.bat`.
+To build all targets (x64) run the script `x64_build.bat`.
 ```
 C:\Users\haumea>cd C:\Projects\CAN\Drivers\KvaserCAN
 C:\Projects\CAN\Drivers\KvaserCAN>x64_build.bat
 ```
+(The version number of the libraries can be adapted by editing the `.rc` files in the corresponding subfolders. Don´t forget to set the version number also in the header file `Version.h`.)
 
 ### Libraries
 
@@ -109,7 +104,14 @@ See header file `can_api.h` for a description of all API functions.
 
 ### Utilities
 
-#### can_moni (CLI)
+##### can_send
+
+`can_send` is a command line tool to send CAN messages that are entered at the program prompt.
+The syntax is taken from the Linux SocketCAN utility [can_utils\cansend](https://github.com/linux-can/can-utils/tree/master).
+
+Type `can_send /?` to display all program options.
+
+##### can_moni (CLI)
 
 `can_moni` is a command line tool to view incoming CAN messages.
 I hate this messing around with binary masks for identifier filtering.
@@ -117,7 +119,7 @@ So I wrote this little program to have an exclude list for single identifiers or
 
 Type `can_moni /?` to display all program options.
 
-#### can_test (CLI)
+##### can_test (CLI)
 
 `can_test` is a command line tool to test CAN communication.
 Originally developed for electronic environmental tests on an embedded Linux system with SocketCAN, I´m using it for many years as a traffic generator for CAN stress-tests.
@@ -180,5 +182,5 @@ _If you connect your CAN device to a real CAN network when using this library, y
 
 ### Contact
 
-E-Mail: mailto://info@uv-software.com \
+E-Mail: mailto://info@uv-software.de \
 Internet: https://www.uv-software.com
