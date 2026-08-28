@@ -1,6 +1,6 @@
 ### CAN API V3 Wrapper Library for Kvaser CAN Interfaces (Windows&reg;)
 
-_Copyright &copy; 2017-2024 Uwe Vogt, UV Software, Berlin (info@uv-software.de)_
+_Copyright &copy; 2017-2026 Uwe Vogt, UV Software, Berlin (info@uv-software.de)_
 _All rights reserved._
 
 # Deployment
@@ -32,8 +32,9 @@ _All rights reserved._
   - `$(PROJROOT)\Sources\Wrapper\can_api.c`
   - `$(PROJROOT)\Libraries\CANAPI\uvcankvl.rc`
   - `$(PROJROOT)\Libraries\PeakCAN\KvaserCAN.rc`
-  - `$(PROJROOT)\Utilities\can_moni\Driver.h`
-  - `$(PROJROOT)\Utilities\can_test\Driver.h`
+  - `$(PROJROOT)/Utilities/can_moni/README.md`
+  - `$(PROJROOT)/Utilities/can_send/README.md`
+  - `$(PROJROOT)/Utilities/can_test/README.md`
 
 ### Procedure
 
