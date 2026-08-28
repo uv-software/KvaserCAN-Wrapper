@@ -2,7 +2,7 @@
 //
 //  CAN Interface API, Version 3 (for Kvaser CAN Interfaces)
 //
-//  Copyright (c) 2017-2026 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
+//  Copyright (c) 2017-2026 Uwe Vogt, UV Software, Berlin (info@uv-software.de)
 //  All rights reserved.
 //
 //  This file is part of KvaserCAN-Wrapper.
