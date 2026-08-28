@@ -1,6 +1,6 @@
 ### CAN API V3 Wrapper Library for Kvaser CAN Interfaces (Windows&reg;)
 
-_Copyright &copy; 2017-2024  Uwe Vogt, UV Software, Berlin (info@uv-software.com)_
+_Copyright &copy; 2017-2026 Uwe Vogt, UV Software, Berlin (info@uv-software.de)_
 
 ![MSBuild](https://github.com/uv-software/KvaserCAN-Wrapper/actions/workflows/msbuild.yml/badge.svg)
 
@@ -83,17 +83,14 @@ C:\Projects\CAN\Drivers\KvaserCAN>build_no.bat
 ```
 Repeat this step after each `git commit`, `git pull`, `git clone`, etc.
 
-To build all 32-bit targets (x86) run the script `x86_build.bat`.
-```
-C:\Users\haumea>cd C:\Projects\CAN\Drivers\KvaserCAN
-C:\Projects\CAN\Drivers\KvaserCAN>x86_build.bat
-```
-
-To build all 64-bit targets (x64) run the script `x64_build.bat`.
+To build all targets (x64) run the script `x64_build.bat`.
 ```
 C:\Users\haumea>cd C:\Projects\CAN\Drivers\KvaserCAN
 C:\Projects\CAN\Drivers\KvaserCAN>x64_build.bat
 ```
+(The version number of the libraries can be adapted by editing the `.rc` files in the corresponding subfolders. Don´t forget to set the version number also in the header file `Version.h`.)
+
+### Libraries
 
 #### uvKvaserCAN (DLL)
 
@@ -105,7 +102,16 @@ See header file `KvaserCAN.h` for a description of all class members.
 ___u3cankvl___ is a dynamic link library with a CAN API V3 compatible application programming interface for use in __C__ applications.
 See header file `can_api.h` for a description of all API functions.
 
-#### can_moni (CLI)
+### Utilities
+
+##### can_send
+
+`can_send` is a command line tool to send CAN messages that are entered at the program prompt.
+The syntax is taken from the Linux SocketCAN utility [can_utils\cansend](https://github.com/linux-can/can-utils/tree/master).
+
+Type `can_send /?` to display all program options.
+
+##### can_moni (CLI)
 
 `can_moni` is a command line tool to view incoming CAN messages.
 I hate this messing around with binary masks for identifier filtering.
@@ -113,7 +119,7 @@ So I wrote this little program to have an exclude list for single identifiers or
 
 Type `can_moni /?` to display all program options.
 
-#### can_test (CLI)
+##### can_test (CLI)
 
 `can_test` is a command line tool to test CAN communication.
 Originally developed for electronic environmental tests on an embedded Linux system with SocketCAN, I´m using it for many years as a traffic generator for CAN stress-tests.
@@ -122,11 +128,11 @@ Type `can_test /?` to display all program options.
 
 ### Target Platform
 
-- Windows 10 & 11 (x64 operating systems)
+- Windows 11 (x64 operating systems)
 
 ### Development Environment
 
-- Microsoft Visual Studio Community 2022 (Version 17.10.1)
+- Microsoft Visual Studio Community 2022 (Version 17.14.39)
 
 ### Required Kvaser CANlib SDK
 
@@ -134,9 +140,9 @@ Type `can_test /?` to display all program options.
 
 ### Tested CAN Hardware
 
-- Kvaser Leaf Light V2 - single channel, CAN 2.0 (EAN: 73-30130-00685-0)
-- Kvaser Leaf Pro HS V2 - single channel, CAN FD (EAN: 73-30130-00843-4)
-- Kvaser U100P - single channel, CAN FD (EAN: 73-30130-01174-8)
+- Kvaser Leaf Light V2 - single channel, CAN 2.0 (EAN: 73-30130-00685-0; Firmware: 4.12.211)
+- Kvaser Leaf Pro HS V2 - single channel, CAN FD (EAN: 73-30130-00843-4; Firmware: 3.39.788)
+- Kvaser U100P - single channel, CAN FD (EAN: 73-30130-01174-8; Firmware: 3.39.788)
 
 ## Known Bugs and Caveats
 
@@ -160,13 +166,13 @@ A generic documentation of the CAN API V3 application programming interface can 
 ### Dual-License
 
 Except where otherwise noted, this work is dual-licensed under the terms of the BSD 2-Clause "Simplified" License
-and under the terms of the GNU General Public License v3.0 (or any later version).
+and under the terms of the GNU General Public License v2.0 (or any later version).
 You can choose between one of them if you use these portions of this work in whole or in part.
 
 ### Trademarks
 
 Windows is a registered trademark of Microsoft Corporation in the United States and/or other countries. \
-Mac and macOS are trademarks of Apple Inc., registered in the U.S. and other countries. \
+Mac and macOS are trademarks of Apple Inc., registered in the U.S. and other countries and regions. \
 Linux is a registered trademark of Linus Torvalds. \
 All other company, product and service names mentioned herein may be trademarks, registered trademarks, or service marks of their respective owners.
 
@@ -176,5 +182,5 @@ _If you connect your CAN device to a real CAN network when using this library, y
 
 ### Contact
 
-E-Mail: mailto://info@uv-software.com \
+E-Mail: mailto://info@uv-software.de \
 Internet: https://www.uv-software.com

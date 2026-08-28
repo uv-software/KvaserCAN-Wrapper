@@ -1,13 +1,13 @@
-//  SPDX-License-Identifier: GPL-3.0-or-later
+//  SPDX-License-Identifier: GPL-2.0-or-later
 //
 //  CAN Tester for generic Interfaces (CAN API V3)
 //
 //  Copyright (c) 2005-2010 Uwe Vogt, UV Software, Friedrichshafen
-//  Copyright (c) 2012-2024 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
+//  Copyright (c) 2012-2025 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
 //
-//  This program is free software: you can redistribute it and/or modify
+//  This program is free software; you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
+//  the Free Software Foundation; either version 2 of the License, or
 //  (at your option) any later version.
 //
 //  This program is distributed in the hope that it will be useful,
@@ -15,8 +15,8 @@
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
 //
-//  You should have received a copy of the GNU General Public License
-//  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//  You should have received a copy of the GNU General Public License along
+//  with this program; if not, see <https://www.gnu.org/licenses/>.
 //
 #include "Options.h"
 
@@ -29,6 +29,13 @@
 extern "C" {
 #include "dosopt.h"
 }
+#if defined(_WIN64)
+#define PLATFORM  "x64"
+#elif defined(_WIN32)
+#define PLATFORM  "x86"
+#else
+#error Platform not supported
+#endif
 #ifdef _MSC_VER
 //not #if defined(_WIN32) || defined(_WIN64) because we have strncasecmp in mingw
 #define strncasecmp _strnicmp
@@ -84,19 +91,26 @@ extern "C" {
 #define CAN_CHR           41
 #define CAN_ID            42
 #define COB_ID            43
-#define LISTBITRATES_STR  44
-#define LISTBOARDS_STR    45
-#define LISTBOARDS_CHR    46
-#define TESTBOARDS_STR    47
-#define TESTBOARDS_CHR    48
-#define JSON_STR          49
-#define JSON_CHR          50
-#define HELP              51
-#define QUESTION_MARK     52
-#define ABOUT             53
-#define CHARACTER_MJU     54
-#define VERSION           55
-#define MAX_OPTIONS       56
+#define XTD_ID            44
+#define EXT_STR           45
+#define EXT_CHR           46
+#define TRACEFILE_STR     47
+#define TRACEFILE_CHR     48
+#define LISTBITRATES_STR  49
+#define LISTBOARDS_STR    50
+#define LISTBOARDS_CHR    51
+#define TESTBOARDS_STR    52
+#define TESTBOARDS_CHR    53
+#define PROTOCOL_STR      54
+#define PROTOCOL_CHR      55
+#define JSON_STR          56
+#define JSON_CHR          57
+#define HELP              58
+#define QUESTION_MARK     59
+#define ABOUT             60
+#define CHARACTER_MJU     61
+#define VERSION           62
+#define MAX_OPTIONS       63
 
 static char* option[MAX_OPTIONS] = {
     (char*)"BAUDRATE", (char*)"bd",
@@ -120,9 +134,12 @@ static char* option[MAX_OPTIONS] = {
     (char*)"USEC", (char*)"u",
     (char*)"DLC", (char*)"d", (char*)"DATA",
     (char*)"CAN-ID", (char*)"id", (char*)"i", (char*)"COP-ID",
+    (char*)"XTD-ID", (char*)"extended", (char*)"ext",
+    (char*)"TRACE", (char*)"trc",
     (char*)"LIST-BITRATES",
     (char*)"LIST-BOARDS", (char*)"list",
     (char*)"TEST-BOARDS", (char*)"test",
+    (char*)"PROTOCOL", (char*)"pr",
 #if (OPTION_CANAPI_LIBRARY != 0)
     (char*)"PATH", (char*)"p",
 #else
@@ -144,7 +161,7 @@ static char* basename(char* path);
 #endif
 
 SOptions::SOptions() {
-    // to have dault bus speed from bit-timing index
+    // to have default bus speed from bit-timing index
     (void)CCanDriver::MapIndex2Bitrate(DEFAULT_BAUDRATE, m_Bitrate);
     (void)CCanDriver::MapBitrate2Speed(m_Bitrate, m_BusSpeed);
     // initialization
@@ -155,6 +172,9 @@ SOptions::SOptions() {
 #else
     m_szJsonFilename = (char*)NULL;
 #endif
+#if (SERIAL_CAN_SUPPORTED != 0)
+    m_u8Protocol = CANSIO_LAWICEL;
+#endif
     m_OpMode.byte = DEFAULT_OP_MODE;
     m_Bitrate.index = DEFAULT_BAUDRATE;
     m_bHasDataPhase = false;
@@ -163,6 +183,9 @@ SOptions::SOptions() {
     m_StdFilter.m_u32Mask = CANACC_MASK_11BIT;
     m_XtdFilter.m_u32Code = CANACC_CODE_29BIT;
     m_XtdFilter.m_u32Mask = CANACC_MASK_29BIT;
+#if (CAN_TRACE_SUPPORTED != 0)
+    m_eTraceMode = SOptions::eTraceOff;
+#endif
     m_TestMode = SOptions::RxMODE;
     m_nStartNumber = (uint64_t)0;
     m_fCheckNumber = false;
@@ -172,10 +195,10 @@ SOptions::SOptions() {
     m_nTxDelay = (uint64_t)0;
     m_nTxCanId = (uint32_t)DEFAULT_CAN_ID;
     m_nTxCanDlc = (uint8_t)DEFAULT_LENGTH;
+    m_fTxXtdId = false;
     m_fListBitrates = false;
     m_fListBoards = false;
     m_fTestBoards = false;
-    m_fVerbose = false;
     m_fVerbose = false;
     m_fExit = false;
 }
@@ -189,13 +212,15 @@ int SOptions::ScanCommanline(int argc, const char* argv[], FILE* err, FILE* out)
     int optBitrate = 0;
     int optVerbose = 0;
     int optMode = 0;
+#if (CAN_SHARED_SUPPORTED != 0)
     int optShared = 0;
+#endif
     int optListenOnly = 0;
     int optErrorFrames = 0;
     int optExtendedFrames = 0;
     int optRemoteFrames = 0;
-    int optCode = 0;
-    int optMask = 0;
+    int optStdCode = 0;
+    int optStdMask = 0;
     int optXtdCode = 0;
     int optXtdMask = 0;
     int optReceive = 0;
@@ -207,9 +232,16 @@ int SOptions::ScanCommanline(int argc, const char* argv[], FILE* err, FILE* out)
     int optCycle = 0;
     int optDlc = 0;
     int optId = 0;
+    int optXtd = 0;
+#if (CAN_TRACE_SUPPORTED != 0)
+    int optTraceMode = 0;
+#endif
     int optListBitrates = 0;
     int optListBoards = 0;
     int optTestBoards = 0;
+#if (SERIAL_CAN_SUPPORTED != 0)
+    int optProtocol = 0;
+#endif
 #if (OPTION_CANAPI_LIBRARY != 0)
     int optPath = 0;
 #else
@@ -222,7 +254,7 @@ int SOptions::ScanCommanline(int argc, const char* argv[], FILE* err, FILE* out)
         return (-1);
     // (1) get basename from command-line
 #if (USE_BASENAME != 0)
-    m_szBasename = Basename(argv[0]);
+    m_szBasename = basename((char*)argv[0]);
 #endif
     // (2) scan command-line for options
     while ((optind = getOption(argc, (char**)argv, MAX_OPTIONS, option)) != EOF) {
@@ -298,7 +330,7 @@ int SOptions::ScanCommanline(int argc, const char* argv[], FILE* err, FILE* out)
             m_fVerbose = true;
             break;
 #if (OPTION_CANAPI_LIBRARY != 0)
-        /* option '--path' (-p) */
+        /* option '--path=<pathname>' (-p) */
         case JSON_STR:
         case JSON_CHR:
             if ((optPath++)) {
@@ -310,6 +342,28 @@ int SOptions::ScanCommanline(int argc, const char* argv[], FILE* err, FILE* out)
                 return 1;
             }
             m_szSearchPath = optarg;
+            break;
+#endif
+#if (SERIAL_CAN_SUPPORTED != 0)
+        /* option '--protocol=(Lawicel|CANable)' */
+        case PROTOCOL_STR:
+        case PROTOCOL_CHR:
+            if ((optProtocol++)) {
+                fprintf(err, "%s: duplicated option /PROTOCOL\n", m_szBasename);
+                return 1;
+            }
+            if ((optarg = getOptionParameter()) == NULL) {
+                fprintf(err, "%s: missing argument for option /PROTOCOL\n", m_szBasename);
+                return 1;
+            }
+            if (!strcasecmp(optarg, "LAWICEL") || !strcasecmp(optarg, "default") || !strcasecmp(optarg, "SLCAN"))
+                m_u8Protocol = CANSIO_LAWICEL;
+            else if (!strcasecmp(optarg, "CANABLE"))
+                m_u8Protocol = CANSIO_CANABLE;
+            else {
+                fprintf(err, "%s: illegal argument for option /PROTOCOL\n", m_szBasename);
+                return 1;
+            }
             break;
 #endif
         /* option '--mode=(2.0|FDF[+BRS])' (-m) */
@@ -324,7 +378,8 @@ int SOptions::ScanCommanline(int argc, const char* argv[], FILE* err, FILE* out)
                 return 1;
             }
             if (!strcasecmp(optarg, "DEFAULT") || !strcasecmp(optarg, "CLASSIC") || !strcasecmp(optarg, "CLASSICAL") ||
-                !strcasecmp(optarg, "CAN20") || !strcasecmp(optarg, "CAN2.0") || !strcasecmp(optarg, "2.0"))
+                !strcasecmp(optarg, "CAN20") || !strcasecmp(optarg, "CAN2.0") || !strcasecmp(optarg, "2.0") ||
+                !strcasecmp(optarg, "CANCC") || !strcasecmp(optarg, "CC") || !strcasecmp(optarg, "CCF"))
                 m_OpMode.byte |= CANMODE_DEFAULT;
 #if (CAN_FD_SUPPORTED != 0)
             else if (!strcasecmp(optarg, "CANFD") || !strcasecmp(optarg, "FD") || !strcasecmp(optarg, "FDF"))
@@ -337,6 +392,7 @@ int SOptions::ScanCommanline(int argc, const char* argv[], FILE* err, FILE* out)
                 return 1;
             }
             break;
+#if (CAN_SHARED_SUPPORTED != 0)
         /* option '--shared' */
         case OP_SHARED_STR:
         case OP_SHARED_CHR:
@@ -350,6 +406,7 @@ int SOptions::ScanCommanline(int argc, const char* argv[], FILE* err, FILE* out)
             }
             m_OpMode.byte |= CANMODE_SHRD;
             break;
+#endif
         /* option '--listen-only' */
         case OP_MON_STR:
         case OP_MONITOR_STR:
@@ -451,7 +508,7 @@ int SOptions::ScanCommanline(int argc, const char* argv[], FILE* err, FILE* out)
             break;
         /* option '--code=<11-bit-code>' */
         case STD_CODE_STR:
-            if ((optCode++)) {
+            if ((optStdCode++)) {
                 fprintf(err, "%s: duplicated option /CODE\n", m_szBasename);
                 return 1;
             }
@@ -471,7 +528,7 @@ int SOptions::ScanCommanline(int argc, const char* argv[], FILE* err, FILE* out)
             break;
         /* option '--mask=<11-bit-mask>' */
         case STD_MASK_CHR:
-            if ((optMask++)) {
+            if ((optStdMask++)) {
                 fprintf(err, "%s: duplicated option /MASK\n", m_szBasename);
                 return 1;
             }
@@ -529,6 +586,37 @@ int SOptions::ScanCommanline(int argc, const char* argv[], FILE* err, FILE* out)
             }
             m_XtdFilter.m_u32Mask = (uint32_t)intarg;
             break;
+        /* option '--trace=(ON|OFF)' */
+#if (CAN_TRACE_SUPPORTED != 0)
+        case TRACEFILE_STR:
+        case TRACEFILE_CHR:
+            if (optTraceMode++) {
+                fprintf(err, "%s: duplicated option /TRACE\n", m_szBasename);
+                return 1;
+            }
+            if ((optarg = getOptionParameter()) == NULL) {
+                fprintf(err, "%s: missing argument for option /TRACE\n", m_szBasename);
+                return 1;
+            }
+#if (CAN_TRACE_SUPPORTED == 1)
+            if (!strcasecmp(optarg, "OFF") || !strcasecmp(optarg, "NO") || !strcasecmp(optarg, "n") || !strcasecmp(optarg, "0"))
+                m_eTraceMode = SOptions::eTraceOff;
+            else if (!strcasecmp(optarg, "ON") || !strcasecmp(optarg, "YES") || !strcasecmp(optarg, "y") || !strcasecmp(optarg, "1"))
+                m_eTraceMode = SOptions::eTraceVendor;
+#else
+            if (!strcasecmp(optarg, "BIN") || !strcasecmp(optarg, "BINARY") || !strcasecmp(optarg, "default"))
+                m_eTraceMode = SOptions::eTraceBinary;
+            else if (!strcasecmp(optarg, "CSV") || !strcasecmp(optarg, "logger") || !strcasecmp(optarg, "log"))
+                m_eTraceMode = SOptions::eTraceLogger;
+            else if (!strcasecmp(optarg, "TRC") || !strcasecmp(optarg, "vendor"))
+                m_eTraceMode = SOptions::eTraceVendor;
+#endif
+            else {
+                fprintf(err, "%s: illegal argument for option /TRACE\n", m_szBasename);
+                return 1;
+            }
+            break;
+#endif
         /* option '--receive' (-r) */
         case RECEIVE_STR:
         case RECEIVE_CHR:
@@ -577,7 +665,7 @@ int SOptions::ScanCommanline(int argc, const char* argv[], FILE* err, FILE* out)
             }
             m_fStopOnError = 1;
             break;
-        /* option '--transmit=<duration>' (-t) in [s] */
+        /* option '--transmit=<duration>' (-t) (in [s]) */
         case TRANSMIT_STR:
         case TRANSMIT_CHR:
             if ((optTransmit++)) {
@@ -736,6 +824,20 @@ int SOptions::ScanCommanline(int argc, const char* argv[], FILE* err, FILE* out)
             }
             m_nTxCanId = (uint32_t)intarg;
             break;
+        /* option '--extended' (-e) */
+        case EXT_STR:
+        case EXT_CHR:
+        case XTD_ID:
+            if ((optXtd++)) {
+                fprintf(err, "%s: duplicated option /EXTENDED\n", m_szBasename);
+                return 1;
+            }
+            if ((optarg = getOptionParameter()) != NULL) {
+                fprintf(err, "%s: illegal argument for option /EXTENDED\n", m_szBasename);
+                return 1;
+            }
+            m_fTxXtdId = true;
+            break;
         /* option '--list-bitrates[=(2.0|FDF[+BRS])]' */
         case LISTBITRATES_STR:
             if ((optListBitrates++)) {
@@ -748,7 +850,8 @@ int SOptions::ScanCommanline(int argc, const char* argv[], FILE* err, FILE* out)
                     return 1;
                 }
                 if (!strcasecmp(optarg, "DEFAULT") || !strcasecmp(optarg, "CLASSIC") || !strcasecmp(optarg, "CLASSICAL") ||
-                    !strcasecmp(optarg, "CAN20") || !strcasecmp(optarg, "CAN2.0") || !strcasecmp(optarg, "2.0"))
+                    !strcasecmp(optarg, "CAN20") || !strcasecmp(optarg, "CAN2.0") || !strcasecmp(optarg, "2.0") ||
+                    !strcasecmp(optarg, "CANCC") || !strcasecmp(optarg, "CC") || !strcasecmp(optarg, "CCF"))
                     m_OpMode.byte |= CANMODE_DEFAULT;
 #if (CAN_FD_SUPPORTED != 0)
                 else if (!strcasecmp(optarg, "CANFD") || !strcasecmp(optarg, "FD") || !strcasecmp(optarg, "FDF"))
@@ -777,7 +880,7 @@ int SOptions::ScanCommanline(int argc, const char* argv[], FILE* err, FILE* out)
                     fprintf(err, "%s: option /PATH already set\n", m_szBasename);
                     return 1;
                 }
-                m_szSearchPath = optarg;
+                m_szSearchPath = optarg;  // option '--list-boards=<pathname>' (-L)
             }
 #endif
             m_fListBoards = true;
@@ -796,7 +899,7 @@ int SOptions::ScanCommanline(int argc, const char* argv[], FILE* err, FILE* out)
                     fprintf(err, "%s: option /PATH already set\n", m_szBasename);
                     return 1;
                 }
-                m_szSearchPath = optarg;
+                m_szSearchPath = optarg;  // option '--test-boards=<pathname>' (-L)
             }
 #endif
             m_fTestBoards = true;
@@ -918,12 +1021,17 @@ void SOptions::ShowUsage(FILE* stream, bool args) {
     fprintf(stream, "  /RECEIVE | /RX                      count received messages until ^C is pressed\n");
     fprintf(stream, "  /Number:<number>                    check up-counting numbers starting with <number>\n");
     fprintf(stream, "  /Stop                               stop on error (with option /NUMBER)\n");
-#if (CAN_FD_SUPPORTED != 0)
-    fprintf(stream, "  /Mode:(2.0|FDf[+BRS])               CAN operation mode: CAN 2.0 or CAN FD mode\n");
-#else
-    fprintf(stream, "  /Mode:2.0                           CAN operation mode: CAN 2.0\n");
+#if (OPTION_CANAPI_LIBRARY != 0)
+    fprintf(stream, "  /Path:<pathname>                    search path for JSON configuration files\n");
 #endif
+#if (CAN_FD_SUPPORTED != 0)
+    fprintf(stream, "  /Mode:(CCf|FDf[+BRS])               CAN operation mode: CAN CC or CAN FD mode\n");
+#else
+    fprintf(stream, "  /Mode:CCf                           CAN operation mode: CAN CC mode\n");
+#endif
+#if (CAN_SHARED_SUPPORTED != 0)
     fprintf(stream, "  /SHARED                             shared CAN controller access (if supported)\n");
+#endif
     fprintf(stream, "  /MONitor:(No|Yes) | /LISTEN-ONLY    monitor mode (listen-only mode)\n");
     fprintf(stream, "  /ERR:(No|Yes) | /ERROR-FRAMES       allow reception of error frames\n");
     fprintf(stream, "  /RTR:(Yes|No)                       allow remote frames (RTR frames)\n");
@@ -934,10 +1042,17 @@ void SOptions::ShowUsage(FILE* stream, bool args) {
     fprintf(stream, "  /XTD-MASK:<id>                      acceptance mask for 29-bit IDs (default=0x%08lx)\n", CANACC_MASK_29BIT);
     fprintf(stream, "  /BauDrate:<baudrate>                CAN bit-timing in kbps (default=250), or\n");
     fprintf(stream, "  /BitRate:<bitrate>                  CAN bit-rate settings (as key/value list)\n");
-#if (OPTION_CANAPI_LIBRARY != 0)
-    fprintf(stream, "  /Path:<pathname>                    search path for JSON configuration files\n");
-#endif
     fprintf(stream, "  /Verbose                            show detailed bit-rate settings\n");
+#if (CAN_TRACE_SUPPORTED != 0)
+#if (CAN_TRACE_SUPPORTED == 1)
+    fprintf(stream, "  /TRaCe:(ON|OFF)                     write a trace file (default=OFF)\n");
+#else
+    fprintf(stream, "  /TRaCe:(BIN|CSV|TRC)                write a trace file (default=OFF)\n");
+#endif
+#endif
+#if (SERIAL_CAN_SUPPORTED != 0)
+    fprintf(stream, "  /PRotocol:(Lawicel|CANable)         select SLCAN protocol (default=Lawicel)\n");
+#endif
     fprintf(stream, "Options for transmitter test:\n");
     fprintf(stream, "  /TRANSMIT:<time> | /TX=<time>       send messages for the given time in seconds, or\n");
     fprintf(stream, "  /FRames:<frames>                    alternatively send the given number of messages, or\n");
@@ -946,22 +1061,35 @@ void SOptions::ShowUsage(FILE* stream, bool args) {
     fprintf(stream, "  /Usec:<usec>                        cycle time in microseconds (default=0)\n");
     fprintf(stream, "  /Dlc:<length>                       send messages of given length (default=8)\n");
     fprintf(stream, "  /can-Id:<can-id>                    use given identifier (default=100h)\n");
+    fprintf(stream, "  /EXTended                           use extended identifier (29-bit)\n");
     fprintf(stream, "  /Number:<number>                    set first up-counting number (default=0)\n");
-#if (CAN_FD_SUPPORTED != 0)
-    fprintf(stream, "  /Mode:(2.0|FDf[+BRS])               CAN operation mode: CAN 2.0 or CAN FD mode\n");
-#else
-    fprintf(stream, "  /Mode:2.0                           CAN operation mode: CAN 2.0\n");
-#endif
-    fprintf(stream, "  /SHARED                             shared CAN controller access (if supported)\n");
-    fprintf(stream, "  /BauDrate:<baudrate>                CAN bit-timing in kbps (default=250), or\n");
-    fprintf(stream, "  /BitRate:<bitrate>                  CAN bit-rate settings (as key/value list)\n");
 #if (OPTION_CANAPI_LIBRARY != 0)
     fprintf(stream, "  /Path:<pathname>                    search path for JSON configuration files\n");
 #endif
+#if (CAN_FD_SUPPORTED != 0)
+    fprintf(stream, "  /Mode:(CCf|FDf[+BRS])               CAN operation mode: CAN CC or CAN FD mode\n");
+#else
+    fprintf(stream, "  /Mode:CCf                           CAN operation mode: CAN CC mode\n");
+#endif
+#if (CAN_SHARED_SUPPORTED != 0)
+    fprintf(stream, "  /SHARED                             shared CAN controller access (if supported)\n");
+#endif
+    fprintf(stream, "  /BauDrate:<baudrate>                CAN bit-timing in kbps (default=250), or\n");
+    fprintf(stream, "  /BitRate:<bitrate>                  CAN bit-rate settings (as key/value list)\n");
     fprintf(stream, "  /Verbose                            show detailed bit-rate settings\n");
+#if (CAN_TRACE_SUPPORTED != 0)
+#if (CAN_TRACE_SUPPORTED == 1)
+    fprintf(stream, "  /TRaCe:(ON|OFF)                     write a trace file (default=OFF)\n");
+#else
+    fprintf(stream, "  /TRaCe:(BIN|CSV|TRC)                write a trace file (default=OFF)\n");
+#endif
+#endif
+#if (SERIAL_CAN_SUPPORTED != 0)
+    fprintf(stream, "  /PRotocol:(Lawicel|CANable)         select SLCAN protocol (default=Lawicel)\n");
+#endif
     fprintf(stream, "Other options:\n");
 #if (CAN_FD_SUPPORTED != 0)
-    fprintf(stream, "  /LIST-BITRATES[:(2.0|FDf[+BRS])]    list standard bit-rate settings and exit\n");
+    fprintf(stream, "  /LIST-BITRATES[:(CCf|FDf[+BRS])]    list standard bit-rate settings and exit\n");
 #else
     fprintf(stream, "  /LIST-BITRATES[:2.0]                list standard bit-rate settings and exit\n");
 #endif

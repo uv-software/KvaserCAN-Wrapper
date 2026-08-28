@@ -1,7 +1,3 @@
-
-#ifndef _OBSOLETE_H_
-#define _OBSOLETE_H_
-
 /*
  *                   Copyright 1998-2017 by KVASER AB, SWEDEN
  *
@@ -21,6 +17,10 @@
  * \brief Definitions which are retained for compatibility.
  * @{
 */
+
+#ifndef _OBSOLETE_H_
+#define _OBSOLETE_H_
+
 
 #define canCIRCUIT_ANY          -1   ///< Any circuit will do \warning Obsolete!
 #define canCARD_ANY             -1   ///< Any card will do    \warning Obsolete!
@@ -126,6 +126,8 @@ canStatus CANLIBAPI canGetCircuits(int * context,
 #define canCHANNEL_CAP_DIAGNOSTICS      0x10000000L               ///< Obsolete, use canCHANNEL_CAP_CANTEGRITY instead.
 #define canCHANNEL_CAP_CAN_DIAGNOSTICS  canCHANNEL_CAP_RESERVED_2 ///< Obsolete, can report CAN diagnostics. Only used by LAPcan driver.
 #define canCHANNEL_CAP_REMOTE           canCHANNEL_CAP_RESERVED_1 ///< Obsolete, use \ref canCHANNEL_CAP_REMOTE_ACCESS or \ref canCHANNELDATA_IS_REMOTE
+/** @} */
+
 
 /**
  * \name Sticky status flags
@@ -295,6 +297,6 @@ canStatus CANLIBAPI canUninstallOwnBuffer(int handle, long id);
 }
 #endif /* __cplusplus */
 
-/** @} */
-
 #endif /* _OBSOLETE_H_ */
+
+/** @} */

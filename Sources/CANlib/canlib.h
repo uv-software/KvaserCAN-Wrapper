@@ -1494,7 +1494,7 @@ canStatus CANLIBAPI canTranslateBaud(long *const freq,
  * \param[in]     hnd       A handle to an open circuit.
  * \param[in]     freq      Bitrate constant, \ref canBITRATE_xxx.
  * \param[in,out] nominal   A pointer to a \ref kvBusParamsTq, upon return receives
- *                          the bus busparamters specified by \a freq.
+ *                          the bus busparameters specified by \a freq.
  *
  * \return \ref canOK (zero) is success
  * \return \ref canERR_xxx (negative) if failure
@@ -1521,9 +1521,9 @@ canStatus CANLIBAPI kvBitrateToBusParamsTq(const canHandle hnd,
  * \param[in]     freqA       Bitrate constant, \ref canFD_BITRATE_xxx.
  * \param[in]     freqD       Bitrate constant, \ref canFD_BITRATE_xxx.
  * \param[in,out] arbitration A pointer to a \ref kvBusParamsTq, upon return receives
- *                            the bus busparamters specified by \a freqA.
+ *                            the bus busparameters specified by \a freqA.
  * \param[in,out] data        A pointer to a \ref kvBusParamsTq, upon return receives
- *                            the bus busparamters specified by \a freqD.
+ *                            the bus busparameters specified by \a freqD.
  *
  * \return \ref canOK (zero) is success
  * \return \ref canERR_xxx (negative) if failure
@@ -1783,7 +1783,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a 32-bit unsigned integer that receives the
    * capabilities of the CAN controller; this is a combination of the \ref
@@ -1793,7 +1793,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a 32-bit unsigned integer that receives the
    * capabilities of the CAN transceiver; this is a combination of the
@@ -1804,7 +1804,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a 32-bit unsigned integer that receives
    * a combination of \ref canCHANNEL_IS_xxx flags.
@@ -1814,7 +1814,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a 32-bit unsigned integer that receives the hardware
    * type of the card. This value is any one of the \ref canHWTYPE_xxx
@@ -1824,7 +1824,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a 32-bit unsigned integer that receives the card's
    * number in the computer. Each card type is numbered separately. For
@@ -1835,7 +1835,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a 32-bit unsigned integer which receives the channel
    * number on the card.
@@ -1844,7 +1844,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a 64-bit (8 bytes) area which receives the serial
    * number of the card. If the card doesn't have a serial number, 0 is
@@ -1855,7 +1855,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a 64-bit (8 bytes) area which receives the serial
    * number of the transceiver. The serial number is an 8-byte unsigned
@@ -1866,7 +1866,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a 64-bit (8 bytes) area which receives the firmware
    * revision number on the card. This number consists of four 16-bit words:
@@ -1878,7 +1878,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a 64-bit (8 bytes) area which receives the hardware
    * revision number on the card. This number consists of four 16-bit words;
@@ -1890,23 +1890,23 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a 8-byte area which receives the UPC (EAN) number for
    * the card. If there is no UPC number, the buffer is filled with zeros. The
    * UPC (EAN) number is coded as a BCD string with the LSB first, so
-   * e.g. 733-0130-00122-0 is coded as 0x30001220 0x00073301.
+   * e.g. 73-30130-00122-0 is coded as 0x30001220 0x00073301.
    */
 #define canCHANNELDATA_CARD_UPC_NO                11
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a 8-byte area which receives the UPC (EAN) number for
    * the transceiver. If there is no UPC number, the buffer is filled with
    * zeros. The UPC (EAN) number is coded as a BCD string with the LSB first,
-   * so e.g. 733-0130-00122-0 is coded as 0x30001220 0x00073301.
+   * so e.g. 73-30130-00122-0 is coded as 0x30001220 0x00073301.
    * \note Not implemented in linux.
    */
 #define canCHANNELDATA_TRANS_UPC_NO               12
@@ -1915,7 +1915,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
    * \deprecated Use \ref canCHANNELDATA_DEVDESCR_ASCII instead.
    *
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to an area which receives a zero-terminated string with a
    * clear-text name of the channel.
@@ -1932,7 +1932,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to an array of 4 16-bit unsigned integers which receives
    * the file version number of the second-level DLL driver file, i.e. the DLL
@@ -1949,7 +1949,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to an array of 4 16-bit unsigned integers which receives
    * the product version number of the second-level DLL driver file, i.e. the
@@ -1966,7 +1966,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a 32-bit unsigned integer which receives a number that
    * identifies the second-level DLL driver file, i.e. the DLL that interfaces
@@ -1983,7 +1983,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a 32-bit unsigned integer which receives the CAN
    * transceiver type of the specified channel.  This value is one of the
@@ -1993,7 +1993,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a 32-bit unsigned integer which receives an address
    * indicating where the device is located on its underlying bus. The
@@ -2018,7 +2018,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a 32-bit unsigned integer which receives a number
    * associated with the device that can be displayed in the user
@@ -2032,7 +2032,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a 32-bit unsigned integer which is set to 0, if the
    * legacy time synchronization is not currently enabled for the specified
@@ -2057,7 +2057,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to an array of four 16-bit unsigned integers which
    * receives the file version number of the kernel-mode driver.
@@ -2073,7 +2073,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    *  \a buffer points to an array of four 16-bit unsigned integers which
    *  receives the product version number of the kernel-mode driver.
@@ -2089,7 +2089,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a buffer which receives the device manufacturer's name
    * as a zero-terminated Unicode string.
@@ -2099,7 +2099,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a buffer which receives the device manufacturer's name
    * as a zero-terminated ASCII string.
@@ -2108,7 +2108,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a buffer which receives the product name of the device
    * as a zero-terminated Unicode string.
@@ -2118,7 +2118,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a buffer which receives the product name of the device
    * as a zero-terminated ASCII string.
@@ -2127,7 +2127,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
  /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a buffer which receives the name of the device
    * driver (e.g. "kcanl") as a zero-terminated ASCII string.
@@ -2139,7 +2139,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a 32-bit unsigned integer that receives the quality of
    * the channel, where the quality is measured in percent of optimal quality.
@@ -2153,7 +2153,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer point to a 32-bit unsigned integer that receives the roundtrip
    * time which is measured in milliseconds.
@@ -2163,7 +2163,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a 32-bit unsigned integer that receives the
    * \ref kvBUSTYPE_GROUP_xxx bus type.
@@ -2173,7 +2173,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a CHAR array of at least 32 characters which receives
    * the current device name as a \c NULL terminated ASCII string. The user
@@ -2187,7 +2187,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a 32-bit unsigned integer that contains the time in
    * milliseconds since the last communication occurred.
@@ -2199,7 +2199,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a 32-bit unsigned integer that receives the
    * current WLAN operational mode of the remote capable device;
@@ -2210,7 +2210,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a buffer which receives the remote profile name
    * of the device as a zero-terminated ASCII string.
@@ -2220,7 +2220,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a buffer which receives the remote host name
    * of the device as a zero-terminated ASCII string.
@@ -2230,7 +2230,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a buffer which receives the mac address
    * of the device as a zero-terminated ASCII string.
@@ -2240,7 +2240,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a 32-bit unsigned integer which receives
    * maximum bitrate of the device. Zero value means no limit on
@@ -2250,7 +2250,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a 32-bit unsigned integer that receives the
    * capabilities mask of the CAN channel. This mask specifies
@@ -2262,7 +2262,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
 /**
  * This define is used in \ref canGetChannelData(), \a buffer
- * mentioned below refers to this functions argument.
+ * mentioned below refers to this function's argument.
  *
  * \note If no channel name is set, \ref canERR_NOT_IMPLEMENTED will be
  * returned, regardless of channel name is supported in the device or not.
@@ -2275,7 +2275,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a 32-bit unsigned integer that is 1 if
    * the channel(device) is currently connected as a remote device. 0 if it is not
@@ -2286,7 +2286,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a 32-bit unsigned integer that returns the type of remote connection.
    * See \ref kvREMOTE_TYPExxx for returned values.
@@ -2296,7 +2296,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to a 32-bit unsigned integer that returns the logger type of the device.
    * See \ref kvLOGGER_TYPE_xxx for returned values.
@@ -2306,7 +2306,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to an array of six 32-bit unsigned integers that receives
    * hardware status codes for the device.
@@ -2317,7 +2317,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer points to an array of two 32-bit unsigned integers that returns
    * the feature eanLo and feature eanHi of the device.
@@ -2328,7 +2328,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer is \ref kvBusParamLimits.
    */
@@ -2336,7 +2336,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
   /**
    * This define is used in \ref canGetChannelData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \a buffer is \ref kvClockInfo.
    */
@@ -2344,7 +2344,7 @@ canStatus CANLIBAPI canGetChannelData(int channel,
 
 /**
  * This define is used in \ref canGetChannelData(), \a buffer
- * mentioned below refers to this functions argument.
+ * mentioned below refers to this function's argument.
  *
  * \a buffer points to an array of two 64-bit unsigned integers that
  * receives the capabilities value and capabilities mask of the CAN channel.
@@ -2530,9 +2530,22 @@ typedef struct kvBusParamLimits {
  * \name canCHANNEL_CAP_EX_xxx
  * \anchor canCHANNEL_CAP_EX_xxx
  *
- * Channel extended capabilities.
+ * Extended channel capabilities.
+ *
+ * Result of \ref canGetChannelData() with \ref
+ * canCHANNELDATA_CHANNEL_CAP_EX as the item argument.
+ *
+ * @{
  */
-#define canCHANNEL_CAP_EX_BUSPARAMS_TQ      0x0000000000000001L ///< Used in \ref canGetChannelData() with \ref canCHANNELDATA_CHANNEL_CAP_EX as the item argument. Channel has BusParams TQ API
+/// Channel has BusParams TQ API.
+#define canCHANNEL_CAP_EX_BUSPARAMS_TQ    0x0000000000000001L
+/// Channel receives data in errorframes, encoded similar to SocketCAN.
+#define canCHANNEL_CAP_EX_ERRORFRAME_DATA 0x0000000000000002L
+/// Channel supports CAN CC.
+#define canCHANNEL_CAP_EX_CAN             0x0000000000000004L
+/// Channel supports LIN.
+#define canCHANNEL_CAP_EX_LIN             0x0000000000000008L
+///@}
 
 /**
  * \name canCHANNEL_OPMODE_xxx
@@ -2588,7 +2601,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf and \a buflen refers to this
-   * functions arguments.
+   * function's arguments.
    *
    * Tells CANlib to "prefer" extended identifiers; that is, if you send a
    * message with \ref canWrite() and don't specify \ref canMSG_EXT nor \ref
@@ -2603,7 +2616,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf and \a buflen refers to this
-   * functions arguments.
+   * function's arguments.
    *
    * Tells CANlib to "prefer" standard identifiers; that is, if you send a
    * message with \ref canWrite() and don't specify \ref canMSG_EXT nor \ref canMSG_STD,
@@ -2621,7 +2634,7 @@ typedef struct kvBusParamLimits {
    * changed back to their original values after this call.
    *
    * This define is used in \ref canIoCtl(), \a buf and \a buflen refers to this
-   * functions arguments.
+   * function's arguments.
    *
    * Tells CANlib to clear the CAN error counters. The contents of \a buf and \a
    * buflen is ignored. CAN error counters on device side are NOT updated.
@@ -2635,14 +2648,14 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
-
    * The timer scale determines how precisely the channel's timestamps will be
    * displayed without changing the accuracy of the clock. \a buf points to a
    * DWORD which contains the desired time-stamp clock resolution in
    * microseconds. If you want to change the resolution to 10 microseconds, set
-   * the value to 10. The default value is 1000, i.e. one millisecond.
+   * the value to 10. The default value is 1000, i.e. one millisecond. Attempting
+   * to set the scale to 0 will result in it reverting to the default.
    *
    * \note The accuracy of the clock isn't affected.
    */
@@ -2650,7 +2663,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * Enabling transmit Acknowledges on a channel results in that channel receiving a
    * message with the TXACK flag enabled every time a message is successfully
@@ -2671,7 +2684,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * \a buf points at a \c DWORD which receives the current RX queue level. The
    * returned value is approximative, this is because not all hardware supports
@@ -2685,7 +2698,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * \a buf points at a \c DWORD which receives the current TX queue level. The
    * returned value is approximative, this is because not all hardware supports
@@ -2699,7 +2712,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf and \a buflen refers to this
-   * functions arguments.
+   * function's arguments.
    *
    * Discard the current contents of the RX queue. The values of \a buf and \a
    * buflen is ignored.
@@ -2710,7 +2723,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf and \a buflen refers to this
-   * functions arguments.
+   * function's arguments.
    *
    * Discard the current contents of the TX queue. The values of \a buf and \a
    * buflen is ignored.
@@ -2721,7 +2734,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * \a buf points to a \c DWORD which contains the desired time-stamp clock
    * resolution in microseconds. Note that the accuracy of the clock isn't
@@ -2731,7 +2744,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * Turns transmit requests on or off. If transmit requests are enabled on a
    * channel, the channel will receive a message any time it writes a message
@@ -2748,7 +2761,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * \a buf points at a \c HANDLE which receives a Windows Event handle which can
    * be passed to the Win32 API \c WaitForSingleObject. The event is signaled
@@ -2777,7 +2790,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * \note Not yet implemented.
    */
@@ -2792,7 +2805,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * \a buf points to a HANDLE which receives the Windows handle related to the
    * CANlib handle.
@@ -2817,7 +2830,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * \a buf points to a unsigned char which contains
    *
@@ -2830,7 +2843,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * \a buf points to a unsigned char which receives the current setting of the access
    * error reporting (0 or 1.)
@@ -2839,7 +2852,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * Connects the handle to a virtual bus.
    * \a buf points to a unsigned int containing the virtual bus number (0..31).
@@ -2850,7 +2863,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * Disconnects the handle from a virtual bus.
    * \a buf points to a unsigned int containing the virtual bus number (0..31).
@@ -2861,7 +2874,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * \a buf points to a \ref canUserIoPortData struct that contains a port number
    * and a port value to set. This is used by special hardware only.
@@ -2872,7 +2885,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * \a buf points to a \ref canUserIoPortData struct that contains a port
    *  number. After the call, the struct will contain the current value of the
@@ -2891,7 +2904,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * Use this function code to set the size of the receive buffer for a
    * specific handle. \a buf points to an unsigned integer which contains the
@@ -2923,7 +2936,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to
-   * this functions argument.
+   * this function's argument.
    *
    * This function enables or disables automatic time reset on bus on. By
    * default, this is enabled, so the timer will automatically reset when a
@@ -2939,7 +2952,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * Returns the state of the Transmit Acknowledge as a DWORD in \a buf:
    *
@@ -2952,7 +2965,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * \a buf points to an unsigned byte. If the value is zero, the local transmit
    * echo is turned off for the handle. Otherwise, local transmit echo is turned
@@ -2968,7 +2981,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * This function turns error frame reporting on or off. If it is off, the
    * channel handle will ignore any error frames it receives.
@@ -2985,7 +2998,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * \a buf points to a 32-bit unsigned integer that receives the quality of
    * the channel, where the quality is measured in percent of optimal quality.
@@ -3000,7 +3013,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * Returns the round trip time to a device.
    *
@@ -3013,7 +3026,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * \a buf points to a \c DWORD that contains the \ref kvBUSTYPE_GROUP_xxx bus type.
    *
@@ -3023,7 +3036,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * \a buf points to a CHAR array of at least 32 characters which receives the
    * current device name as a \c NULL terminated ASCII string.
@@ -3037,7 +3050,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * \a buf points to a \c DWORD that contains the time in milliseconds since the last
    * communication occurred.
@@ -3050,7 +3063,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * Obtain the time reference list for MagiSync devices.
    *
@@ -3065,7 +3078,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * \a buf points to a \c DWORD that contains the number of microseconds
    * the minimum CAN message transmit interval should be set to, or 0xffffffff
@@ -3088,7 +3101,7 @@ typedef struct kvBusParamLimits {
 
    /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * Some hardware have a bitrate limit, which must be met when using any of \a canSetBusParams(),
    * \a canSetBusParamsC200() and \a canSetBusParamsFd() functions.
@@ -3108,7 +3121,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * This ioctl can be used to set the responsitivity of some devices.
    * \a buf points to a \c DWORD that should contain a value between 0 and 100.
@@ -3131,7 +3144,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * This ioctl can be used to set the responsitivity of some devices.
    * \a buf points to a \c DWORD that should contain a value between 0 and 100.
@@ -3147,7 +3160,7 @@ typedef struct kvBusParamLimits {
 
   /**
    * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
-   * functions argument.
+   * function's argument.
    *
    * This ioctl resets overrun count and flags, \sa \ref canReadStatus \sa \ref canGetBusStatistics.
    * The contents of \a buf and \a buflen is ignored.
@@ -3183,6 +3196,28 @@ typedef struct kvBusParamLimits {
    * The default value is 0, Local Transmit Acknowledge is off.
    */
 #define canIOCTL_SET_LOCAL_TXACK                     46
+
+  /**
+   * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
+   * function's argument.
+   *
+   * The native tick resolution changes the accuracy of the clock (in
+   * microseconds).  \a buf points to \c DWORD which contains the desired
+   * tick resolution in microseconds. If you want to change the
+   * resolution to 1 microsecond, set the value to 1. The default value is
+   * 10 microseconds. Attempting to set the resolution to 0 will result in
+   * it reverting to the default.
+   */
+#define canIOCTL_SET_NATIVE_TICK_RESOLUTION             47
+
+  /**
+   * This define is used in \ref canIoCtl(), \a buf mentioned below refers to this
+   * function's argument.
+   *
+   * \a buf points to a \c DWORD which contains the configured time-stamp tick
+   * resolution in microseconds. The default value is 10 microseconds.
+   */
+#define canIOCTL_GET_NATIVE_TICK_RESOLUTION             48
  /** @} */
 
 /** Used in \ref canIOCTL_SET_USER_IOPORT and \ref canIOCTL_GET_USER_IOPORT. */
@@ -4051,7 +4086,7 @@ canStatus CANLIBAPI canObjBufSendBurst(const CanHandle hnd,
  */
   /**
    * This define is used in \ref canProbeVersion(), \a major and \a minor refer to
-   * this functions arguments.
+   * this function's arguments.
    *
    * Require that exactly the version specified by \a major and \a minor be
    * present. Earlier and later versions are not accepted. This flag does not
@@ -4060,7 +4095,7 @@ canStatus CANLIBAPI canObjBufSendBurst(const CanHandle hnd,
 #define canVERSION_DONT_ACCEPT_LATER      0x01
   /**
    * This define is used in \ref canProbeVersion(), \a major and \a minor refer to
-   * this functions arguments.
+   * this function's arguments.
    *
    * Return FALSE if a beta version (preview version) of CANlib is installed,
    * regardless of its version number.
@@ -5684,7 +5719,7 @@ kvStatus CANLIBAPI kvScriptTxeGetData(const char *filePathOnPC,
 
   /**
    * This define is used in \ref kvScriptTxeGetData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \source_cs <b>buffer contains a uint[3] array.</b>
    *
@@ -5701,7 +5736,7 @@ kvStatus CANLIBAPI kvScriptTxeGetData(const char *filePathOnPC,
 
   /**
    * This define is used in \ref kvScriptTxeGetData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \source_cs <b>buffer contains a uint[3] array.</b>
    *
@@ -5718,7 +5753,7 @@ kvStatus CANLIBAPI kvScriptTxeGetData(const char *filePathOnPC,
 
   /**
    * This define is used in \ref kvScriptTxeGetData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \source_cs <b>buffer contains a DateTime object.</b>
    *
@@ -5738,7 +5773,7 @@ kvStatus CANLIBAPI kvScriptTxeGetData(const char *filePathOnPC,
 
   /**
    * This define is used in \ref kvScriptTxeGetData(), \a buffer
-   * mentioned below refers to this functions argument.
+   * mentioned below refers to this function's argument.
    *
    * \source_cs <b>buffer contains a string.</b>
    *
@@ -5750,7 +5785,7 @@ kvStatus CANLIBAPI kvScriptTxeGetData(const char *filePathOnPC,
 
 /**
  * This define is used in \ref kvScriptTxeGetData(), \a buffer
- * mentioned below refers to this functions argument.
+ * mentioned below refers to this function's argument.
  *
  * \source_cs <b>buffer contains a string.</b>
  *
@@ -5765,7 +5800,7 @@ kvStatus CANLIBAPI kvScriptTxeGetData(const char *filePathOnPC,
 
 /**
  * This define is used in \ref kvScriptTxeGetData(), \a buffer
- * mentioned below refers to this functions argument.
+ * mentioned below refers to this function's argument.
  *
  * \source_cs <b>buffer contains a uint.</b>
  *
@@ -5776,7 +5811,7 @@ kvStatus CANLIBAPI kvScriptTxeGetData(const char *filePathOnPC,
 
 /**
  * This define is used in \ref kvScriptTxeGetData(), \a buffer
- * mentioned below refers to this functions argument.
+ * mentioned below refers to this function's argument.
  *
  * \source_cs <b>buffer contains a bool.</b>
  *
@@ -5790,7 +5825,7 @@ kvStatus CANLIBAPI kvScriptTxeGetData(const char *filePathOnPC,
 
 
 /**
- * \ingroup grp_kvFile
+ * \ingroup grp_kvfile
  *
  * \source_cs       <b>static Canlib.kvStatus kvFileCopyToDevice(CanHandle hnd, String hostFileName, String deviceFileName);</b>
  *
@@ -5817,7 +5852,7 @@ kvStatus CANLIBAPI kvFileCopyToDevice(const CanHandle hnd,
                                       char *deviceFileName);
 
 /**
- * \ingroup grp_kvFile
+ * \ingroup grp_kvfile
  *
  * \source_cs       <b>static Canlib.kvStatus kvFileCopyFromDevice(CanHandle hnd, String deviceFileName, String hostFileName);</b>
  *
@@ -5843,7 +5878,7 @@ kvStatus CANLIBAPI kvFileCopyFromDevice(const CanHandle hnd,
                                         char *hostFileName);
 
 /**
- * \ingroup grp_kvFile
+ * \ingroup grp_kvfile
  *
  * \source_cs       <b>static Canlib.kvStatus kvFileDelete(CanHandle hnd, String deviceFileName);</b>
  *
@@ -5866,7 +5901,7 @@ kvStatus CANLIBAPI kvFileCopyFromDevice(const CanHandle hnd,
 kvStatus CANLIBAPI kvFileDelete(const CanHandle hnd, char *deviceFileName);
 
 /**
- * \ingroup grp_kvFile
+ * \ingroup grp_kvfile
  *
  * \source_cs       <b>static Canlib.kvStatus kvFileGetName(CanHandle hnd, Int32 fileNo, out String name);</b>
  *
@@ -5893,7 +5928,7 @@ kvStatus CANLIBAPI kvFileGetName(const CanHandle hnd,
                                  int namelen);
 
 /**
- * \ingroup grp_kvFile
+ * \ingroup grp_kvfile
  *
  * \source_cs       <b>static Canlib.kvStatus kvFileGetCount(CanHandle hnd, out Int32 count);</b>
  *
@@ -5914,7 +5949,7 @@ kvStatus CANLIBAPI kvFileGetName(const CanHandle hnd,
 kvStatus CANLIBAPI kvFileGetCount(const CanHandle hnd, int *count);
 
 /**
- * \ingroup grp_kvFile
+ * \ingroup grp_kvfile
  *
  * \source_cs       <b>static Canlib.kvStatus kvFileGetSystemData(CanHandle hnd, Int32 itemCode, out Int32 result);</b>
  *
@@ -5940,7 +5975,7 @@ kvStatus CANLIBAPI kvFileGetSystemData(const CanHandle hnd,
                                        int *result);
 
 /**
- * \ingroup grp_kvFile
+ * \ingroup grp_kvfile
  *
  * \source_cs       <b>static Canlib.canStatus  kvFileDiskFormat(CanHandle hnd);</b>
  *

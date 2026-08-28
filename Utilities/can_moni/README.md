@@ -1,5 +1,5 @@
-__CAN Monitor for Kvaser CAN Interfaces, Version 0.3.1__ \
-Copyright &copy; 2007,2012-2024 by Uwe Vogt, UV Software, Berlin
+__CAN Monitor for Kvaser CAN Interfaces, Version 0.3.2__ \
+Copyright &copy; 2007,2012-2026 by Uwe Vogt, UV Software, Berlin
 
 ```
 Usage: can_moni <interface> [<option>...]
@@ -14,7 +14,7 @@ Options:
   /MASK:<id>                          acceptance mask for 11-bit IDs (default=0x000)
   /XTD-CODE:<id>                      acceptance code for 29-bit IDs (default=0x00000000)
   /XTD-MASK:<id>                      acceptance mask for 29-bit IDs (default=0x00000000)
-  /Mode:(2.0|FDf[+BRS])               CAN operation mode: CAN 2.0 or CAN FD mode
+  /Mode:(CCf|FDf[+BRS])               CAN operation mode: CAN CC or CAN FD mode
   /SHARED                             shared CAN controller access (if supported)
   /MONitor:(No|Yes) | /LISTEN-ONLY    monitor mode (listen-only mode)
   /ERR:(No|Yes) | /ERROR-FRAMES       allow reception of error frames
@@ -23,14 +23,14 @@ Options:
   /BauDrate:<baudrate>                CAN bit-timing in kbps (default=250), or
   /BitRate:<bitrate>                  CAN bit-rate settings (as key/value list)
   /Verbose                            show detailed bit-rate settings
-  /LIST-BITRATES[:(2.0|FDf[+BRS])]    list standard bit-rate settings and exit
+  /LIST-BITRATES[:(CCf|FDf[+BRS])]    list standard bit-rate settings and exit
   /LIST-BOARDS | /LIST                list all supported CAN interfaces and exit
   /TEST-BOARDS | /TEST                list all available CAN interfaces and exit
   /JSON-file:<filename>               write configuration into JSON file and exit
   /HELP | /?                          display this help screen and exit
   /VERSION                            show version information and exit
 Arguments:
-  <id>           CAN identifier (11-bit)
+  <id>           CAN identifier (11-bit or 29-bit)
   <interface>    CAN interface board (list all with /LIST)
   <baudrate>     CAN baud rate index (default=3):
                  0 = 1000 kbps
@@ -53,15 +53,15 @@ Arguments:
                  data_brp=<value>     bit-rate prescaler (FD data)
                  data_tseg1=<value>   time segment 1 (FD data)
                  data_tseg2=<value>   time segment 2 (FD data)
-                 data_sjw=<value>     sync. jump width (FD data).
+                 data_sjw=<value>     sync. jump width (FD data)
 Hazard note:
   If you connect your CAN device to a real CAN network when using this program,
   you might damage your application.
 ```
 
-This program is free software: you can redistribute it and/or modify
+This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
+the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
@@ -69,5 +69,5 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License along
+with this program; if not, see <https://www.gnu.org/licenses/>.

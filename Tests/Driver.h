@@ -1,17 +1,18 @@
-//  SPDX-License-Identifier: BSD-2-Clause OR GPL-3.0-or-later
+//  SPDX-License-Identifier: BSD-2-Clause OR GPL-2.0-or-later
 //
 //  CAN Interface API, Version 3 (Testing)
 //
-//  Copyright (c) 2004-2024 Uwe Vogt, UV Software, Berlin (info@uv-software.com)
+//  Copyright (c) 2004-2026 Uwe Vogt, UV Software, Berlin (info@uv-software.de)
 //  All rights reserved.
 //
 //  This file is part of CAN API V3.
 //
 //  CAN API V3 is dual-licensed under the BSD 2-Clause "Simplified" License
-//  and under the GNU General Public License v3.0 (or any later version).
+//  and under the GNU General Public License v2.0 (or any later version).
 //  You can choose between one of them if you use this file.
 //
-//  BSD 2-Clause "Simplified" License:
+//  (1) BSD 2-Clause "Simplified" License
+//
 //  Redistribution and use in source and binary forms, with or without
 //  modification, are permitted provided that the following conditions are met:
 //  1. Redistributions of source code must retain the above copyright notice, this
@@ -31,10 +32,11 @@
 //  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 //  OF CAN API V3, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-//  GNU General Public License v3.0 or later:
-//  CAN API V3 is free software: you can redistribute it and/or modify
+//  (2) GNU General Public License v2.0 or later
+//
+//  CAN API V3 is free software; you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
+//  the Free Software Foundation; either version 2 of the License, or
 //  (at your option) any later version.
 //
 //  CAN API V3 is distributed in the hope that it will be useful,
@@ -42,8 +44,8 @@
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
 //
-//  You should have received a copy of the GNU General Public License
-//  along with CAN API V3.  If not, see <https://www.gnu.org/licenses/>.
+//  You should have received a copy of the GNU General Public License along
+//  with CAN API V3; if not, see <https://www.gnu.org/licenses/>.
 //
 #ifndef DRIVER_H_INCLUDED
 #define DRIVER_H_INCLUDED
@@ -63,18 +65,19 @@ typedef CKvaserCAN  CCanDriver;
 
 //  ($4) define macros for driver-specific features
 //       at least the mandatory macros (cf. compiler warnings)
-#define FEATURE_BITRATE_5K          FEATURE_UNSUPPORTED
-#define FEATURE_BITRATE_800K        FEATURE_SUPPORTED
-#define FEATURE_BITRATE_SAM         FEATURE_SUPPORTED
-#define FEATURE_BITRATE_FD_SAM      FEATURE_UNSUPPORTED
-#define FEATURE_BITRATE_SJA1000     FEATURE_UNSUPPORTED
-#define FEATURE_FILTERING           FEATURE_SUPPORTED
-#define FEATURE_ERROR_FRAMES        FEATURE_SUPPORTED
-#define FEATURE_ERROR_CODE_CAPTURE  FEATURE_UNSUPPORTED
-#define FEATURE_BLOCKING_READ       FEATURE_SUPPORTED
-#define FEATURE_BLOCKING_WRITE      FEATURE_SUPPORTED
-#define FEATURE_SIZE_RECEIVE_QUEUE  20478
-#define FEATURE_SIZE_TRANSMIT_QUEUE 2048
+#define FEATURE_BITRATE_5K           FEATURE_UNSUPPORTED
+#define FEATURE_BITRATE_800K         FEATURE_SUPPORTED
+#define FEATURE_BITRATE_SAM          FEATURE_SUPPORTED
+#define FEATURE_BITRATE_FD_SAM       FEATURE_UNSUPPORTED
+#define FEATURE_BITRATE_SJA1000      FEATURE_UNSUPPORTED
+#define FEATURE_FILTERING            FEATURE_SUPPORTED
+#define FEATURE_TRACEFILE            FEATURE_UNSUPPORTED
+#define FEATURE_ERROR_FRAMES         FEATURE_SUPPORTED
+#define FEATURE_ERROR_CODE_CAPTURE   FEATURE_UNSUPPORTED
+#define FEATURE_BLOCKING_READ        FEATURE_SUPPORTED
+#define FEATURE_BLOCKING_WRITE       FEATURE_SUPPORTED
+#define FEATURE_SIZE_RECEIVE_QUEUE   20478
+#define FEATURE_SIZE_TRANSMIT_QUEUE  2048
 
 //  (§5) define macros for CAN Classic bit-rate settings
 //       at least BITRATE_1M, BITRATE_500K, BITRATE_250K, BITRATE_125K,
@@ -127,8 +130,8 @@ typedef CKvaserCAN  CCanDriver;
 
 #if (CAN_FD_SUPPORTED == FEATURE_SUPPORTED)
 //  (§10) define macros for CAN FD bit-rate settings
-//       at least BITRATE_FD_1M8M, BITRATE_FD_500K4M, BITRATE_FD_250K2M, BITRATE_FD_125K1M,
-//                BITRATE_FD_1M, BITRATE_FD_500K, BITRATE_FD_250K, BITRATE_FD_125K
+//        at least BITRATE_FD_1M8M, BITRATE_FD_500K4M, BITRATE_FD_250K2M, BITRATE_FD_125K1M,
+//                 BITRATE_FD_1M, BITRATE_FD_500K, BITRATE_FD_250K, BITRATE_FD_125K
 #define BITRATE_FD_1M(x)      KVASER_CAN_FD_BR_1M(x)
 #define BITRATE_FD_500K(x)    KVASER_CAN_FD_BR_500K(x)
 #define BITRATE_FD_250K(x)    KVASER_CAN_FD_BR_250K(x)

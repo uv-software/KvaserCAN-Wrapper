@@ -1,6 +1,6 @@
 ### CAN API V3 Wrapper Library for Kvaser CAN Interfaces (Windows&reg;)
 
-_Copyright &copy; 2017-2024 Uwe Vogt, UV Software, Berlin (info@uv-software.de)_
+_Copyright &copy; 2017-2026 Uwe Vogt, UV Software, Berlin (info@uv-software.de)_
 _All rights reserved._
 
 # Deployment
@@ -32,8 +32,9 @@ _All rights reserved._
   - `$(PROJROOT)\Sources\Wrapper\can_api.c`
   - `$(PROJROOT)\Libraries\CANAPI\uvcankvl.rc`
   - `$(PROJROOT)\Libraries\PeakCAN\KvaserCAN.rc`
-  - `$(PROJROOT)\Utilities\can_moni\Driver.h`
-  - `$(PROJROOT)\Utilities\can_test\Driver.h`
+  - `$(PROJROOT)/Utilities/can_moni/README.md`
+  - `$(PROJROOT)/Utilities/can_send/README.md`
+  - `$(PROJROOT)/Utilities/can_test/README.md`
 
 ### Procedure
 
@@ -43,7 +44,7 @@ _All rights reserved._
 2. Open the trial program with Visual Studio and run a code analysis.
   - _**There should not be any serious finding.**_
   - _If there are findings then fix them or create an issue in the repo._
-3. Run `x86_build.bat` and `x64_build.bat` in the project root directory.
+3. Run `x64_build.bat` in the project root directory.
   - _**There should be absolutely no compiler or linker error!**_
   - _If there are compiler or linker warnings then think twice._
 4. Try out the trial program with different options.
@@ -71,20 +72,17 @@ _All rights reserved._
 2. Double check all version numbers again (see above).
 3. Run the batch files in the project root directory:
   - `C:\Users\haumea>cd C:\Projects\CAN\Drivers\KvaserCAN`
-  - `C:\Projects\CAN\Drivers\KvaserCAN>x86_build.bat`
-  - `C:\Projects\CAN\Drivers\KvaserCAN>x86_install.bat`
   - `C:\Projects\CAN\Drivers\KvaserCAN>x64_build.bat`
   - `C:\Projects\CAN\Drivers\KvaserCAN>x64_install.bat`
 4. Build the CAN API V3 GoogleTest program:
   - `C:\Users\haumea>cd C:\Projects\CAN\Drivers\KvaserCAN\Tests`
-  - `C:\Projects\CAN\Drivers\KvaserCAN\Tests>x86_build.bat`
   - `C:\Projects\CAN\Drivers\KvaserCAN\Tests>x64_build.bat`
 5. Run the CAN API V3 GoogleTest program with two Kvaser CAN devices in CAN 2.0 mode:
-  - `C:\Projects\CAN\Drivers\KvaserCAN\Tests>Debug\kvl_testing --can_dut1="Kvaser CAN Channel 0" --can_dut2="Kvaser CAN Channel 1" --gtest_output=xml:TestReport_KvaserCAN.xml --run_all=YES --smoketest_frames=100000` [...]
+  - `C:\Projects\CAN\Drivers\KvaserCAN\Tests>x64\Debug\kvl_testing --can_dut1="Kvaser CAN Channel 0" --can_dut2="Kvaser CAN Channel 1" --can_mode=2.0 --can_baudrate=DEFAULT --gtest_output=xml:TestReport_KvaserCAN.xml --run_all=YES --smoketest_frames=100000` [...]
   - _If there is any error then **stop** here or create an issue for each error in the repo._
   - Copy the test report into the binary's directory `$(PROJROOT)\Binaries`.
 6. Run the CAN API V3 GoogleTest program with two Kvaser CAN devices in CAN FD mode:
-  - `C:\Projects\CAN\Drivers\KvaserCAN\Tests>x64\Debug\kvl_testing --can_dut1="Kvaser CAN Channel 1" --can_dut2="Kvaser CAN Channel 2" --can_bitrate=DEFAULT --can_mode=CANFD+BRS  --gtest_output=xml:TestReport_KvaserCAN_FD.xml --run_all=YES --smoketest_frames=100000` [...]
+  - `C:\Projects\CAN\Drivers\KvaserCAN\Tests>x64\Debug\kvl_testing --can_dut1="Kvaser CAN Channel 0" --can_dut2="Kvaser CAN Channel 1" --can_mode=FDF+BRS --can_bitrate=DEFAULT --gtest_output=xml:TestReport_KvaserCAN_FD.xml --run_all=YES --smoketest_frames=100000` [...]
   - _If there is any error then **stop** here or create an issue for each error in the repo._
   - Copy the test report into the binary's directory `$(PROJROOT)\Binaries`.
 7. Pack the artifacts into a .zip-archive, e.g. `artifacts.zip`:
@@ -104,7 +102,7 @@ _All rights reserved._
   - Change-log: list all major changes, e.g. from commit comments
   - Assets: drag and drop the artifacts archive (see above)
 3. Click on `Publish release`.
-4. That´s all folks!
+4. That's all folks!
 
 ## Announce the new Release
 
